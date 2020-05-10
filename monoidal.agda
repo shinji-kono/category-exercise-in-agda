@@ -274,6 +274,8 @@ postulate extensionality : { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ
 -- Data.Product as a Tensor Product for Monoidal Category
 --
 
+open import Relation.Binary.PropositionalEquality hiding ( [_] )
+
 SetsTensorProduct : {c : Level} → Functor ( Sets {c} × Sets {c} )  (Sets {c})
 SetsTensorProduct =   record {
        FObj = λ x  →  proj₁ x  *  proj₂ x

@@ -165,6 +165,29 @@ proof1 (suc (suc n)) =   let open ≡-Reasoning in
         lemma2 : { n :  ℕ } -> isEven (suc (suc n ))  ≡  isEven n
         lemma2 = refl
 
+data One : Set where
+   * : One
+
+lemma1 :  ( x y : One  ) → x ≡ y
+lemma1 * * = refl
+
+lemma2 :  {A : Set} ( x : A) → x ≡ x
+lemma2 x  = refl
 
 
+open import Data.Empty
+open import Relation.Nullary
+open import Level
+
+lemma4 : Set (Level.suc Level.zero)
+lemma4 =  {A : Set} ( x y : A) → ¬ ( ¬ x ≡ y )
+
+data  A   : Set  where
+   x y z : A
+
+data _==_ : ( a b : A ) → Set where
+   x=y : x == y
+
+lemma3 : ( a b : A ) → a == b → ¬ a ≡ b
+lemma3 _ _ x=y = λ ()
 

@@ -9,6 +9,7 @@ open import cat-utility
 open import Relation.Binary.Core
 open import Relation.Binary
 open import monoidal
+open import Relation.Binary.PropositionalEquality  hiding ( [_] )
 
 -----
 --

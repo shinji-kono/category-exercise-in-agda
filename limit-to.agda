@@ -6,8 +6,10 @@ module limit-to where
 open import cat-utility
 open import HomReasoning
 open import Relation.Binary.Core
+open  import  Relation.Binary.PropositionalEquality hiding ([_])
 
-open import discrete
+
+open import graph
 
 
 ---  Equalizer  from Limit ( 2→A IdnexFunctor Γ and  IndexNat :  K →　Γ)
@@ -39,7 +41,7 @@ open NTrans
 
 -- Functor Γ : TwoCat → A
 
-IndexFunctor :  {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) ( a b : Obj A) ( f g : Hom A a b ) →  Functor (TwoCat  {c₁} {c₂}) A
+IndexFunctor :  {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) ( a b : Obj A) ( f g : Hom A a b ) →  Functor (TwoCat ) A
 IndexFunctor  {c₁} {c₂} {ℓ} A a b f g = record {
          FObj = λ a → fobj a
        ; FMap = λ {a} {b} f → fmap {a} {b} f
@@ -49,7 +51,7 @@ IndexFunctor  {c₁} {c₂} {ℓ} A a b f g = record {
              ; ≈-cong = λ {a} {b} {c} {f}   → ≈-cong  {a} {b} {c} {f}
        }
       } where
-          T = TwoCat   {c₁} {c₂}
+          T = TwoCat 
           fobj :  Obj T → Obj A
           fobj t0 = a
           fobj t1 = b
@@ -59,7 +61,7 @@ IndexFunctor  {c₁} {c₂} {ℓ} A a b f g = record {
           fmap  {t0} {t1} arrow-f = f
           fmap  {t0} {t1} arrow-g = g
           ≈-cong :  {a : Obj T} {b : Obj T} {f g : Hom T a b}  → T [ f ≈ g ]  → A [ fmap f ≈ fmap g ]
-          ≈-cong  {a} {b} {f} {.f} refl = let open  ≈-Reasoning A in refl-hom
+          ≈-cong  {a} {b} {f} {_} refl = let open  ≈-Reasoning A in refl-hom
           identity : (x : Obj T ) →  A [ fmap (id1 T x) ≈  id1 A (fobj x) ]
           identity t0  = let open  ≈-Reasoning A in refl-hom
           identity t1  = let open  ≈-Reasoning A in refl-hom
@@ -117,7 +119,7 @@ IndexNat {c₁} {c₂} {ℓ} A {a} {b} f g d h fh=gh = record {
         commute = λ {x} {y} {f'} → commute1 {x} {y} {f'} d h fh=gh
     }
  } where
-         I = TwoCat  {c₁} {c₂}
+         I = TwoCat 
          Γ : Functor I A
          Γ = IndexFunctor {c₁} {c₂} {ℓ} A a b f g
          nmap :  (x : Obj I ) ( d : Obj (A)  ) (h : Hom A d a ) → Hom A (FObj (K I A d) x) (FObj Γ x)
@@ -155,7 +157,7 @@ IndexNat {c₁} {c₂} {ℓ} A {a} {b} f g d h fh=gh = record {
 
 equlimit : {c₁ c₂ ℓ : Level} (A : Category c₁ c₂  ℓ) {a b : Obj A} → (f g : Hom A a b)  (lim : Limit TwoCat A (IndexFunctor A a b f g) ) →
          Hom A (a0 lim) a
-equlimit A {a} {b} f g lim = TMap (Limit.t0 lim) discrete.t0
+equlimit A {a} {b} f g lim = TMap (Limit.t0 lim) graph.t0
 
 lim-to-equ :  {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ)
         →  {a b : Obj A}  (f g : Hom A  a b )
@@ -167,7 +169,7 @@ lim-to-equ {c₁} {c₂} {ℓ} A {a} {b} f g lim =  record {
         ; ek=h = λ {d} {h} {fh=gh} → ek=h d h fh=gh
         ; uniqueness = λ {d} {h} {fh=gh} {k'} → uniquness d h fh=gh k'
      } where
-         I : Category  c₁ c₂ c₂
+         I : Category Level.zero Level.zero Level.zero   
          I = TwoCat
          Γ : Functor I A
          Γ = IndexFunctor A a b f g
@@ -181,11 +183,11 @@ lim-to-equ {c₁} {c₂} {ℓ} A {a} {b} f g lim =  record {
          fe=ge0 = let open  ≈-Reasoning A in  begin
                     f o (equlimit A f g lim )
                 ≈⟨⟩
-                    FMap  Γ arrow-f o TMap (Limit.t0 lim) discrete.t0
-                ≈⟨  IsNTrans.commute ( isNTrans (Limit.t0 lim)) {discrete.t0} {discrete.t1} {arrow-f} ⟩ 
-                    TMap (Limit.t0 lim) discrete.t1 o FMap (K (TwoCat {c₁} {c₂} ) A (a0 lim)) id-t0
-                ≈↑⟨ IsNTrans.commute ( isNTrans (Limit.t0 lim)) {discrete.t0} {discrete.t1} {arrow-g} ⟩ 
-                    FMap  Γ arrow-g o TMap (Limit.t0 lim) discrete.t0
+                    FMap  Γ arrow-f o TMap (Limit.t0 lim) graph.t0
+                ≈⟨  IsNTrans.commute ( isNTrans (Limit.t0 lim)) {graph.t0} {graph.t1} {arrow-f} ⟩ 
+                    TMap (Limit.t0 lim) graph.t1 o FMap (K (TwoCat   ) A (a0 lim)) id-t0
+                ≈↑⟨ IsNTrans.commute ( isNTrans (Limit.t0 lim)) {graph.t0} {graph.t1} {arrow-g} ⟩ 
+                    FMap  Γ arrow-g o TMap (Limit.t0 lim) graph.t0
                 ≈⟨⟩
                     g o (equlimit A f g lim )
                 ∎
@@ -195,9 +197,9 @@ lim-to-equ {c₁} {c₂} {ℓ} A {a} {b} f g lim =  record {
          ek=h d h fh=gh = let open  ≈-Reasoning A in  begin
                     e o k h fh=gh
                 ≈⟨⟩
-                    TMap (Limit.t0 lim) discrete.t0  o k h fh=gh
-                ≈⟨ t0f=t (isLimit lim) {d} {inat d h fh=gh } {discrete.t0}  ⟩
-                    TMap (inat d h fh=gh) discrete.t0
+                    TMap (Limit.t0 lim) graph.t0  o k h fh=gh
+                ≈⟨ t0f=t (isLimit lim) {d} {inat d h fh=gh } {graph.t0}  ⟩
+                    TMap (inat d h fh=gh) graph.t0
                 ≈⟨⟩
                     h
                 ∎
@@ -205,13 +207,13 @@ lim-to-equ {c₁} {c₂} {ℓ} A {a} {b} f g lim =  record {
                        ( fh=gh : A [ A [ f  o  h ] ≈ A [ g  o h ] ]) → A [ A [ e o k' ] ≈ h ] →
                        A [ A [ TMap (Limit.t0 lim) i o k' ] ≈ TMap (inat d h fh=gh) i ]
          uniq-nat {t0} d h k' fh=gh ek'=h =  let open  ≈-Reasoning A in begin
-                    TMap (Limit.t0 lim) discrete.t0 o k'
+                    TMap (Limit.t0 lim) graph.t0 o k'
                 ≈⟨⟩
                     e o k'
                 ≈⟨ ek'=h ⟩
                     h
                 ≈⟨⟩
-                    TMap (inat d h fh=gh) discrete.t0
+                    TMap (inat d h fh=gh) graph.t0
                 ∎
          uniq-nat {t1} d h k' fh=gh ek'=h =  let open  ≈-Reasoning A in begin
                     TMap (Limit.t0 lim) t1 o k'
@@ -220,7 +222,7 @@ lim-to-equ {c₁} {c₂} {ℓ} A {a} {b} f g lim =  record {
                 ≈⟨⟩
                     ( TMap (Limit.t0 lim) t1  o  FMap (K I A c) arrow-f ) o k'
                 ≈↑⟨ car ( nat1 (Limit.t0 lim) arrow-f ) ⟩
-                    ( FMap Γ  arrow-f  o TMap (Limit.t0 lim) discrete.t0 ) o k'
+                    ( FMap Γ  arrow-f  o TMap (Limit.t0 lim) graph.t0 ) o k'
                 ≈⟨⟩
                    (f o e ) o k'
                 ≈↑⟨ assoc ⟩
@@ -241,6 +243,8 @@ lim-to-equ {c₁} {c₂} {ℓ} A {a} {b} f g lim =  record {
 
 
 ---  Product  from Limit ( given Discrete→A functor Γ and  pnat :  K →　Γ)
+
+open  import  Relation.Binary.PropositionalEquality
 
 open DiscreteHom
 

@@ -16,6 +16,8 @@ open import HomReasoning
 open import cat-utility
 open import Relation.Binary.Core
 open import Relation.Binary
+open import Relation.Binary.PropositionalEquality hiding ( [_] ; sym )
+
 
 
 -- Contravariant Functor : op A → Sets  ( Obj of Sets^{A^op} )
@@ -163,7 +165,7 @@ y-map  {_} {c₂} {_} A  {a} {b} f = record { TMap =  y-tmap A a b f ; isNTrans 
 -----
 
 YonedaFunctor :  { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ )  → Functor A (SetsAop A)
-YonedaFunctor {_} {c₂} {_} A = record {
+YonedaFunctor A = record {
          FObj = λ a → y-obj A a
        ; FMap = λ f → y-map A f
        ; isFunctor = record {
@@ -297,10 +299,25 @@ YondaLemma1 A {a} {a'} {f} = refl
 --
 -- But we cannot prove like this
 --     FObj YonedaFunctor a   ≡ FObj YonedaFunctor b → a  ≡ b
---     YondaLemma2 : {a b x : Obj A }  → (FObj (FObj YonedaFunctor a) x)  ≡ (FObj (FObj YonedaFunctor b  ) x)  →     
---         a ≡ b 
---     YondaLemma2 {a} {b} eq  = {!!}
+
+open import Relation.Nullary
+open import Data.Empty
+
+--YondaLemma2 :  {c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ )   →
+--     (a b x : Obj A )  → (FObj (FObj (YonedaFunctor A) a) x)  ≡ (FObj (FObj (YonedaFunctor A) b ) x)  → a ≡ b 
+--YondaLemma2 A a bx eq = {!!}
+
 --       N.B     = ≡-cong gives you ! a ≡ b, so we cannot cong inv to prove a ≡ b
+
+--record Category c₁ c₂ ℓ : Set (suc (c₁ ⊔ c₂ ⊔ ℓ)) where
+--  infixr 9 _o_
+--  infix  4 _≈_
+--  field
+--    Obj : Set c₁
+--    Hom : Obj → Obj → Set c₂
+--YondaLemma31 :  {c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ )   →
+--     (a b x : Obj A )  → Hom A a x  ≡ Hom A b x  → a ≡ b 
+--YondaLemma31 A a b x eq = {!!}
 --
 -- Instead we prove only
 --     inv ( FObj YonedaFunctor a )  ≡ a
@@ -312,11 +329,19 @@ YonedaLemma21 :   { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ )  {a x 
 YonedaLemma21 A {a} {x} f = refl
 
 open import  Relation.Binary.HeterogeneousEquality
--- 
 a1 : { c₁ : Level} {A B : Set c₁ } {a : A } { b : B } → a ≅ b → A ≡ B 
 a1 refl = refl
--- 
--- YonedaInjective :   { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ )  {a b x : Obj A}
---      → FObj (FObj (YonedaFunctor A ) a ) x ≡ FObj (FObj (YonedaFunctor A ) b ) x
---      → a ≡ b
--- YonedaInjective A eq =  ≡-cong ( λ y → inv A y ) eq
+
+-- YondaLemma3 :  {c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ )   →
+--     (a b x : Obj A )  → Hom A a x  ≅ Hom A b x  → a ≡ b 
+-- YondaLemma3 A a b x eq = {!!} -- ≡-cong (inv A) ?
+
+a2 :  ( a b : Set ) (f : a → a ) (g : b → a ) -> f ≅ g → a ≡ b
+a2 a b f g eq = {!!}
+
+-- YonedaInjective :   { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ )  {a b : Obj A}
+--          → FObj (FObj (YonedaFunctor A ) a ) a  ≅ FObj (FObj (YonedaFunctor A ) a ) b
+--          → a ≡ b
+-- YonedaInjective A {a} {b} eq = {!!}
+
+

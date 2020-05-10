@@ -3,6 +3,8 @@ open import Level
 
 module epi where
 
+open import Relation.Binary.PropositionalEquality hiding ( [_] ; sym )
+
 open import Relation.Binary.Core
 
 data  FourObject   : Set where

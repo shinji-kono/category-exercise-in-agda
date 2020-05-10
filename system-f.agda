@@ -12,6 +12,8 @@ T : {l : Level} (X : Set l) → Bool X
 T X = λ(x y : X) → x
 
 F : {l : Level} (X : Set l) → Bool X
+
+
 F X = λ(x y : X) → y
 
 D : {l : Level} → {U : Set l} → U → U → Bool U → U
@@ -27,7 +29,7 @@ _×_ : {l : Level} → Set l → Set l →  Set (suc l)
 _×_ {l} U V =  {X : Set l} → (U → V → X)  → X 
  
 <_,_> : {l : Level} {U V : Set l} → U → V → (U ×  V) 
-<_,_> {l} {U} {V} u v = λ X  → λ(x : U → V → X) → x u v
+<_,_> {l} {U} {V} u v = λ x → x u v 
 
 π1 : {l : Level} {U V : Set l} → (U ×  V) → U
 π1 {l} {U} {V}  t = t {U} (λ(x : U) → λ(y : V) → x)
@@ -44,8 +46,8 @@ lemma07 = refl
 hoge : {l : Level} {U V : Set l} → U → V  → (U ×  V)
 hoge u v = < u , v >
 
--- lemma08 :  {l : Level} {U V : Set l } → {u : U } →  (t : U ×  V)  → < π1 t  , π2 t > ≡ t
--- lemma08 t = refl
+--lemma08 :  {l : Level} {X U V : Set l } → {x : X } → {u : U } →  (t : U ×  V)  → < π1 t  , π2 t > x ≡ t x
+--lemma08 t = refl
 
 -- Emp definision is still wrong...
 
@@ -62,8 +64,8 @@ hoge u v = < u , v >
 Emp  : {l : Level } → Set (suc l)
 Emp {l} = {X : Set l} → X 
 
--- ε :  {l : Level} {U : Set l} → Emp {l} → U
--- ε {l} {U} t =  t U
+ε :  {l : Level} {U : Set l} → Emp {l} → U
+ε {l} {U} t =  t {U}
 
 -- lemma103 : {l : Level} {U V : Set l} → (u : U) → (t : Emp {l} ) → (ε {l} {U → V} t) u ≡ ε {l} {V} t
 -- lemma103 u t = refl
@@ -88,10 +90,10 @@ _+_  : {l : Level} → Set l → Set l → Set (suc l)
 _+_ {l} U V = {X : Set l} → ( U → X ) → (V → X) → X
 
 ι1 : {l : Level } {U V : Set l} →  U →  U + V
-ι1 {l} {U} {V} u = λ{X} → λ(x : U → X) → λ(y : V → X ) → x u
+ι1 {l} {U} {V} u = λ x y → x u -- λ{X} → λ(x : U → X) → λ(y : V → X ) → x u
 
 ι2 : {l : Level } {U V : Set l} →  V →  U + V
-ι2 {l} {U} {V} v = λ{X} → λ(x : U → X) → λ(y : V → X ) → y v
+ι2 {l} {U} {V} v = λ x y → y v --λ{X} → λ(x : U → X) → λ(y : V → X ) → y v
 
 δ : {l : Level} { U V R S : Set l } → (R → U) → (S → U) → ( R + S ) → U
 δ {l} {U} {V} {R} {S} u v t = t {U} (λ(x : R) → u x) ( λ(y : S) → v y)
@@ -107,7 +109,7 @@ _××_ : {l : Level} → Set (suc l) → Set l →  Set (suc l)
 _××_ {l} U V =  {X : Set l} → (U → V → X)  → X 
 
 <<_,_>> : {l : Level} {U : Set (suc l) } {V : Set l} → U → V → (U  ××   V) 
-<<_,_>> {l} {U} {V} u v = λ{X} → λ(x : U → V → X) → x u v
+<<_,_>> {l} {U} {V} u v = λ x → x u v -- λ{X} → λ(x : U → V → X) → x u v
 
 
 Int : {l : Level } ( X : Set l ) → Set l
@@ -143,6 +145,9 @@ It u f t = t u f
 ItInt : {l : Level} {X : Set l} → Int X → (X → Int X ) → ( Int X → Int X ) → Int X → Int X
 ItInt {l} {X} u g f t = λ z s → t (u z s) ( λ (w : X) → (f (g w)) z s )
 
+copy_int : {l l' : Level } { X X' : Set l } → Int (X → (X → X) → X) → Int X
+copy_int {_} {_} {X} {X'} x = It Zero S x
+
 R : {l : Level} { U X : Set l}   → U → ( U → Int X →  U ) → Int _ → U 
 R {l} {U} {X} u v t =  π1 ( It {suc l} {U ×  Int X} (< u , Zero >) (λ (x : U × Int X) →  < v (π1 x) (π2 x) , S (π2 x) > ) t ) 
 
@@ -158,6 +163,20 @@ add'' x y = ItInt y (\w z s -> w )S x
 
 lemma22 : {l : Level} {X : Set l} ( x y : Int X ) → add x y  ≡ add'' x y
 lemma22 x y = refl
+
+lemma21 : {l : Level} {X : Set l} ( x y : Int X ) → add x Zero  ≡ x
+lemma21 x y = refl
+
+postulate extensionality : {l : Level } → Relation.Binary.PropositionalEquality.Extensionality l l
+
+--lemma23 : {l : Level} {X : Set l} ( x y : Int X ) → add x (S y)  ≡ S ( add x y )
+--lemma23 x y = extensionality ( λ z → {!!} )
+--   where
+--       lemma24 : {!!}
+--       lemma24 = {!!}
+
+-- lemma23 : {l : Level} {X : Set l} ( x y : Int X ) → add x y  ≡ add y x
+-- lemma23 x y = {!!}
 
 -- bad adder which modifies input type
 mul' : {l : Level } {X : Set l} → Int X → Int (Int X) → Int X
@@ -183,7 +202,7 @@ lemma24 = refl
 
 
 -- lemma14 : {l : Level} {X : Set l} → (x y : Int X) → mul x y  ≡ mul y x
--- lemma14 x y = It {!!} {!!} {!!}
+-- lemma14 x y = {!!} -- It {!!} {!!} {!!}
 
 lemma15 : {l : Level} {X : Set l} (x y : Int X) → mul {l} {X} n2 n3  ≡ mul {l} {X} n3 n2
 lemma15 x y = refl

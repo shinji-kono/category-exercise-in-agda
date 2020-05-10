@@ -13,6 +13,8 @@ postulate extensionality : { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ
 
 ≡cong = Relation.Binary.PropositionalEquality.cong
 
+open import Relation.Binary.PropositionalEquality hiding ( [_] )
+
 lemma1 :  { c₂ : Level  } {a b  : Obj (Sets { c₂})} {f g : Hom Sets a b} →
    Sets [ f ≈ g ] → (x : a ) → f x  ≡ g x
 lemma1 refl  x  = refl

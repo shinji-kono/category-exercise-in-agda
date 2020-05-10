@@ -16,7 +16,7 @@ open import monoidal
 open import applicative 
 open import Category.Cat
 open import Category.Sets
-import Relation.Binary.PropositionalEquality
+open import Relation.Binary.PropositionalEquality  hiding ( [_] )
 
 -----
 --

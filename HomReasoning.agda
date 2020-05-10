@@ -6,7 +6,6 @@ open import Category -- https://github.com/konn/category-agda
 open import Level
 open Functor
 
-
 --        F(f)
 --   F(a) ---→ F(b)
 --    |          |
@@ -55,11 +54,19 @@ module ≈-Reasoning {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) where
 
   car : {a b c : Obj A } {x y : Hom A a b } { f : Hom A c a } →
           x ≈ y  → ( x o f ) ≈ ( y  o f )
-  car {f} eq = ( IsCategory.o-resp-≈ ( Category.isCategory A )) ( refl-hom  ) eq
+  car  eq = ( IsCategory.o-resp-≈ ( Category.isCategory A )) ( refl-hom  ) eq
+
+  car1 : { c₁ c₂ ℓ : Level}  (A : Category c₁ c₂ ℓ) {a b c : Obj A } {x y : Hom A a b } { f : Hom A c a } →
+          A [ x ≈ y ] → A [ A [  x o f ] ≈ A [  y  o f  ] ]
+  car1 A  eq = ( IsCategory.o-resp-≈ ( Category.isCategory A )) ( IsEquivalence.refl (IsCategory.isEquivalence  ( Category.isCategory A ))  ) eq
 
   cdr : {a b c : Obj A } {x y : Hom A a b } { f : Hom A b c } →
           x ≈ y  →  f o x  ≈  f  o y 
-  cdr {f} eq = ( IsCategory.o-resp-≈ ( Category.isCategory A )) eq (refl-hom  ) 
+  cdr eq = ( IsCategory.o-resp-≈ ( Category.isCategory A )) eq (refl-hom  ) 
+
+  cdr1 : { c₁ c₂ ℓ : Level}  (A : Category c₁ c₂ ℓ) {a b c : Obj A } {x y : Hom A a b } { f : Hom A b c } →
+          A [ x ≈ y ] →  A [ A [ f o x ]  ≈  A [ f  o y  ] ]
+  cdr1 A eq = ( IsCategory.o-resp-≈ ( Category.isCategory A )) eq (IsEquivalence.refl (IsCategory.isEquivalence  ( Category.isCategory A ))  ) 
 
   id :  (a  : Obj A ) →  Hom A a a
   id a =  (Id {_} {_} {_} {A} a) 
@@ -82,8 +89,9 @@ module ≈-Reasoning {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) where
   idR1 :  { c₁ c₂ ℓ : Level}  (A : Category c₁ c₂ ℓ) {a b : Obj A } { f : Hom A a b } →  A [ A [ f o Id {_} {_} {_} {A} a ] ≈ f  ]
   idR1 A =  IsCategory.identityR (Category.isCategory A)
 
+  open import Relation.Binary.PropositionalEquality using ( _≡_ )
   ≈←≡ : {a b : Obj A } { x y : Hom A a b } →  (x≈y : x ≡ y ) → x ≈ y
-  ≈←≡  refl = refl-hom
+  ≈←≡  _≡_.refl = refl-hom
 
 -- Ho← to prove this?
 --  ≡←≈ : {a b : Obj A } { x y : Hom A a b } →  (x≈y : x ≈ y ) → x ≡ y
@@ -91,7 +99,7 @@ module ≈-Reasoning {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) where
 
   ≡-cong : { c₁′ c₂′ ℓ′ : Level}  {B : Category c₁′ c₂′ ℓ′} {x y : Obj B } { a b : Hom B x y } {x' y' : Obj A }  →
              (f : Hom B x y → Hom A x' y' ) →  a ≡ b  → f a  ≈  f b
-  ≡-cong f refl =  ≈←≡ refl
+  ≡-cong f _≡_.refl =  ≈←≡ _≡_.refl
 
 --  cong-≈ :  { c₁′ c₂′ ℓ′ : Level}  {B : Category c₁′ c₂′ ℓ′} {x y : Obj B } { a b : Hom B x y } {x' y' : Obj A }  → 
 --             B [ a ≈ b ] → (f : Hom B x y → Hom A x' y' ) →  f a ≈ f b

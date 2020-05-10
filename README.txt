@@ -61,6 +61,13 @@
     applicative.agda              -- Applicative functor is a monoidal functor
     monad→monoidal.agda
 
+-- Cartesian Closed Category
+
+    deductive.agda                -- deduction theorem
+    CCC.agda
+    CCChom.agda
+    CCCGraph.agda                 -- CCC generated from graph
+
 -- no yet finished
 
 -- repositories
