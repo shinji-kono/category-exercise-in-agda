@@ -179,16 +179,9 @@ U_b : {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) → ( ccc : CCC A ) �
 FObj (U_b A ccc b) = λ a → (CCC._<=_ ccc  a b )
 FMap (U_b A ccc b) = λ f → CCC._* ccc ( A [ f o  CCC.ε ccc ] ) 
 isFunctor (U_b A ccc b) = isF where
-   _<=_ = CCC._<=_ ccc
-   _∧_ = CCC._∧_ ccc
-   <_,_> = CCC.<_,_> ccc
-   _* = CCC._* ccc
-   ε = CCC.ε ccc
-   π = CCC.π ccc
-   π' = CCC.π' ccc
-   isc = CCC.isCCC ccc
-   *-cong = IsCCC.*-cong (CCC.isCCC ccc)
-   π-cong = IsCCC.π-cong (CCC.isCCC ccc)
+   open CCC.CCC ccc
+   isc = isCCC 
+   open IsCCC isCCC 
 
    isF : IsFunctor A A ( λ a → (a <=  b)) (  λ f → CCC._* ccc ( A [ f o  ε ] ) )
    IsFunctor.≈-cong isF f≈g = IsCCC.*-cong (CCC.isCCC ccc) ( car f≈g ) where open ≈-Reasoning A
@@ -226,12 +219,9 @@ F_b : {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) → ( ccc : CCC A ) �
 FObj (F_b A ccc b) = λ a → ( CCC._∧_ ccc a  b )
 FMap (F_b A ccc b) = λ f → ( CCC.<_,_>  ccc (A [ f o CCC.π ccc ] ) ( CCC.π'  ccc) )
 isFunctor (F_b A ccc b) = isF where
-   _∧_ = CCC._∧_ ccc
-   <_,_> = CCC.<_,_> ccc
-   π = CCC.π ccc
-   π' = CCC.π' ccc
-   isc = CCC.isCCC ccc
-   π-cong = IsCCC.π-cong (CCC.isCCC ccc)
+   open CCC.CCC ccc
+   isc = isCCC 
+   open IsCCC isCCC 
 
    isF : IsFunctor A A ( λ a → (a ∧  b)) (  λ f → < ( A [ f o π ] ) , π' >  )
    IsFunctor.≈-cong isF f≈g = π-cong ( car f≈g ) refl-hom  where open ≈-Reasoning A
@@ -262,14 +252,9 @@ CCCtoAdj  A ccc b = record {
          ; couniquness = couniquness
      }
   } where
-   _<=_ = CCC._<=_ ccc
-   <_,_> = CCC.<_,_> ccc
-   _* = CCC._* ccc
-   ε = CCC.ε ccc
-   π = CCC.π ccc
-   π' = CCC.π' ccc
-   isc = CCC.isCCC ccc
-   *-cong = IsCCC.*-cong (CCC.isCCC ccc)
+   open CCC.CCC ccc
+   isc = isCCC 
+   open IsCCC isCCC 
    ε' :  (a : Obj A) → Hom A (FObj (F_b A ccc b) (a <= b)) a
    ε' a = ε
    solution :  { b' : Obj A} {a : Obj A} → Hom A (FObj (F_b A ccc b) a) b' → Hom A a (b' <= b)

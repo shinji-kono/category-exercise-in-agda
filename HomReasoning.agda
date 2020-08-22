@@ -170,6 +170,100 @@ module ≈-Reasoning {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) where
   _∎ : { a b : Obj A } ( x : Hom A a b ) → x IsRelatedTo x
   _∎ _ = relTo refl-hom
 
+
+  ---
+  -- to avoid assoc storm, flatten composition according to the template
+  --
+
+  data MP : { a b : Obj A } ( x : Hom A a b ) → Set (c₁ ⊔  c₂  ⊔ ℓ ) where
+            am  : { a b : Obj A } → (x : Hom A a b )   →  MP x
+            _repl_by_  : { a b : Obj A } → (x y : Hom A a b ) → x ≈ y →  MP y
+            _∙_ : { a b c : Obj A } {x : Hom A b c } { y : Hom A a b } →  MP x →  MP  y → MP  ( x o y )
+
+  open import Relation.Binary.HeterogeneousEquality as HE using (_≅_ ) 
+
+  mp-before : { a b : Obj A } { f : Hom A a b } → MP f → Hom A a b
+  mp-before (am x) = x
+  mp-before (x repl y by x₁) = x
+  mp-before (m ∙ m₁) = mp-before m o mp-before m₁
+
+  mp-after : { a b : Obj A } { f : Hom A a b } → MP f → Hom A a b
+  mp-after (am x) = x
+  mp-after (x repl y by x₁) = y
+  mp-after (m ∙ m₁) = mp-before m o mp-before m₁
+
+  mp≈ : { a b : Obj A } { f g : Hom A a b } → (m : MP f ) → mp-before m ≈ mp-after m
+  mp≈ {a} {b} {f} {g} (am x) = refl-hom
+  mp≈ {a} {b} {f} {g} (x repl y by x=y ) = x=y
+  mp≈ {a} {b} {f} {g} (m ∙ m₁) = resp refl-hom refl-hom  
+
+  mpf : {a b c : Obj A } {y : Hom A b c } → (m : MP y ) → Hom A a b → Hom A a c
+  mpf (am x) y = x o y
+  mpf (x repl y by eq ) z = y o z
+  mpf (m ∙ m₁) y = mpf m ( mpf m₁ y )
+
+  mp-flatten : {a b : Obj A } {x : Hom A a b } → (m : MP x ) → Hom A a b
+  mp-flatten  m = mpf m (id _)
+
+  mpl1 : {a b c : Obj A } → Hom A b c → {y : Hom A a b } → MP y → Hom A a c
+  mpl1 x (am y) = x o y
+  mpl1 x (z repl y by eq ) = x o y
+  mpl1 x (y ∙ y1) = mpl1 ( mpl1 x y ) y1
+
+  mpl : {a b c : Obj A } {x : Hom A b c } {z : Hom A a b } → MP x → MP z  → Hom A a c
+  mpl (am x)  m = mpl1 x m
+  mpl (y repl x by eq ) m  = mpl1 x m
+  mpl (m ∙ m1) m2 = mpl m (m1 ∙ m2)
+
+  mp-flattenl : {a b : Obj A } {x : Hom A a b } → (m : MP x ) → Hom A a b
+  mp-flattenl m = mpl m (am (id _))
+
+  _⁻¹ : {a b : Obj A } ( f : Hom A a b ) → Set c₂
+  _⁻¹ {a} {b} f = Hom A b a
+
+  test1 : {a b c : Obj A } ( f : Hom A b c ) ( g : Hom A a b ) → ( _⁻¹ : {a b : Obj A } ( f : Hom A a b ) → Hom A b a )   → Hom A c a
+  test1 f g _⁻¹ = mp-flattenl ((am (g ⁻¹) ∙ am (f ⁻¹) ) ∙ ( (am f ∙ am g) ∙ am ((f o g) ⁻¹ )))
+
+  test2 : {a b c : Obj A } ( f : Hom A b c ) ( g : Hom A a b ) → ( _⁻¹ : {a b : Obj A } ( f : Hom A a b ) → Hom A b a )  → test1 f g  _⁻¹ ≈  ((((g ⁻¹ o f ⁻¹ )o f ) o g ) o  (f o g) ⁻¹  ) o id  _
+  test2 f g  _⁻¹ = refl-hom
+
+  test3 : {a b c : Obj A } ( f : Hom A b c ) ( g : Hom A a b )  →  ( _⁻¹ : {a b : Obj A } ( f : Hom A a b ) → Hom A b a ) → Hom A c a
+  test3 f g _⁻¹ = mp-flatten ((am (g ⁻¹) ∙ am (f ⁻¹) ) ∙ ( (am f ∙ am g) ∙ am ((f o g) ⁻¹ )))
+
+  test4 : {a b c : Obj A } ( f : Hom A b c ) ( g : Hom A a b )  →  ( _⁻¹ : {a b : Obj A } ( f : Hom A a b ) → Hom A b a ) → test3 f g  _⁻¹ ≈ g ⁻¹ o (f ⁻¹ o (f o (g o ((f o g) ⁻¹ o id _))))
+  test4 f g _⁻¹ = refl-hom
+
+  o-flatten : {a b : Obj A } {x : Hom A a b } → (m : MP x ) → x ≈ mp-flatten m
+  o-flatten (am y) = sym-hom (idR )
+  o-flatten (y repl x by eq)  = sym-hom (idR )
+  o-flatten (am x ∙ q) = resp ( o-flatten q ) refl-hom 
+  o-flatten ((y repl x by eq)  ∙ q) = resp ( o-flatten q ) refl-hom 
+  --  d <- c <- b <- a  ( p ∙ q ) ∙ r   ,    ( x o y ) o z
+  o-flatten {a} {d} (_∙_ {a} {b} {d} {xy} {z} (_∙_ {b} {c} {d} {x} {y} p q) r) =
+     lemma9 _ _ _ ( o-flatten {b} {d} {x o y } (p ∙ q )) ( o-flatten {a} {b} {z} r ) where
+           mp-cong : { a b c : Obj A } → {p : Hom A b c} {q r : Hom A a b} → (P : MP p)  → q ≈ r → mpf P q ≈ mpf P r
+           mp-cong (am x) q=r = resp q=r refl-hom 
+           mp-cong (y repl x by eq)  q=r = resp q=r refl-hom 
+           mp-cong (P ∙ P₁) q=r = mp-cong P ( mp-cong P₁ q=r )
+           mp-assoc : {a b c d : Obj A } {p : Hom A c d} {q : Hom A b c} {r : Hom A a b} → (P : MP p)  → mpf P q o r ≈ mpf P (q o r )
+           mp-assoc (am x) = sym-hom assoc
+           mp-assoc (y repl x by eq ) = sym-hom assoc
+           mp-assoc {_} {_} {_} {_} {p} {q} {r} (P ∙ P₁) = begin
+               mpf P (mpf  P₁ q) o r ≈⟨ mp-assoc P ⟩
+               mpf P (mpf P₁ q o r)  ≈⟨ mp-cong P (mp-assoc P₁)  ⟩ mpf P ((mpf  P₁) (q o r)) 
+            ∎ 
+           lemma9 : (x : Hom A c d) (y : Hom A b c) (z : Hom A a b) →  x o y ≈ mpf p (mpf q (id _))
+               → z ≈ mpf r (id _)
+               →  (x o y) o z ≈ mp-flatten ((p ∙ q) ∙ r)
+           lemma9 x y z t s = begin
+               (x o y) o z                    ≈⟨ resp refl-hom t ⟩
+               mpf p (mpf q (id _)) o z ≈⟨ mp-assoc p ⟩
+               mpf p (mpf q (id _) o z)          ≈⟨ mp-cong p (mp-assoc q ) ⟩
+               mpf p (mpf q ((id _) o z))        ≈⟨ mp-cong p (mp-cong q idL) ⟩
+               mpf p (mpf q z)              ≈⟨ mp-cong p (mp-cong q s) ⟩
+               mpf p (mpf q (mpf r (id _)))
+            ∎ 
+
 -- an example
 
 Lemma61 : {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) →

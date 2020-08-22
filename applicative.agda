@@ -30,7 +30,12 @@ open import Relation.Binary.PropositionalEquality  hiding ( [_] )
 
 open Functor
 
-postulate FreeTheorem : {c₁ c₂ ℓ c₁' c₂' ℓ' : Level} (C : Category c₁ c₂ ℓ) (D : Category c₁' c₂' ℓ') {a b c : Obj C } → (F : Functor C D ) →  ( fmap : {a : Obj C } {b : Obj C } → Hom C a b → Hom D (FObj F a) ( FObj F b) ) →  {h f : Hom C a b } →  {g k : Hom C b c } →  C [  C  [ g o h ]  ≈  C [ k o f ]  ] →  D [ D [ FMap F g o fmap h ]  ≈  D [ fmap k o FMap F f ] ]
+postulate
+    FreeTheorem : {c₁ c₂ ℓ c₁' c₂' ℓ' : Level} (C : Category c₁ c₂ ℓ) (D : Category c₁' c₂' ℓ') {a b c : Obj C }
+       → (F : Functor C D )
+       → (fmap : {a : Obj C } {b : Obj C } → Hom C a b → Hom D (FObj F a) ( FObj F b) )
+       → {h f : Hom C a b } →  {g k : Hom C b c }
+       → C [  C  [ g o h ]  ≈  C [ k o f ]  ] →  D [ D [ FMap F g o fmap h ]  ≈  D [ fmap k o FMap F f ] ]
 
 UniquenessOfFunctor :  {c₁ c₂ ℓ c₁' c₂' ℓ' : Level} (C : Category c₁ c₂ ℓ) (D : Category c₁' c₂' ℓ')  (F : Functor C D)
   {a b : Obj C } { f : Hom C a b } → ( fmap : {a : Obj C } {b : Obj C } → Hom C a b → Hom D (FObj F a) ( FObj F b) )
