@@ -20,46 +20,6 @@ module equalizer { c₁ c₂ ℓ : Level} { A : Category c₁ c₂ ℓ } where
 open import HomReasoning
 open import cat-utility
 
--- in cat-utility
--- record Equalizer { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ )  {c a b : Obj A} (e : Hom A c a) (f g : Hom A a b)  : Set  (ℓ ⊔ (c₁ ⊔ c₂)) where
---    field
---       fe=ge : A [ A [ f o e ] ≈ A [ g o e ] ]
---       k : {d : Obj A}  (h : Hom A d a) → A [ A [ f  o  h ] ≈ A [ g  o h ] ] → Hom A d c
---       ek=h : {d : Obj A}  → ∀ {h : Hom A d a} →  {eq : A [ A [ f  o  h ] ≈ A [ g  o h ] ] } →  A [ A [ e  o k {d} h eq ] ≈ h ]
---       uniqueness : {d : Obj A} →  ∀ {h : Hom A d a} →  {eq : A [ A [ f  o  h ] ≈ A [ g  o h ] ] } →  {k' : Hom A d c } →
---               A [ A [ e  o k' ] ≈ h ] → A [ k {d} h eq  ≈ k' ]
---    equalizer : Hom A c a
---    equalizer = e
-
-
---
--- Burroni's Flat Equational Definition of Equalizer
---
-record Burroni { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ )  {c a b : Obj A} (f g : Hom A a b) (e : Hom A c a) : Set  (ℓ ⊔ (c₁ ⊔ c₂)) where
-   field
-      α : {a b c : Obj A } → (f : Hom A a b) → (g : Hom A a b ) →  (e : Hom A c a ) → Hom A c a
-      γ : {a b c d : Obj A } → (f : Hom A a b) → (g : Hom A a b ) → (h : Hom A d a ) →  Hom A d c
-      δ : {a b c : Obj A } → (e : Hom A c a ) → (f : Hom A a b) → Hom A a c
-      cong-α : {a b c :  Obj A } → { e : Hom A c a }
-          → {f g g' : Hom A a b } →  A [ g ≈ g' ] → A [ α f g e ≈ α f g' e ]
-      cong-γ : {a _ c d : Obj A } → {f g : Hom A a b} {h h' : Hom A d a } →  A [ h ≈ h' ]
-         → A [ γ {a} {b} {c} {d} f g h ≈ γ f g h' ]
-      cong-δ : {a b c : Obj A } → {e : Hom A c a} → {f f' : Hom A a b} → A [ f ≈ f' ] →  A [ δ e f ≈ δ e f' ]
-      b1 : A [ A [ f  o α {a} {b} {c}  f g e ] ≈ A [ g  o α {a} {b} {c} f g e ] ]
-      b2 :  {d : Obj A } → {h : Hom A d a } → A [ A [ ( α {a} {b} {c} f g e ) o (γ {a} {b} {c} f g h) ] ≈ A [ h  o α (A [ f o h ]) (A [ g o h ]) (id1 A d) ] ]
-      b3 : {a b d : Obj A} → (f : Hom A a b ) → {h : Hom A d a } → A [ A [ α {a} {b} {d} f f h o δ {a} {b} {d} h f ] ≈ id1 A a ]
-      -- b4 :  {c d : Obj A } {k : Hom A c a} → A [ β f g ( A [ α f g o  k ] ) ≈ k ]
-      b4 :  {d : Obj A } {k : Hom A d c} →
-           A [ A [ γ {a} {b} {c} {d} f g ( A [ α {a} {b} {c} f g e o k ] ) o ( δ {d} {b} {d} (id1 A d) (A [ f o A [ α {a} {b} {c} f g e o  k ] ] )  )] ≈ k ]
-   --  A [ α f g o β f g h ] ≈ h
-   β : { d a b : Obj A}  → (f : Hom A a b) → (g : Hom A a b ) →  (h : Hom A d a ) → Hom A d c
-   β {d} {a} {b} f g h =  A [ γ {a} {b} {c} f g h o δ {d} {b} {d} (id1 A d) (A [ f o h ]) ]
-
-
-open Equalizer
-open IsEqualizer
-open Burroni
-
 --
 -- Some obvious conditions for k  (fe = ge) → ( fh = gh )
 --
@@ -82,6 +42,31 @@ f1=gh {a} {b} {c} {d} {f} {g} {e} {h} eq = let open ≈-Reasoning (A) in
              ≈↑⟨ assoc  ⟩
                   g o ( e  o h )
              ∎
+
+--
+-- Burroni's Flat Equational Definition of Equalizer
+--
+
+record Burroni : Set  (ℓ ⊔ (c₁ ⊔ c₂)) where
+   field
+      equ : {a b : Obj A } → (f g : Hom A a b) →  Obj A
+      α : {a b : Obj A } → (f g : Hom A a b) →  Hom A (equ f g)  a
+      γ : {a b d : Obj A } → (f g : Hom A a b) → (h : Hom A d a ) →  Hom A (equ (A [ f o h ]) (A [ g o h ]))  (equ f g)
+      δ : {a b : Obj A } → (f g : Hom A a b) → A [ f ≈ g ] → Hom A a (equ f g)
+      b1 : {a b : Obj A } → (f g : Hom A a b) → A [ A [ f  o α f g ] ≈ A [ g  o α f g ] ]
+   b1k :  {a b : Obj A } → (f g : Hom A a b) → {d : Obj A } {k : Hom A d (equ f g)} →  A [ A [ f o A [ α f g o k ] ] ≈ A [ g o A [ α f g o k ] ] ]
+   b1k f g {d} {k} = ≈-Reasoning.trans-hom A (≈-Reasoning.assoc A) (≈-Reasoning.trans-hom A (≈-Reasoning.car A (b1 f g)) (≈-Reasoning.sym A (≈-Reasoning.assoc A)))
+   field
+      b2 : {a b d : Obj A} {h : Hom A d a } → (f g : Hom A a b) → A [ A [ ( α f g ) o (γ f g h) ] ≈ A [ h  o α (A [ f o h ]) (A [ g o h ]) ] ]
+      b3 : {a b   : Obj A} (f g : Hom A a b) → (f=g : A [ f ≈ g ]) → A [ A [ α f g o δ f g f=g ] ≈ id1 A a ]
+      b4 : {a b d : Obj A} (f g : Hom A a b) → {k : Hom A d (equ f g)} → 
+           A [ A [ γ f g ( A [ α f g o k ] ) o ( δ (A [ f o A [ α f g o  k ] ] ) (A [ g o A [ α f g o  k ] ] ) (f1=gh (b1 f g) ) )] ≈ k ]
+   β : { d a b : Obj A}  → (f g : Hom A a b) → (h : Hom A d a ) → A [ A [ f o h ]  ≈ A [ g o h ] ] → Hom A d (equ f g)
+   β {d} {a} {b} f g h eq =  A [ γ f g h o δ (A [ f o h ]) (A [ g o h ]) eq ]
+
+open Equalizer
+open IsEqualizer
+open Burroni
 
 -------------------------------
 -- 
@@ -237,6 +222,22 @@ c-iso-lr  {c} {c'} {a} {b} {f} {g} {e} {e'} eqa eqa' =  let open ≈-Reasoning (
 
 -- c-iso-rl is obvious from the symmetry
 
+--
+-- we cannot have equalizer ≈ id. we only have Iso A (equalizer-c equ) a
+--
+equ-ff : {a b : Obj A} → (f : Hom A a b ) → IsEqualizer A (id1 A a) f f
+equ-ff {a} {b} f = record {
+      fe=ge = ≈-Reasoning.refl-hom A ;  
+      k = λ {d} h eq → h ;
+      ek=h = λ {d} {h} {eq} → ≈-Reasoning.idL A ;
+      uniqueness  = λ {d} {h} {eq} {k'} ek=h → begin
+            h
+         ≈↑⟨ ek=h ⟩
+            id1 A a o k'
+         ≈⟨ idL ⟩
+            k'
+         ∎ 
+   } where open  ≈-Reasoning A
 
 
 --------------------------------
@@ -246,176 +247,143 @@ c-iso-lr  {c} {c'} {a} {b} {f} {g} {e} {e'} eqa eqa' =  let open ≈-Reasoning (
 --
 ----
 
-lemma-equ1 : {a b c : Obj A} (f g : Hom A a b)  → (e : Hom A c a ) →
-         ( eqa : {a b c : Obj A} → (f g : Hom A a b)  → {e : Hom A c a }  → IsEqualizer A e f g ) 
-              → Burroni A {c} {a} {b} f g e
-lemma-equ1  {a} {b} {c} f g e eqa  = record {
-      α = λ {a} {b} {c}  f g e  →  equalizer1 (eqa {a} {b} {c} f g {e} ) ; -- Hom A c a
-      γ = λ {a} {b} {c} {d} f g h → k (eqa {a} {b} {c} f g ) {d} ( A [ h  o (equalizer1 ( eqa (A [ f  o  h ] ) (A [ g o h ] ))) ] ) 
-                            (lemma-equ4 {a} {b} {c} {d} f g h ) ;  -- Hom A c d
-      δ =  λ {a} {b} {c} e f → k (eqa {a} {b} {c} f f {e} ) {a} (id1 A a)  (f1=f1 f); -- Hom A a c
-      cong-α = λ {a b c e f g g'} eq → cong-α1 {a} {b} {c} {e} {f} {g} {g'} eq ;
-      cong-γ = λ {a} {_} {c} {d} {f} {g} {h} {h'} eq → cong-γ1 {a}  {c} {d} {f} {g} {h} {h'} eq  ;
-      cong-δ = λ {a b c e f f'} f=f' → cong-δ1 {a} {b} {c} {e} {f} {f'} f=f'  ;
-      b1 = fe=ge (eqa {a} {b} {c} f g {e}) ;
-      b2 = λ {d} {h} → lemma-b2 {d} {h};
-      b3 = lemma-b3 ;
-      b4 = lemma-b4 
- } where
-     --
-     --           e eqa f g        f
-     --         c ---------→ a ------→b
-     --         ^                  g
-     --         |
-     --         |k₁  = e eqa (f o (e (eqa f g))) (g o (e (eqa f g))))
-     --         |
-     --         d
-     --
-     --
-     --               e  o id1 ≈  e  →   k e  ≈ id
-
-     lemma-b3 : {a b d : Obj A} (f : Hom A a b ) { h : Hom A d a } → A [ A [ equalizer1 (eqa f f ) o k (eqa f f) (id1 A a) (f1=f1 f) ] ≈ id1 A a  ]
-     lemma-b3 {a} {b} {d} f {h} = let open ≈-Reasoning (A) in
+lemma-equ1 : ({a b : Obj A} (f g : Hom A a b) → Equalizer A f g ) → Burroni 
+lemma-equ1  eqa  = record {
+      equ = λ f g → equalizer-c (eqa f g)
+    ; α = λ f g   →  equalizer (eqa f g)
+    ; γ = λ f g h → k (isEqualizer (eqa f g )) ( A [ h  o (equalizer ( eqa (A [ f  o  h ] ) (A [ g o h ] ))) ] )
+           (lemma-equ4 f g h) 
+    ; δ =   λ {a} {b} f g f=g → k (isEqualizer (eqa {a} {b} f g )) {a} (id1 A a) (f1=g1 f=g _ )
+    ; b1 = λ f g → fe=ge (isEqualizer (eqa f g ))
+    ; b2 = lemma-b2 
+    ; b3 = λ {a } {b} f g f=g → lemma-b3 f g f=g 
+    ; b4 = lemma-b4
+ }  where
+     ieqa : {a b : Obj A} (f g : Hom A a b) → IsEqualizer A ( equalizer (eqa f g )) f g 
+     ieqa f g = isEqualizer (eqa f g) 
+     lemma-b3 : {a b : Obj A} (f g : Hom A a b ) 
+        → (f=g : A [ f ≈ g ] ) → A [ A [ equalizer (eqa f g ) o k (isEqualizer (eqa f g)) (id1 A a) (f1=g1 f=g _ ) ] ≈ id1 A a  ]
+     lemma-b3 {a} f g f=g = let open ≈-Reasoning (A) in
              begin
-                  equalizer1 (eqa f f) o k (eqa f f) (id a) (f1=f1 f)
-             ≈⟨ ek=h (eqa f f )  ⟩
+                  equalizer (eqa f g) o k (isEqualizer (eqa f g)) (id a) (f1=g1 f=g _ )
+             ≈⟨ ek=h (isEqualizer (eqa f g ))  ⟩
                   id a
              ∎
-     lemma-equ4 :  {a b c d : Obj A}  → (f : Hom A a b) → (g : Hom A a b ) → (h : Hom A d a ) →
-                      A [ A [ f o A [ h o equalizer1 (eqa (A [ f o h ]) (A [ g o h ])) ] ] ≈ A [ g o A [ h o equalizer1 (eqa (A [ f o h ]) (A [ g o h ])) ] ] ]
-     lemma-equ4 {a} {b} {c} {d} f g h  = let open ≈-Reasoning (A) in
+     lemma-equ4 :  {a b d : Obj A}  → (f : Hom A a b) → (g : Hom A a b ) → (h : Hom A d a ) →
+                      A [ A [ f o A [ h o equalizer (eqa (A [ f o h ]) (A [ g o h ])) ] ] ≈ A [ g o A [ h o equalizer (eqa (A [ f o h ]) (A [ g o h ])) ] ] ]
+     lemma-equ4 {a} {b} {d} f g h  = let open ≈-Reasoning (A) in
              begin
-                   f o ( h o equalizer1 (eqa (f o h) ( g o h )))
+                   f o ( h o equalizer (eqa (f o h) ( g o h )))
              ≈⟨ assoc ⟩
-                   (f o h) o equalizer1 (eqa (f o h) ( g o h ))
-             ≈⟨ fe=ge (eqa (A [ f o h ]) (A [ g o h ])) ⟩
-                   (g o h) o equalizer1 (eqa (f o h) ( g o h ))
+                   (f o h) o equalizer (eqa (f o h) ( g o h ))
+             ≈⟨ fe=ge (isEqualizer (eqa (A [ f o h ]) (A [ g o h ]))) ⟩
+                   (g o h) o equalizer (eqa (f o h) ( g o h ))
              ≈↑⟨ assoc ⟩
-                   g o ( h o equalizer1 (eqa (f o h) ( g o h )))
+                   g o ( h o equalizer (eqa (f o h) ( g o h )))
              ∎
-     cong-α1 : {a b c :  Obj A } → { e : Hom A c a }
-          → {f g g' : Hom A a b } →  A [ g ≈ g' ] → A [ equalizer1 (eqa {a} {b} {c} f g {e} )≈ equalizer1 (eqa {a} {b} {c} f g' {e} ) ] 
-     cong-α1 {a} {b} {c} {e} {f} {g} {g'} eq = let open ≈-Reasoning (A) in refl-hom 
-     cong-γ1 :  {a c d : Obj A } → {f g : Hom A a b} {h h' : Hom A d a } →  A [ h ≈ h' ] →  { e : Hom A c a} →
-                     A [  k (eqa f g {e} ) {d} ( A [ h  o (equalizer1 ( eqa (A [ f  o  h  ] ) (A [ g o h  ] ) {id1 A d} )) ] ) (lemma-equ4 {a} {b} {c} {d} f g h ) 
-                       ≈  k (eqa f g {e} ) {d} ( A [ h' o (equalizer1 ( eqa (A [ f  o  h' ] ) (A [ g o h' ] ) {id1 A d} )) ] ) (lemma-equ4 {a} {b} {c} {d} f g h' )  ]
-     cong-γ1 {a} {c} {d} {f} {g} {h} {h'} h=h' {e} = let open ≈-Reasoning (A) in begin
-                 k (eqa f g ) {d} ( A [ h  o (equalizer1 ( eqa (A [ f  o  h  ] ) (A [ g o h  ] ))) ] ) (lemma-equ4 {a} {b} {c} {d} f g h )
-             ≈⟨ uniqueness (eqa f g) ( begin
-                 e o k (eqa f g ) {d} ( A [ h' o (equalizer1 ( eqa (A [ f  o  h' ] ) (A [ g o h' ] ))) ] ) (lemma-equ4 {a} {b} {c} {d} f g h' )
-             ≈⟨ ek=h (eqa f g ) ⟩
-                 h' o (equalizer1 ( eqa (A [ f  o  h' ] ) (A [ g o h' ] )))
-             ≈↑⟨ car h=h'  ⟩
-                 h o (equalizer1 ( eqa (A [ f  o  h' ] ) (A [ g o h' ] )))
-             ∎ )⟩    
-                 k (eqa f g ) {d} ( A [ h' o (equalizer1 ( eqa (A [ f  o  h' ] ) (A [ g o h' ] ))) ] ) (lemma-equ4 {a} {b} {c} {d} f g h' )
-             ∎
-     cong-δ1 : {a b c : Obj A} {e : Hom A c a } {f f' : Hom A a b} → A [ f ≈ f' ] →  A [ k (eqa {a} {b} {c} f f {e} ) (id1 A a)  (f1=f1 f)  ≈ 
-                                                                            k (eqa {a} {b} {c} f' f' {e} ) (id1 A a)  (f1=f1 f') ]
-     cong-δ1 {a} {b} {c} {e} {f} {f'} f=f' =  let open ≈-Reasoning (A) in
+     lemma-b2 : {a b d : Obj A} {h : Hom A d a} → (f g : Hom A a b) → A [
+                      A [ equalizer (eqa f g) o k (isEqualizer (eqa f g)) (A [ h o equalizer (eqa (A [ f o h ]) (A [ g o h ])) ]) (lemma-equ4 {a} {b} f g h) ]
+                    ≈ A [ h o equalizer (eqa (A [ f o h ]) (A [ g o h ])) ] ]
+     lemma-b2 {a} {b} {d} {h} f g = let open ≈-Reasoning (A) in
              begin
-                 k (eqa {a} {b} {c} f  f  {e} ) (id a)  (f1=f1 f) 
-             ≈⟨  uniqueness (eqa f f) ( begin
-                 e o k (eqa {a} {b} {c} f' f' {e} ) (id a)  (f1=f1 f') 
-             ≈⟨ ek=h (eqa {a} {b} {c} f' f' {e} ) ⟩
-                 id a
-             ∎ )⟩
-                 k (eqa {a} {b} {c} f' f' {e} ) (id a)  (f1=f1 f') 
+                    equalizer (eqa f g) o k (isEqualizer (eqa f g)) (h o equalizer (eqa (f o h) (g o h))) (lemma-equ4 {a} {b} f g h)
+             ≈⟨ ek=h (isEqualizer (eqa f g))  ⟩
+                    h o equalizer (eqa (f o h ) ( g o h ))
              ∎
-
-     lemma-b2 :  {d : Obj A} {h : Hom A d a} → A [
-                      A [ equalizer1 (eqa f g) o k (eqa f g) (A [ h o equalizer1 (eqa (A [ f o h ]) (A [ g o h ])) ]) (lemma-equ4 {a} {b} {c} f g h) ]
-                    ≈ A [ h o equalizer1 (eqa (A [ f o h ]) (A [ g o h ])) ] ]
-     lemma-b2 {d} {h} = let open ≈-Reasoning (A) in
+     lemma-b4 : {a b d : Obj A} (f g : Hom A a b) → {j : Hom A d (equalizer-c (eqa f g))} → A [
+              A [ k (ieqa f g) (A [ A [ equalizer (eqa f g) o j ] o 
+                              equalizer (eqa (A [ f o A [ equalizer (eqa f g ) o j ] ]) (A [ g o A [ equalizer (eqa f g  ) o j ] ])) ])
+                     (lemma-equ4 {a} {b} {d} f g (A [ equalizer (eqa f g) o j ])) 
+                 o    k (ieqa (A [ f o A [ equalizer (eqa f g) o j ] ]) (A [ g o A [ equalizer (eqa f g) o j ] ])) (id1 A _)
+                     (f1=g1 (f1=gh (fe=ge (ieqa f g))) (id1 A _))] ≈ j ]
+     --   h = equalizer (eqa f g) o j 
+     lemma-b4 {a} {b} {d} f g  {j} = 
              begin
-                    equalizer1 (eqa f g) o k (eqa f g) (h o equalizer1 (eqa (f o h) (g o h))) (lemma-equ4 {a} {b} {c} f g h)
-             ≈⟨ ek=h (eqa f g)  ⟩
-                    h o equalizer1 (eqa (f o h ) ( g o h ))
-             ∎
-
-     lemma-b4 : {d : Obj A} {j : Hom A d c} → A [
-              A [ k (eqa f g) (A [ A [ equalizer1 (eqa f g) o j ] o 
-                              equalizer1 (eqa (A [ f o A [ equalizer1 (eqa f g {e}) o j ] ]) (A [ g o A [ equalizer1 (eqa f g {e} ) o j ] ])) ])
-                     (lemma-equ4 {a} {b} {c} f g (A [ equalizer1 (eqa f g) o j ])) 
-                 o k (eqa (A [ f o A [ equalizer1 (eqa f g) o j ] ]) (A [ f o A [ equalizer1 (eqa f g) o j ] ])) 
-                     (id1 A d) (f1=f1 (A [ f o A [ equalizer1 (eqa f g) o j ] ])) ]
-              ≈ j ]
-     lemma-b4 {d} {j} = let open ≈-Reasoning (A) in
-             begin
-                ( k (eqa f g) (( ( equalizer1 (eqa f g) o j ) o equalizer1 (eqa (( f o ( equalizer1 (eqa f g {e}) o j ) )) (( g o ( equalizer1 (eqa f g {e}) o j ) ))) ))
-                            (lemma-equ4 {a} {b} {c} f g (( equalizer1 (eqa f g) o j ))) o
-                   k (eqa (( f o ( equalizer1 (eqa f g) o j ) )) (( f o ( equalizer1 (eqa f g) o j ) ))) (id1 A d) (f1=f1 (( f o ( equalizer1 (eqa f g) o j ) ))) )
-             ≈⟨ car ((uniqueness (eqa f g) ( begin
-                         equalizer1 (eqa f g) o j 
-                ≈↑⟨ idR  ⟩
-                         (equalizer1 (eqa f g) o j )  o id d
-                ≈⟨⟩         -- here we decide e (fej) (gej)' is id d
-                        ((equalizer1 (eqa f g) o j) o equalizer1 (eqa (f o equalizer1 (eqa f g {e}) o j) (g o equalizer1 (eqa f g {e}) o j)))
-             ∎ ))) ⟩
-                    j o k (eqa (( f o ( equalizer1 (eqa f g) o j ) )) (( f o ( equalizer1 (eqa f g) o j ) ))) (id1 A d) (f1=f1 (( f o ( equalizer1 (eqa f g) o j ) ))) 
-             ≈⟨ cdr ((uniqueness (eqa (( f o ( equalizer1 (eqa f g) o j ) )) (( f o ( equalizer1 (eqa f g) o j ) ))) ( begin
-                     equalizer1 (eqa (f o equalizer1 (eqa f g {e} ) o j) (f o equalizer1 (eqa f g {e}) o j))  o id d
+                 k (ieqa f g) ( h o equalizer (eqa ( f o h ) ( g o h )) ) (lemma-equ4 {a} {b} {d} f g h)
+                 o    k (ieqa (f o h) ( g o h)) (id1 A _) (f1=g1 (f1=gh (fe=ge (ieqa f g))) (id1 A _))
+             ≈↑⟨ uniqueness (ieqa f g) ( begin
+                  equalizer (eqa f g) o ( k (ieqa f g) (( h o equalizer (eqa ( f o h ) ( g o h )) )) (lemma-equ4 {a} {b} {d} f g h)
+                   o    k (ieqa (f o h) ( g o h)) (id1 A _) (f1=g1 (f1=gh (fe=ge (ieqa f g))) (id1 A _)) )
+                ≈⟨ assoc ⟩
+                 (equalizer (eqa f g) o ( k (ieqa f g) (( h o equalizer (eqa ( f o h ) ( g o h )) )) (lemma-equ4 {a} {b} {d} f g h)))
+                   o    k (ieqa (f o h) ( g o h)) (id1 A _) (f1=g1 (f1=gh (fe=ge (ieqa f g))) (id1 A _))
+                ≈⟨ car (ek=h (ieqa f g) ) ⟩
+                 (( h o equalizer (eqa ( f o h ) ( g o h )) ))
+                   o    k (ieqa (f o h) ( g o h)) (id1 A _) (f1=g1 (f1=gh (fe=ge (ieqa f g))) (id1 A _))
+                ≈↑⟨ assoc ⟩
+                 h o (equalizer (eqa ( f o h ) ( g o h )) o    k (ieqa (f o h) ( g o h)) (id1 A _) (f1=g1 (f1=gh (fe=ge (ieqa f g))) (id1 A _)))
+                ≈⟨ cdr (ek=h  (ieqa (f o h) ( g o h))) ⟩
+                 h o id1 A _
                 ≈⟨ idR ⟩
-                     equalizer1 (eqa (f o equalizer1 (eqa f g {e}) o j) (f o equalizer1 (eqa f g {e}) o j))  
-                ≈⟨⟩         -- here we decide e (fej) (fej)' is id d
-                    id d
-             ∎ ))) ⟩
-                    j o id d
-                ≈⟨ idR ⟩
-                    j
-             ∎ 
+                 h
+                ∎ 
+             ) ⟩
+                 k (ieqa f g) h (f1=gh (fe=ge (ieqa f g)) )
+             ≈⟨ uniqueness (ieqa f g) refl-hom ⟩
+                 j
+             ∎  where
+               open ≈-Reasoning A
+               h : Hom A d a
+               h = equalizer (eqa f g) o j
+
 
 --------------------------------
 --
 -- Bourroni equations gives an Equalizer
 --
 
-lemma-equ2 : {a b c : Obj A} (f g : Hom A a b)  (e : Hom A c a )
-         → ( bur : Burroni A {c} {a} {b} f g e ) → IsEqualizer A {c} {a} {b} (α bur f g e) f g 
-lemma-equ2 {a} {b} {c} f g e bur = record {
+lemma-equ2 : {a b : Obj A} (f g : Hom A a b) → ( bur : Burroni ) → → IsEqualizer A {equ bur f g} {a} {b} (α bur f g ) f g 
+lemma-equ2 {a} {b} f g bur = record {
       fe=ge = fe=ge1 ;  
       k = k1 ;
       ek=h = λ {d} {h} {eq} → ek=h1 {d} {h} {eq} ;
       uniqueness  = λ {d} {h} {eq} {k'} ek=h → uniqueness1  {d} {h} {eq} {k'} ek=h
    } where
+      c : Obj A
+      c = equ bur f g
+      e : Hom A c a
+      e = α bur f g
       k1 :  {d : Obj A} (h : Hom A d a) → A [ A [ f o h ] ≈ A [ g o h ] ] → Hom A d c
-      k1 {d} h fh=gh = β bur {d} {a} {b} f g h
-      fe=ge1 : A [ A [ f o (α bur f g e) ] ≈ A [ g o (α bur f g e) ] ]
-      fe=ge1 = b1 bur
-      ek=h1 : {d : Obj A}  → ∀ {h : Hom A d a} →  {eq : A [ A [ f  o  h ] ≈ A [ g  o h ] ] } →  A [ A [ (α bur f g e)  o k1 {d} h eq ] ≈ h ]
+      k1 {d} h fh=gh = β bur {d} {a} {b} f g h fh=gh
+      fe=ge1 : A [ A [ f o (α bur f g ) ] ≈ A [ g o (α bur f g ) ] ]
+      fe=ge1 = b1 bur f g
+      ek=h1 : {d : Obj A}  → ∀ {h : Hom A d a} →  {eq : A [ A [ f  o  h ] ≈ A [ g  o h ] ] } →  A [ A [ (α bur f g )  o k1 {d} h eq ] ≈ h ]
       ek=h1 {d} {h} {eq} =  let open ≈-Reasoning (A) in
              begin
-                 α bur f g e o k1 h eq 
-             ≈⟨⟩
-                 α bur f g e o ( γ bur {a} {b} {c} f g h o δ bur {d} {b} {d} (id d) (f o h) )
+                 α bur f g  o k1 h eq 
              ≈⟨ assoc ⟩
-                 ( α bur f g e o  γ bur {a} {b} {c} f g h ) o δ bur {d} {b} {d} (id d) (f o h) 
-             ≈⟨ car (b2 bur) ⟩
-                  ( h o ( α bur ( f o h ) ( g o h ) (id d))) o δ bur {d} {b} {d} (id d) (f o h) 
+                 (α bur f g o γ bur f g h) o δ bur (f o h) (g o h) eq
+             ≈⟨ car (b2 bur f g) ⟩
+                 ( h o α bur ( f o h ) ( g o h ) ) o δ bur (f o h) (g o h) eq
              ≈↑⟨ assoc ⟩
-                   h o ((( α bur ( f o h ) ( g o h ) (id d) )) o δ bur {d} {b} {d} (id d) (f o h)  )
-             ≈↑⟨ cdr ( car ( cong-α bur eq)) ⟩
-                   h o ((( α bur ( f o h ) ( f o h ) (id d)))o δ bur {d} {b} {d} (id d) (f o h)  )
-             ≈⟨ cdr (b3 bur {d} {b} {d} (f  o h) {id d} ) ⟩
+                   h o α bur (f o h) (g o h) o δ bur (f o h) (g o h) eq
+             ≈⟨ cdr ( b3 bur (f o h) (g o h) eq ) ⟩
                    h o id d
              ≈⟨ idR ⟩
                  h 
              ∎
-      uniqueness1 : {d : Obj A} →  ∀ {h : Hom A d a} →  {eq : A [ A [ f  o  h ] ≈ A [ g  o h ] ] } →  {k' : Hom A d c } →
-              A [ A [ (α bur f g e) o k' ] ≈ h ] → A [ k1 {d} h eq  ≈ k' ]
-      uniqueness1 {d} {h} {eq} {k'} ek=h =   let open ≈-Reasoning (A) in
-             begin
-                k1 {d} h eq
-             ≈⟨⟩
-                γ bur {a} {b} {c} f g h o δ bur {d} {b} {d} (id d) (f o h)
-             ≈↑⟨ car (cong-γ bur {a} {b} {c} {d} ek=h ) ⟩
-                γ bur f g (A [ α bur f g e o k' ]) o δ bur {d} {b} {d} (id d) (f o h)
-             ≈↑⟨ cdr (cong-δ bur (resp ek=h refl-hom )) ⟩
-                γ bur f g (A [ α bur f g e o k' ]) o δ bur {d} {b} {d} (id d) ( f o ( α bur f g e o k') ) 
-             ≈⟨ b4 bur ⟩
-                 k'
-             ∎
 
+--         e             f
+--    c  -------→ a ---------→ b
+--    ^        .     ---------→
+--    |      .            g
+--    |k   .
+--    |  . h
+--    d
+
+      postulate 
+              uniqueness1 : {d : Obj A} →  ∀ {h : Hom A d a} →  {eq : A [ A [ f  o  h ] ≈ A [ g  o h ] ] } →  {k' : Hom A d c } →
+                      A [ A [ (α bur f g ) o k' ] ≈ h ] → A [ k1 {d} h eq  ≈ k' ]
+--       uniqueness1 {d} {h} {eq} {k'} ek=h =  
+--              begin
+--                 k1 {d} h eq
+--              ≈⟨⟩
+--                 γ bur f g h o δ bur (f o h) (g o h) eq
+--              ≈⟨ ? ⟩  -- without locality, we cannot simply replace h with (α bur f g o k' 
+--                 γ bur f g (α bur f g o k' ) o (δ bur ( f o ( α bur f g o k' )) ( g o ( α bur f g o k' )) (f1=gh (b1 bur f g )))
+--              ≈⟨ b4 bur f g ⟩
+--                 k'
+--              ∎ 
 
 -- end
 

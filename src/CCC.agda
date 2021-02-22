@@ -1,6 +1,7 @@
 open import Level
-open import Category 
+open import Category
 module CCC where
+
 
 open import HomReasoning
 open import cat-utility
@@ -120,6 +121,53 @@ record CCC {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) :  Set ( c₁  �
          _* : {a b c : Obj A } → Hom A (a ∧ b) c → Hom A a (c <= b) 
          ε : {a b : Obj A } → Hom A ((a <= b ) ∧ b) a 
          isCCC : IsCCC A １ ○ _∧_ <_,_> π π' _<=_ _* ε 
+
+----
+--
+-- Sub Object Classifier as Topos
+-- pull back on
+--                   ○ b
+--       b ----------------------→ 1
+--       |                         |
+--       |                         |
+--     m |                         | ⊤
+--       |                         |
+--       ↓                         ↓
+--       a ----------------------→ Ω
+--                    h
+--
+open Equalizer
+
+record Mono  {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) {b a : Obj A} (mono : Hom A b a) : Set  (c₁ ⊔ c₂ ⊔ ℓ)  where
+     field
+         isMono : {c : Obj A} ( f g : Hom A c b ) → A [ A [ mono o f ]  ≈ A [ mono o g ] ] → A [ f ≈ g ]
+
+open Mono
+
+open import equalizer
+
+record IsTopos {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) ( １ : Obj A) (○ : (a : Obj A ) → Hom A a １)
+        ( Ω : Obj A )
+        ( ⊤ : Hom A １ Ω )
+        (Ker : {a : Obj A} → ( h : Hom A a Ω ) → Equalizer A h (A [ ⊤ o (○ a) ]))
+        (char : {a b : Obj A} → (m :  Hom A b a) → Mono A m  → Hom A a Ω) :  Set ( suc c₁  ⊔  suc c₂ ⊔ suc ℓ ) where
+     field
+         char-ker  : {a b : Obj A } {h : Hom A a Ω} 
+             → A [ char (equalizer (Ker h)) record { isMono = monic (Ker h) } ≈ h ]
+         ker-char : {a b : Obj A} →  (m :  Hom A b a) → (mono : Mono A m)  → Iso A b (  equalizer-c (Ker ( char m mono ))) 
+
+record Topos {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ)  ( １ : Obj A) (○ : (a : Obj A ) → Hom A a １) :  Set ( suc c₁  ⊔  suc c₂ ⊔ suc ℓ ) where
+     field
+         Ω : Obj A
+         ⊤ : Hom A １ Ω
+         Ker : {a : Obj A} → ( h : Hom A a Ω ) → Equalizer A h (A [ ⊤ o (○ a) ])
+         char : {a b : Obj A} → (m : Hom A b a ) → Mono A m → Hom A a Ω
+         isTopos : IsTopos A １ ○ Ω ⊤ Ker char
+     ker : {a : Obj A} → ( h : Hom A a Ω )  → Hom A ( equalizer-c (Ker h) ) a
+     ker h = equalizer (Ker h)
+
+
+
 
 
 

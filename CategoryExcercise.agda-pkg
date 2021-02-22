@@ -11,7 +11,7 @@ tested-with:       2.6.2-102d9c8
 description:       CategoryExcercise is an Agda library ...
 depend:
     - standard-library
-    - Category
+    - category-agda
 include:
     - src
 # End 

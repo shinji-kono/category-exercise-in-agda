@@ -1,3 +1,5 @@
+{-# OPTIONS --allow-unsolved-metas #-} 
+
 ----
 --
 --  B^A
@@ -12,7 +14,9 @@ module CatExponetial where
 
 open import HomReasoning
 open import cat-utility
-
+-- open import Relation.Binary  hiding (_⇔_)
+-- open import Relation.Binary.Core hiding (_⇔_)
+-- open import  Relation.Binary.PropositionalEquality hiding ( [_] )
 
 -- Object is a Functor : A → B 
 -- Hom is a natural transformation
@@ -70,20 +74,16 @@ infix  4 _==_
 open import Relation.Binary.Core  
 isB^A :  {c₁ c₂ ℓ c₁' c₂' ℓ' : Level} (A : Category c₁ c₂ ℓ) (B : Category c₁' c₂' ℓ' ) → IsCategory (CObj A B) (CHom A B) _==_ _+_ (Cid A B)
 isB^A  {c₁} {c₂} {ℓ} {c₁'} {c₂'} {ℓ'} A B =
-  record  { isEquivalence =  record {refl = IsEquivalence.refl (IsCategory.isEquivalence ( Category.isCategory B )); 
-                  sym = λ {i j} → sym1 {_} {_} {i} {j} ;
-                  trans = λ {i j k} → trans1 {_} {_} {i} {j} {k} }  
+  record  { isEquivalence =  record {refl = ≈-Reasoning.refl-hom B  
+              ;   sym = λ {i j} → sym1 {_} {_} {i} {j} 
+              ;   trans = λ {i j k} → trans1 {_} {_} {i} {j} {k} }  
         ; identityL = IsCategory.identityL ( Category.isCategory B )
         ; identityR = IsCategory.identityR ( Category.isCategory B )
         ; o-resp-≈ =  λ{a b c f g h i } → o-resp-≈1      {a} {b} {c} {f} {g} {h} {i}
         ; associative = IsCategory.associative ( Category.isCategory B )
         } where
             sym1 : {a b : CObj A B } {i j : CHom A B a b } → i == j → j == i
-            sym1 {a} {b} {i} {j} eq {x} = let open ≈-Reasoning B in begin
-                 TMap j x
-             ≈⟨ sym eq ⟩
-                 TMap i x
-             ∎ 
+            sym1 {a} {b} {i} {j} eq {x} = ≈-Reasoning.sym B eq 
             trans1 : {a b : CObj A B } {i j k : CHom A B a b} → i == j → j == k → i == k
             trans1 {a} {b} {i} {j} {k} i=j j=k {x} =  let open ≈-Reasoning B in begin
                  TMap i x
