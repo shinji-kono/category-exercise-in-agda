@@ -82,10 +82,10 @@ open Burroni
 --        ||
 --         d
 
-monoic : { c a b d : Obj A } {f g : Hom A a b } → ( eqa : Equalizer A f g) 
+monic : { a b d : Obj A } {f g : Hom A a b } → ( eqa : Equalizer A f g) 
       →  { i j : Hom A d (equalizer-c eqa) }
       →  A [ A [ equalizer eqa o i ]  ≈  A [ equalizer eqa o j ] ] →  A [ i  ≈ j  ]
-monoic {c} {a} {b} {d} {f} {g} eqa {i} {j} ei=ej = let open ≈-Reasoning (A) in begin
+monic {a} {b} {d} {f} {g} eqa {i} {j} ei=ej = let open ≈-Reasoning (A) in begin
                  i
               ≈↑⟨ uniqueness (isEqualizer eqa) ( begin
                    equalizer eqa  o i
@@ -332,7 +332,7 @@ lemma-equ1  eqa  = record {
 -- Bourroni equations gives an Equalizer
 --
 
-lemma-equ2 : {a b : Obj A} (f g : Hom A a b) → ( bur : Burroni ) → → IsEqualizer A {equ bur f g} {a} {b} (α bur f g ) f g 
+lemma-equ2 : {a b : Obj A} (f g : Hom A a b) → ( bur : Burroni ) → IsEqualizer A {equ bur f g} {a} {b} (α bur f g ) f g 
 lemma-equ2 {a} {b} f g bur = record {
       fe=ge = fe=ge1 ;  
       k = k1 ;

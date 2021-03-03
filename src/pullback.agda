@@ -116,12 +116,12 @@ pullback-from  {a} {b} {c} f g eqa prod0 =  record {
              ≈⟨ π2fxg=g prod ⟩
                      π2'
              ∎
-      uniqueness1 :  {d₁ : Obj A} (p' : Hom A d₁ d) {π1' : Hom A d₁ a} {π2' : Hom A d₁ b} 
-         {eq : A [ A [ f o π1' ] ≈ A [ g o π2' ] ]} →
-        {eq1 : A [ A [ A [ π1 o equalizer (eqa (A [ f o π1 ]) (A [ g o π2 ])) ] o p' ] ≈ π1' ]} →
-        {eq2 : A [ A [ A [ π2 o equalizer (eqa (A [ f o π1 ]) (A [ g o π2 ])) ] o p' ] ≈ π2' ]} →
+      uniqueness1 :  {d₁ : Obj A} (p' : Hom A d₁ d) (π1' : Hom A d₁ a) (π2' : Hom A d₁ b)
+         (eq : A [ A [ f o π1' ] ≈ A [ g o π2' ] ]) →
+        (eq1 : A [ A [ A [ π1 o equalizer (eqa (A [ f o π1 ]) (A [ g o π2 ])) ] o p' ] ≈ π1' ]) →
+        (eq2 : A [ A [ A [ π2 o equalizer (eqa (A [ f o π1 ]) (A [ g o π2 ])) ] o p' ] ≈ π2' ]) →
         A [ p1 eq ≈ p' ]
-      uniqueness1 {d'} p' {π1'} {π2'} {eq} {eq1} {eq2} = let open ≈-Reasoning (A) in
+      uniqueness1 {d'} p' π1' π2' eq eq1 eq2 = let open ≈-Reasoning (A) in
              begin
                  p1 eq
              ≈⟨⟩

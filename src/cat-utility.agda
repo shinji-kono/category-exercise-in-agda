@@ -22,6 +22,36 @@ module cat-utility where
                  iso→  :  C [ C [ ≅← o ≅→  ] ≈  id1 C x ]
                  iso←  :  C [ C [ ≅→ o ≅←  ] ≈  id1 C y ]
 
+        record IsoR  {c₁ c₂ ℓ : Level} (C : Category c₁ c₂ ℓ)
+                 {a b c : Obj C }
+                 ( f :  Hom C a b )
+                 ( g :  Hom C a c )
+                : Set ( suc  (c₁ ⊔ c₂ ⊔ ℓ ⊔ c₁)) where
+           field
+                 iso-R   : Iso C b c
+                 iso≈R  :  C [ C [ Iso.≅→ iso-R  o f  ] ≈  g ]
+           R≈iso  :  C [ C [ Iso.≅← iso-R o g ] ≈  f ]
+           R≈iso  = begin  Iso.≅← iso-R o g ≈↑⟨ cdr iso≈R ⟩
+                Iso.≅← iso-R  o (Iso.≅→ iso-R o f) ≈⟨ assoc ⟩
+                (Iso.≅← iso-R  o Iso.≅→ iso-R ) o f ≈⟨ car (Iso.iso→ iso-R ) ⟩
+                id1 C _  o f  ≈⟨ idL ⟩
+                f ∎  where open ≈-Reasoning C
+
+        record IsoL  {c₁ c₂ ℓ : Level} (C : Category c₁ c₂ ℓ)
+                 {a b c : Obj C }
+                 ( f :  Hom C b a )
+                 ( g :  Hom C c a )
+                : Set ( suc  (c₁ ⊔ c₂ ⊔ ℓ ⊔ c₁)) where
+           field
+                 iso-L   : Iso C b c
+                 iso≈L  :  C [ C [ f o Iso.≅← iso-L ] ≈  g ]
+           L≈iso  :  C [ C [ g o Iso.≅→ iso-L ] ≈  f ]
+           L≈iso  = begin  g o Iso.≅→ iso-L ≈↑⟨ car iso≈L ⟩
+                (f o Iso.≅← iso-L ) o Iso.≅→ iso-L ≈↑⟨ assoc ⟩
+                f  o (Iso.≅← iso-L  o Iso.≅→ iso-L ) ≈⟨ cdr (Iso.iso→ iso-L ) ⟩
+                f  o id1 C _ ≈⟨ idR ⟩
+                f ∎  where open ≈-Reasoning C
+
 
         record IsUniversalMapping  {c₁ c₂ ℓ c₁' c₂' ℓ' : Level} (A : Category c₁ c₂ ℓ) (B : Category c₁' c₂' ℓ')
                          ( U : Functor B A )
@@ -116,6 +146,27 @@ module cat-utility where
           join : { a b : Obj A } → { c : Obj A } →
                               ( Hom A b ( FObj T c )) → (  Hom A a ( FObj T b)) → Hom A a ( FObj T c )
           join {_} {_} {c} g f = A [ TMap μ c  o A [ FMap T g o f ] ]
+
+        record IsCoMonad {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ)
+                         ( S : Functor A A )
+                         ( ε : NTrans A A S identityFunctor )
+                         ( δ : NTrans A A S (S ○ S) )
+                         : Set (suc (c₁ ⊔ c₂ ⊔ ℓ )) where
+           field
+              assoc  : {a : Obj A} → A [ A [ TMap δ (FObj S a)  o TMap δ a ] ≈  A [ FMap S (TMap δ a) o TMap δ a ] ]
+              unity1 : {a : Obj A} → A [ A [ TMap ε ( FObj S a ) o TMap δ a ] ≈ Id {_} {_} {_} {A} (FObj S a) ]
+              unity2 : {a : Obj A} → A [ A [ (FMap S (TMap ε a )) o TMap δ a ] ≈ Id {_} {_} {_} {A} (FObj S a) ]
+
+        record coMonad {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (S : Functor A A)
+               : Set (suc (c₁ ⊔ c₂ ⊔ ℓ )) where
+          field
+            ε : NTrans A A S identityFunctor 
+            δ : NTrans A A S (S ○ S) 
+            isCoMonad : IsCoMonad A S ε δ
+             -- g ○ f = g S(f) δ(a)
+          coJoin : { a b : Obj A } → { c : Obj A } →
+                              ( Hom A  (FObj S b ) c ) → (  Hom A ( FObj S a) b ) → Hom A ( FObj S a ) c
+          coJoin {a} {_} {_} g f = A [ A [ g o FMap S f ] o TMap δ a ]
 
 
         Functor*Nat :  {c₁ c₂ ℓ c₁' c₂' ℓ' c₁'' c₂'' ℓ'' : Level} (A : Category c₁ c₂ ℓ) {B : Category c₁' c₂' ℓ'} (C : Category c₁'' c₂'' ℓ'')
@@ -226,6 +277,25 @@ module cat-utility where
               π2 : Hom A product b
               isProduct : IsProduct A a b product π1 π2 
 
+        record IsCoProduct { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ )  (a b ab : Obj A)
+              ( κ1 : Hom A a ab  )
+              ( κ2 : Hom A b ab  )
+                    : Set  (ℓ ⊔ (c₁ ⊔ c₂)) where
+           field
+              _+_ : {c : Obj A} ( f : Hom A a c ) → ( g : Hom A b c ) → Hom A ab c
+              κ1f+g=f : {c : Obj A} { f : Hom A a c } → { g : Hom A b c } → A [ A [ ( f + g ) o κ1    ] ≈  f ]
+              κ2f+g=g : {c : Obj A} { f : Hom A a c } → { g : Hom A b c } → A [ A [ ( f + g ) o κ2    ] ≈  g ]
+              uniqueness : {c : Obj A} { h : Hom A ab c }  → A [  ( A [ h o κ1  ] ) + ( A [ h o κ2  ] ) ≈  h ]
+              +-cong : {c : Obj A} { f f' : Hom A a c } → { g g' : Hom A b c } → A [ f ≈ f' ] → A [ g ≈ g' ] → A [ f + g ≈ f' + g' ]
+
+        record coProduct { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) ( a b : Obj A )
+                    : Set  (ℓ ⊔ (c₁ ⊔ c₂)) where
+           field
+              coproduct : Obj A
+              κ1 : Hom A a coproduct 
+              κ2 : Hom A b coproduct 
+              isProduct : IsCoProduct A a b coproduct κ1 κ2 
+
         -----
         --
         -- product on arbitrary index
@@ -288,9 +358,9 @@ module cat-utility where
                      →  A [ A [ π1  o pullback eq ] ≈  π1' ]
               π2p=π2 :  { d : Obj A } → { π1' : Hom A d a } { π2' : Hom A d b } → { eq : A [ A [ f  o π1' ] ≈ A [ g  o π2' ]  ] }
                      →  A [ A [ π2  o pullback eq ] ≈  π2' ]
-              uniqueness : { d : Obj A } → ( p' : Hom A d ab ) → { π1' : Hom A d a } { π2' : Hom A d b } → { eq : A [ A [ f  o π1' ] ≈ A [ g  o π2' ] ]  }
-                     →  { π1p=π1' : A [ A [ π1  o p' ] ≈  π1' ] }
-                     →  { π2p=π2' : A [ A [ π2  o p' ] ≈  π2' ] }
+              uniqueness : { d : Obj A } → ( p' : Hom A d ab ) → ( π1' : Hom A d a ) ( π2' : Hom A d b ) → ( eq : A [ A [ f  o π1' ] ≈ A [ g  o π2' ] ]  )
+                     →  ( π1p=π1' : A [ A [ π1  o p' ] ≈  π1' ] )
+                     →  ( π2p=π2' : A [ A [ π2  o p' ] ≈  π2' ] )
                      →  A [ pullback eq  ≈ p' ]
 
         record Pullback { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ )  {a b c : Obj A}

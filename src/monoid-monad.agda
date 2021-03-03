@@ -5,7 +5,7 @@ open import Category.Sets
 module monoid-monad {c : Level} where
 
 open import Algebra.Structures
-open import HomReasoning
+open import HomReasoning 
 open import cat-utility
 open import Category.Cat
 open import Data.Product
@@ -13,7 +13,7 @@ open import Relation.Binary.Core
 open import Relation.Binary
 
 -- open Monoid
-open import Algebra.FunctionProperties using (Op₁; Op₂)
+-- open import Algebra.FunctionProperties using (Op₁; Op₂)
 
 open import Relation.Binary.PropositionalEquality hiding ( [_] ; sym )
 
@@ -110,21 +110,23 @@ Lemma-MM35  x = ( proj₂  ( IsMonoid.identity ( isMonoid M )) ) x
 Lemma-MM36 : ∀( x y z : Carrier M ) → (x ∙ y) ∙ z ≡ x ∙ (y ∙ z ) 
 Lemma-MM36  x y z = ( IsMonoid.assoc ( isMonoid M ))  x y z
 
--- Functional Extensionality Axiom (We cannot prove this in Agda / Coq, just assumming )
 import Relation.Binary.PropositionalEquality
 -- postulate extensionality : { a b : Obj A } {f g : Hom A a b } →  Relation.Binary.PropositionalEquality.Extensionality c c
-postulate extensionality : Relation.Binary.PropositionalEquality.Extensionality c c
+-- postulate extensionality : Axiom.Extensionality.Propositional.Extensionality c c
+
+import Axiom.Extensionality.Propositional
+postulate extensionality : { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) → Axiom.Extensionality.Propositional.Extensionality  c₂ c₂
 
 -- Multi Arguments Functional Extensionality
 extensionality30 : {f g : Carrier M → Carrier M → Carrier M → Carrier M } → 
                (∀ x y z  → f x y z ≡ g x y z )  → ( f ≡ g ) 
-extensionality30 eq = extensionality ( λ x → extensionality ( λ y → extensionality (eq x y) ) )
+extensionality30 eq = extensionality A ( λ x → extensionality A ( λ y → extensionality A (eq x y) ) )
 
 Lemma-MM9  :  (λ(x : Carrier M) → ( ε M ∙ x ))  ≡ ( λ(x : Carrier M) → x  )
-Lemma-MM9  = extensionality Lemma-MM34
+Lemma-MM9  = extensionality A Lemma-MM34
 
 Lemma-MM10 : ( λ x →   (x ∙ ε M))  ≡ ( λ x → x ) 
-Lemma-MM10  = extensionality Lemma-MM35
+Lemma-MM10  = extensionality A Lemma-MM35
 
 Lemma-MM11 : (λ x y z → ((x ∙ y ) ∙ z))  ≡ (λ x y z → ( x ∙ (y ∙ z ) ))
 Lemma-MM11 = extensionality30 Lemma-MM36 
@@ -141,7 +143,7 @@ MonoidMonad = record {
        }  
    } where
        Lemma-MM3 : {a : Obj A} → A [ A [ TMap μ a o TMap η ( FObj T a ) ] ≈ Id {_} {_} {_} {A} (FObj T a) ]
-       Lemma-MM3 {a} = let open ≈-Reasoning (A) renaming ( _o_ to _*_ ) in
+       Lemma-MM3 {a} = let open ≈-Reasoning (A) renaming ( _o_ to _*_ ) hiding (_∙_) in
                 begin
                      TMap μ a o TMap η ( FObj T a )
                 ≈⟨⟩
@@ -154,7 +156,7 @@ MonoidMonad = record {
                      Id {_} {_} {_} {A} (FObj T a)
                 ∎
        Lemma-MM4 : {a : Obj A} → A [ A [ TMap μ a o (FMap T (TMap η a ))] ≈ Id {_} {_} {_} {A} (FObj T a) ]
-       Lemma-MM4 {a} = let open ≈-Reasoning (A) renaming ( _o_ to _*_ ) in
+       Lemma-MM4 {a} = let open ≈-Reasoning (A) renaming ( _o_ to _*_ )  hiding (_∙_) in
                 begin
                      TMap μ a o (FMap T (TMap η a ))
                 ≈⟨⟩
@@ -167,7 +169,7 @@ MonoidMonad = record {
                      Id {_} {_} {_} {A} (FObj T a)
                 ∎
        Lemma-MM5 : {a : Obj A} → A [ A [ TMap μ a o TMap μ ( FObj T a ) ] ≈  A [  TMap μ a o FMap T (TMap μ a) ] ]
-       Lemma-MM5 {a} = let open ≈-Reasoning (A) renaming ( _o_ to _*_ ) in
+       Lemma-MM5 {a} = let open ≈-Reasoning (A) renaming ( _o_ to _*_ )  hiding (_∙_) in
                 begin
                       TMap μ a o TMap μ ( FObj T a ) 
                 ≈⟨⟩

@@ -32,29 +32,29 @@ record IsCCC {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ)
        e4a : {a b c : Obj A} → { h : Hom A (c ∧ b) a } →  A [ A [ ε o < A [ (h *) o π ]  ,  π' > ] ≈ h ]
        e4b : {a b c : Obj A} → { k : Hom A c (a <= b ) } →  A [ ( A [ ε o < A [ k o  π ]  ,  π' > ] ) * ≈ k ]
        *-cong :  {a b c : Obj A} → { f f' : Hom A (a ∧ b) c } → A [ f ≈ f' ]  → A [  f *  ≈  f' * ] 
-
-     e'2 : A [ ○ １ ≈ id1 A １ ]
-     e'2 = let open  ≈-Reasoning A in begin
+     open  ≈-Reasoning A 
+     e'2 :  ○ １ ≈ id1 A １ 
+     e'2 = begin
             ○ １
         ≈↑⟨ e2  ⟩
            id1 A １
         ∎
-     e''2 : {a b : Obj A} {f : Hom A a b } → A [ A [  ○ b o f ] ≈ ○ a ]
-     e''2 {a} {b} {f} = let open  ≈-Reasoning A in begin
+     e''2 : {a b : Obj A} {f : Hom A a b } →  ( ○ b o f ) ≈ ○ a 
+     e''2 {a} {b} {f} = begin
            ○ b o f
         ≈⟨ e2  ⟩
            ○ a
         ∎
-     π-id : {a b : Obj A} → A [ < π ,  π' >  ≈ id1 A (a ∧ b ) ]
-     π-id {a} {b} = let open  ≈-Reasoning A in begin
+     π-id : {a b : Obj A} →  < π ,  π' >  ≈ id1 A (a ∧ b ) 
+     π-id {a} {b} = begin
            < π ,  π' > 
         ≈↑⟨ π-cong idR idR  ⟩
           < π o id1 A (a ∧ b)  ,  π'  o id1 A (a ∧ b) >
         ≈⟨ e3c ⟩
           id1 A (a ∧ b )
         ∎
-     distr-π : {a b c d : Obj A} {f : Hom A c a }{g : Hom A c b } {h : Hom A d c } → A [ A [ < f , g > o h ]  ≈  < A [ f o h ] , A [ g o h ] > ]
-     distr-π {a} {b} {c} {d} {f} {g} {h} = let open  ≈-Reasoning A in begin
+     distr-π : {a b c d : Obj A} {f : Hom A c a }{g : Hom A c b } {h : Hom A d c } → ( < f , g > o h )  ≈  < ( f o h ) , ( g o h ) > 
+     distr-π {a} {b} {c} {d} {f} {g} {h} = begin
             < f , g > o h
         ≈↑⟨ e3c ⟩
             < π o  < f , g > o h  , π' o  < f , g > o h  >
@@ -64,8 +64,42 @@ record IsCCC {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ)
             < f o h ,  g o h  >
         ∎
      _×_ :  {  a b c d  : Obj A } ( f : Hom A a c ) (g : Hom A b d )  → Hom A (a ∧ b) ( c ∧ d )
-     f × g  = < (A [ f o  π ] ) , (A [ g o π' ])  >
-     distr-* : {a b c d : Obj A } { h : Hom A (a ∧ b) c } { k : Hom A d a } → A [ A [ h * o k ]  ≈ ( A [ h o < A [ k o π ] , π' > ] ) * ]
+     f × g  = < ( f o  π )  ,  (g o π' )  >
+     π-exchg : {a b c  : Obj A} {f : Hom A c a }{g : Hom A c b }  →  < π' , π > o < f , g >   ≈  < g , f > 
+     π-exchg {a} {b} {c} {f} {g} = begin
+            < π' , π > o < f , g >
+        ≈⟨ distr-π ⟩
+            < π' o < f , g > , π o < f , g > >
+        ≈⟨ π-cong e3b e3a ⟩
+           < g , f >
+        ∎ 
+     π'π : {a b : Obj A}   →  < π' , π > o < π' , π >   ≈  id1 A (a ∧ b)
+     π'π = trans-hom π-exchg π-id
+     exchg-π : {a b c d : Obj A} {f : Hom A c a }{g : Hom A d b }  →  < f o π , g o π' > o < π' , π >   ≈  < f o π' , g o π > 
+     exchg-π {a} {b} {c} {d} {f} {g} = begin
+           < f o π , g o π' > o < π' , π >
+        ≈⟨ distr-π ⟩
+           < (f o π) o < π' , π >  , (g o π' ) o < π' , π > > 
+        ≈↑⟨ π-cong assoc assoc ⟩
+           < f o (π o < π' , π > ) , g o (π' o < π' , π >)> 
+        ≈⟨ π-cong (cdr e3a)  (cdr e3b) ⟩
+           < f o π' , g o π >
+        ∎ 
+     π≈  : {a b c : Obj A} {f f' : Hom A c a }{g g' : Hom A c b }  → < f , g >  ≈  <  f' ,  g' >  → f  ≈ f'
+     π≈ {_} {_} {_} {f} {f'} {g} {g'}  eq = begin
+        f ≈↑⟨ e3a ⟩
+        π o < f , g >  ≈⟨ cdr eq ⟩
+        π o < f' , g' >  ≈⟨ e3a ⟩
+        f'
+        ∎ 
+     π'≈ : {a b c : Obj A} {f f' : Hom A c a }{g g' : Hom A c b }  → < f , g >  ≈  <  f' ,  g' >  → g  ≈ g'
+     π'≈ {_} {_} {_} {f} {f'} {g} {g'}  eq = begin
+        g ≈↑⟨ e3b ⟩
+        π' o < f , g >  ≈⟨ cdr eq ⟩
+        π' o < f' , g' >  ≈⟨ e3b ⟩
+        g'
+        ∎ 
+     distr-* : {a b c d : Obj A } { h : Hom A (a ∧ b) c } { k : Hom A d a } → ( h * o k )  ≈ ( h o < ( k o π ) , π' > )  * 
      distr-* {a} {b} {c} {d} {h} {k} = begin
              h * o k
         ≈↑⟨ e4b  ⟩
@@ -86,12 +120,12 @@ record IsCCC {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ)
                h o < k o π , π' > 
         ∎ ) ⟩
             ( h o  <  k o π  , π' > ) *
-        ∎ where open  ≈-Reasoning A
+        ∎ 
      α : {a b c : Obj A } → Hom A (( a ∧ b ) ∧ c ) ( a ∧ ( b ∧ c ) )
-     α = < A [ π  o π  ]  , < A [ π'  o π ]  , π'  > >
+     α = < ( π  o π  )  , < ( π'  o π )  , π'  > >
      α' : {a b c : Obj A } → Hom A  ( a ∧ ( b ∧ c ) ) (( a ∧ b ) ∧ c )
-     α' = < < π , A [ π o π' ] > ,  A [ π'  o π' ]  >
-     β : {a b c d : Obj A } { f : Hom A a b} { g : Hom A a c } { h : Hom A a d } → A [ A [ α o < < f , g > , h > ] ≈  < f , < g , h > > ]
+     α' = < < π , ( π o π' ) > ,  ( π'  o π' )  >
+     β : {a b c d : Obj A } { f : Hom A a b} { g : Hom A a c } { h : Hom A a d } → ( α o < < f , g > , h > ) ≈  < f , < g , h > > 
      β {a} {b} {c} {d} {f} {g} {h} = begin
              α o < < f , g > , h >
         ≈⟨⟩
@@ -106,7 +140,7 @@ record IsCCC {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ)
              < (  π o < f , g >  ) ,  < (  π' o < f , g >  ) , h >   >  
         ≈⟨ π-cong e3a ( π-cong e3b refl-hom )  ⟩
             < f , < g , h > >
-         ∎ where open  ≈-Reasoning A
+         ∎ 
 
 
 record CCC {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) :  Set ( c₁  ⊔  c₂ ⊔ ℓ ) where
@@ -126,17 +160,16 @@ record CCC {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) :  Set ( c₁  �
 --
 -- Sub Object Classifier as Topos
 -- pull back on
---                   ○ b
---       b ----------------------→ 1
---       |                         |
---       |                         |
---     m |                         | ⊤
---       |                         |
---       ↓                         ↓
---       a ----------------------→ Ω
---                    h
+--             ○ b
+--       b -----------→ 1
+--       |              |
+--     m |              | ⊤
+--       ↓    char m    ↓
+--       a -----------→ Ω
+--             h
 --
 open Equalizer
+open import equalizer
 
 record Mono  {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) {b a : Obj A} (mono : Hom A b a) : Set  (c₁ ⊔ c₂ ⊔ ℓ)  where
      field
@@ -144,32 +177,56 @@ record Mono  {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) {b a : Obj A} 
 
 open Mono
 
-open import equalizer
-
-record IsTopos {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) ( １ : Obj A) (○ : (a : Obj A ) → Hom A a １)
+record IsTopos {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A) 
         ( Ω : Obj A )
-        ( ⊤ : Hom A １ Ω )
-        (Ker : {a : Obj A} → ( h : Hom A a Ω ) → Equalizer A h (A [ ⊤ o (○ a) ]))
+        ( ⊤ : Hom A (CCC.１ c) Ω )
+        (Ker : {a : Obj A} → ( h : Hom A a Ω ) → Equalizer A h (A [ ⊤ o (CCC.○ c a) ]))
         (char : {a b : Obj A} → (m :  Hom A b a) → Mono A m  → Hom A a Ω) :  Set ( suc c₁  ⊔  suc c₂ ⊔ suc ℓ ) where
      field
-         char-ker  : {a b : Obj A } {h : Hom A a Ω} 
-             → A [ char (equalizer (Ker h)) record { isMono = monic (Ker h) } ≈ h ]
-         ker-char : {a b : Obj A} →  (m :  Hom A b a) → (mono : Mono A m)  → Iso A b (  equalizer-c (Ker ( char m mono ))) 
+         char-ker  : {a b : Obj A } {h : Hom A a Ω}  (m :  Hom A b a) → (mono : Mono A m)  
+             → A [ char m mono  ≈ h ]
+         ker-char : {a b : Obj A} →  (m :  Hom A b a) → (mono : Mono A m)  → IsoL A m (equalizer (Ker ( char m mono ))) 
 
-record Topos {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ)  ( １ : Obj A) (○ : (a : Obj A ) → Hom A a １) :  Set ( suc c₁  ⊔  suc c₂ ⊔ suc ℓ ) where
+record Topos {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ)  (c : CCC A)  :  Set ( suc c₁  ⊔  suc c₂ ⊔ suc ℓ ) where
      field
          Ω : Obj A
-         ⊤ : Hom A １ Ω
-         Ker : {a : Obj A} → ( h : Hom A a Ω ) → Equalizer A h (A [ ⊤ o (○ a) ])
+         ⊤ : Hom A (CCC.１ c) Ω
+         Ker : {a : Obj A} → ( h : Hom A a Ω ) → Equalizer A h (A [ ⊤ o (CCC.○ c a) ])
          char : {a b : Obj A} → (m : Hom A b a ) → Mono A m → Hom A a Ω
-         isTopos : IsTopos A １ ○ Ω ⊤ Ker char
+         isTopos : IsTopos A c Ω ⊤ Ker char
      ker : {a : Obj A} → ( h : Hom A a Ω )  → Hom A ( equalizer-c (Ker h) ) a
      ker h = equalizer (Ker h)
+     Monik : {a : Obj A} (h : Hom A a Ω)  → Mono A (equalizer (Ker h))
+     Monik h = record { isMono = λ f g → monic (Ker h ) } 
+     char-m=⊤ :  {a b : Obj A} → (m :  Hom A b a) → (mono : Mono A m) → A [ A [ char m mono  o m ] ≈ A [ ⊤ o CCC.○ c b ] ]
+     char-m=⊤ {a} {b} m mono  = begin
+            char m mono  o m ≈⟨ car (IsTopos.char-ker isTopos m mono) ⟩
+            (⊤ o  CCC.○ c a) o m ≈↑⟨ assoc ⟩
+            ⊤ o  (CCC.○ c a o m ) ≈⟨ cdr (IsCCC.e2 (CCC.isCCC c)) ⟩
+            ⊤ o CCC.○ c b  ∎  where   open ≈-Reasoning A
 
+record NatD {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ)  ( １ : Obj A) : Set ( suc c₁  ⊔  suc c₂ ⊔ suc ℓ ) where
+     field
+         Nat   : Obj A
+         nzero : Hom A １ Nat
+         nsuc  : Hom A Nat Nat
 
+open NatD
 
+record IsToposNat {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ)  ( １ : Obj A) (TNat : NatD A １ )
+       (  gNat : (nat : NatD A １ ) → Hom A (Nat TNat) (Nat nat) )
+  : Set ( suc c₁  ⊔  suc c₂ ⊔ suc ℓ ) where
+     field
+         izero : (nat : NatD A １ ) → A [ A [ gNat nat o nzero TNat ] ≈ nzero nat ]
+         isuc  : (nat : NatD A １ ) → A [ A [ gNat nat o nsuc TNat ] ≈ A [ nsuc nat o gNat nat ] ]
 
-
-
-
+record ToposNat {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ)  ( １  : Obj A) : Set ( suc c₁  ⊔  suc c₂ ⊔ suc ℓ ) where
+     field
+         TNat : NatD A １
+         gNat : (nat : NatD A １ ) → Hom A (Nat TNat) (Nat nat)
+         nat-unique : (nat : NatD A １ ) → {g : Hom A (Nat TNat) (Nat nat) }
+             → A [ A [ g o nzero TNat ] ≈ nzero nat ]
+             → A [ A [ g o nsuc TNat ] ≈ A [ nsuc nat o g ] ]
+             → A [ g ≈ gNat nat ]
+         isToposN : IsToposNat A １ TNat gNat
 
