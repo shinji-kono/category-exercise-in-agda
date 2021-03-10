@@ -30,6 +30,10 @@ module ToposEx   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A
             ⊤ t o ( ○ a o p1 )          ≈⟨ assoc ⟩
            (⊤ t o ○ a ) o p1            ∎ 
 
+  ----
+  --
+  --  pull back from h
+  --
   topos-pullback :  {a : Obj A}  → (h : Hom A a (Ω t)) → Pullback A h (⊤ t)
   topos-pullback {a} h = record {
       ab = equalizer-c (Ker t h)         -- b
@@ -63,6 +67,10 @@ module ToposEx   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A
              IsEqualizer.k (isEqualizer (Ker t h)) p1' (mh=⊤ h p1' p2' eq)  ≈⟨ IsEqualizer.uniqueness  (isEqualizer (Ker t h)) pe1 ⟩
              p' ∎ 
 
+  ----
+  --
+  --  pull back from m
+  --
   topos-m-pullback : {a b : Obj A}  → (m : Hom A b a) → (mono : Mono A m ) → Pullback A (char t m mono )  (⊤ t)
   topos-m-pullback {a} {b} m mono  = record {
       ab = b     
@@ -76,15 +84,15 @@ module ToposEx   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A
          ;    uniqueness = uniq
       }
     } where
-        f← = Iso.≅← (IsoL.iso-L (IsTopos.ker-char (isTopos t) m mono ))
-        f→ = Iso.≅→ (IsoL.iso-L (IsTopos.ker-char (isTopos t) m mono ))
+        f← = Iso.≅← (IsoL.iso-L (IsTopos.ker-iso (isTopos t) m mono ))
+        f→ = Iso.≅→ (IsoL.iso-L (IsTopos.ker-iso (isTopos t) m mono ))
         k : {d : Obj A} (p1 : Hom A d a) → (p2 : Hom A d １) →  A [ A [ char t m mono o p1 ] ≈ A [ ⊤ t o p2 ] ] → Hom A d (equalizer-c (Ker t (char t m mono)))
         k p1 p2 eq = IsEqualizer.k (isEqualizer (Ker t (char t m mono))) p1 (mh=⊤ (char t m mono) p1 p2 eq )
         lemma3 : {d : Obj A} (p1 : Hom A d a) → (p2 : Hom A d １)
             →  (eq : A [ A [ char t m mono o p1 ] ≈ A [ ⊤ t o p2 ] ] ) → m o (f← o k p1 p2 eq ) ≈ p1 
         lemma3 {d} p1 p2 eq = begin
            m o (f← o k p1 p2 eq ) ≈⟨ assoc ⟩
-           (m o f← ) o k p1 p2 eq ≈⟨ car (IsoL.iso≈L (IsTopos.ker-char (isTopos t) m mono )) ⟩
+           (m o f← ) o k p1 p2 eq ≈⟨ car (IsoL.iso≈L (IsTopos.ker-iso (isTopos t) m mono )) ⟩
            equalizer (Ker t (char t m mono)) o k p1 p2 eq ≈⟨ IsEqualizer.ek=h (isEqualizer (Ker t (char t m mono))) ⟩
            p1 ∎
         uniq : {d : Obj A} (p' : Hom A d b) (π1' : Hom A d a) (π2' : Hom A d １)
@@ -93,13 +101,13 @@ module ToposEx   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A
         uniq {d} p p1 p2 eq pe1 pe2 = begin
              f← o k p1 p2 eq ≈⟨ cdr ( IsEqualizer.uniqueness  (isEqualizer (Ker t  (char t m mono))) lemma4) ⟩
              f← o (f→ o p ) ≈⟨ assoc ⟩
-             (f← o f→ ) o p  ≈⟨ car (Iso.iso→ (IsoL.iso-L (IsTopos.ker-char (isTopos t) m mono ))) ⟩
+             (f← o f→ ) o p  ≈⟨ car (Iso.iso→ (IsoL.iso-L (IsTopos.ker-iso (isTopos t) m mono ))) ⟩
              id1 A _ o p  ≈⟨ idL ⟩
              p ∎ where
                 lemma4 : A [ A [ equalizer (Ker t (char t m mono)) o (f→ o p) ] ≈ p1 ]
                 lemma4 = begin
                   equalizer (Ker t (char t m mono)) o (f→ o p)  ≈⟨ assoc ⟩
-                  (equalizer (Ker t (char t m mono)) o f→ ) o p  ≈⟨ car (IsoL.L≈iso (IsTopos.ker-char (isTopos t) m mono )) ⟩
+                  (equalizer (Ker t (char t m mono)) o f→ ) o p  ≈⟨ car (IsoL.L≈iso (IsTopos.ker-iso (isTopos t) m mono )) ⟩
                   m o p  ≈⟨ pe1  ⟩
                   p1 ∎ where
 
@@ -119,6 +127,10 @@ module ToposEx   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A
             id1 A _ o g  ≈⟨ idL ⟩
             g ∎
 
+--
+--
+--   Hom equality and Ω
+--
 --
 --       a -----------→ +
 --     f||g     ○ a     |
@@ -161,6 +173,11 @@ module ToposEx   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A
             < id1 A b , id1 A b > o k  ≈⟨ IsCCC.distr-π isCCC ⟩ 
             < id1 A b o k , id1 A b o k >   ≈⟨ IsCCC.π-cong isCCC idL idL ⟩ 
             < k , k >  ∎
+--
+--
+-- Initial Natural number diagram
+--
+--
 
   open NatD
   open ToposNat n
@@ -174,13 +191,13 @@ module ToposEx   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A
 --             <0,z>     <suc o π , h >
 
   N : Obj A
-  N = Nat TNat 
+  N = Nat iNat 
 
   record prop33   {a : Obj A} (f : Hom A １ a ) ( h : Hom A (N  ∧ a) a )  : Set  ( suc c₁  ⊔  suc c₂ ⊔ suc ℓ ) where
      field 
        g :  Hom A N  a
-       g0=f : A [ A [ g o nzero TNat  ]  ≈ f ]
-       gs=h : A [ A [ g o nsuc  TNat  ]  ≈ A [ h o < id1 A _ , g > ] ]
+       g0=f : A [ A [ g o nzero iNat  ]  ≈ f ]
+       gs=h : A [ A [ g o nsuc  iNat  ]  ≈ A [ h o < id1 A _ , g > ] ]
        xnat : NatD A １
 
   p33 : {a : Obj A} (z : Hom A １ a ) ( h : Hom A (N  ∧ a) a )  → prop33  z h
@@ -191,54 +208,54 @@ module ToposEx   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A
       ; xnat = xnat
     } where
         xnat : NatD A １
-        xnat = record { Nat = N ∧ a ; nzero = < nzero TNat , z > ; nsuc = < nsuc TNat o π , h > }
+        xnat = record { Nat = N ∧ a ; nzero = < nzero iNat , z > ; nsuc = < nsuc iNat o π , h > }
         fg : Hom A N (N ∧ a )
-        fg = gNat xnat -- < f , g >
+        fg = initialNat xnat -- < f , g >
         f : Hom A N N
         f = π o fg
         g : Hom A N a
         g = π' o fg
-        i : f o nzero TNat  ≈ nzero TNat
+        i : f o nzero iNat  ≈ nzero iNat
         i = begin
-            f o nzero TNat  ≈⟨⟩ 
-            (π  o fg) o  nzero TNat  ≈↑⟨ assoc ⟩ 
-            π  o (fg o  nzero TNat ) ≈⟨ cdr (IsToposNat.izero isToposN xnat ) ⟩ 
+            f o nzero iNat  ≈⟨⟩ 
+            (π  o fg) o  nzero iNat  ≈↑⟨ assoc ⟩ 
+            π  o (fg o  nzero iNat ) ≈⟨ cdr (IsToposNat.izero isToposN xnat ) ⟩ 
             π o nzero xnat ≈⟨ IsCCC.e3a isCCC ⟩ 
-            nzero TNat  ∎  
-        ii : f o nsuc TNat  ≈ nsuc  TNat o f
+            nzero iNat  ∎  
+        ii : f o nsuc iNat  ≈ nsuc  iNat o f
         ii = begin
-            f o nsuc TNat  ≈⟨⟩ 
-            (π o fg ) o nsuc TNat  ≈↑⟨ assoc ⟩ 
-            π o ( fg  o nsuc TNat ) ≈⟨ cdr (IsToposNat.isuc isToposN xnat ) ⟩ 
-            π o (nsuc xnat o gNat xnat) ≈⟨ assoc ⟩ 
-            (π o  < nsuc TNat o π , h > ) o gNat xnat ≈⟨ car (IsCCC.e3a isCCC) ⟩ 
-            ( nsuc TNat o π ) o gNat xnat ≈↑⟨ assoc ⟩ 
-             nsuc TNat o ( π  o gNat xnat ) ≈⟨⟩ 
-             nsuc  TNat o f  ∎  
+            f o nsuc iNat  ≈⟨⟩ 
+            (π o fg ) o nsuc iNat  ≈↑⟨ assoc ⟩ 
+            π o ( fg  o nsuc iNat ) ≈⟨ cdr (IsToposNat.isuc isToposN xnat ) ⟩ 
+            π o (nsuc xnat o initialNat xnat) ≈⟨ assoc ⟩ 
+            (π o  < nsuc iNat o π , h > ) o initialNat xnat ≈⟨ car (IsCCC.e3a isCCC) ⟩ 
+            ( nsuc iNat o π ) o initialNat xnat ≈↑⟨ assoc ⟩ 
+             nsuc iNat o ( π  o initialNat xnat ) ≈⟨⟩ 
+             nsuc  iNat o f  ∎  
         ig : f ≈ id1 A N 
         ig  = begin
-           f   ≈⟨ nat-unique TNat i ii ⟩
-           gNat TNat   ≈↑⟨ nat-unique TNat idL (trans-hom idL (sym idR) ) ⟩
+           f   ≈⟨ nat-unique iNat i ii ⟩
+           initialNat iNat   ≈↑⟨ nat-unique iNat idL (trans-hom idL (sym idR) ) ⟩
            id1 A _  ∎
-        iii : g o nzero TNat ≈ z
+        iii : g o nzero iNat ≈ z
         iii = begin
-            g o nzero TNat  ≈⟨⟩ (π' o gNat xnat ) o nzero TNat  ≈↑⟨ assoc ⟩ 
-            π' o ( gNat xnat  o nzero TNat)  ≈⟨ cdr (IsToposNat.izero isToposN xnat) ⟩ 
-            π' o < nzero TNat , z >  ≈⟨ IsCCC.e3b isCCC ⟩ 
+            g o nzero iNat  ≈⟨⟩ (π' o initialNat xnat ) o nzero iNat  ≈↑⟨ assoc ⟩ 
+            π' o ( initialNat xnat  o nzero iNat)  ≈⟨ cdr (IsToposNat.izero isToposN xnat) ⟩ 
+            π' o < nzero iNat , z >  ≈⟨ IsCCC.e3b isCCC ⟩ 
             z  ∎  
-        iv : g o nsuc TNat ≈ h o < f , g >
+        iv : g o nsuc iNat ≈ h o < f , g >
         iv = begin 
-            g o nsuc TNat  ≈⟨⟩ 
-            (π' o gNat xnat) o nsuc TNat   ≈↑⟨ assoc ⟩ 
-            π' o (gNat xnat o nsuc TNat )  ≈⟨ cdr (IsToposNat.isuc isToposN xnat) ⟩ 
-            π' o  (nsuc xnat o gNat xnat ) ≈⟨ assoc ⟩ 
-            (π' o  nsuc xnat ) o gNat xnat  ≈⟨ car (IsCCC.e3b isCCC) ⟩ 
-            h o gNat xnat  ≈↑⟨ cdr (IsCCC.e3c isCCC) ⟩ 
+            g o nsuc iNat  ≈⟨⟩ 
+            (π' o initialNat xnat) o nsuc iNat   ≈↑⟨ assoc ⟩ 
+            π' o (initialNat xnat o nsuc iNat )  ≈⟨ cdr (IsToposNat.isuc isToposN xnat) ⟩ 
+            π' o  (nsuc xnat o initialNat xnat ) ≈⟨ assoc ⟩ 
+            (π' o  nsuc xnat ) o initialNat xnat  ≈⟨ car (IsCCC.e3b isCCC) ⟩ 
+            h o initialNat xnat  ≈↑⟨ cdr (IsCCC.e3c isCCC) ⟩ 
             h o < π o fg , π' o fg >  ≈⟨⟩ 
             h o < f , g >  ∎  
-        v : A [ A [ g o nsuc TNat ] ≈ A [ h o < id1 A N , g > ] ]
+        v : A [ A [ g o nsuc iNat ] ≈ A [ h o < id1 A N , g > ] ]
         v = begin
-            g o nsuc TNat   ≈⟨ iv  ⟩ 
+            g o nsuc iNat   ≈⟨ iv  ⟩ 
             h o < f , g >   ≈⟨ cdr ( IsCCC.π-cong isCCC ig refl-hom) ⟩ 
             h o < id1 A N , g >  ∎  
 
@@ -248,11 +265,11 @@ module ToposEx   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A
   --           /   ↓   \
   --         N --→ N ←-- a
   --
-  cor33  :  coProduct A １ (Nat TNat ) --  N ≅ N + 1
+  cor33  :  coProduct A １ (Nat iNat ) --  N ≅ N + 1
   cor33 = record {
         coproduct = N 
-      ; κ1 = nzero TNat 
-      ; κ2 = nsuc TNat 
+      ; κ1 = nzero iNat 
+      ; κ2 = nsuc iNat 
       ; isProduct = record {
               _+_ = λ {a} f g → prop33.g (p  f ( g o π ))  -- Hom A (N n ∧ a) a
            ;  κ1f+g=f = λ {a} {f} {g} → prop33.g0=f (p f (g o π ) )
@@ -263,55 +280,55 @@ module ToposEx   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A
     } where
         p :  {a : Obj A} (f  : Hom A １ a) ( h : Hom A (N  ∧ a) a ) → prop33  f h
         p f h = p33  f h
-        k2 : {a : Obj A} {f  : Hom A １ a} {g : Hom A (Nat TNat) a }
-           → A [ A [ prop33.g (p f (g o  π)) o nsuc TNat ] ≈ g ]
+        k2 : {a : Obj A} {f  : Hom A １ a} {g : Hom A (Nat iNat) a }
+           → A [ A [ prop33.g (p f (g o  π)) o nsuc iNat ] ≈ g ]
         k2 {a} {f} {g} = begin
-            (prop33.g (p f (g o π)) o nsuc TNat)  ≈⟨ prop33.gs=h (p f (g o π ))   ⟩
+            (prop33.g (p f (g o π)) o nsuc iNat)  ≈⟨ prop33.gs=h (p f (g o π ))   ⟩
             ( g o π ) o  < id1 A N  , prop33.g (p f (g o π)) >   ≈⟨ sym assoc ⟩
             g o ( π  o   < id1 A N  , prop33.g (p f (g o π)) >)  ≈⟨ cdr (IsCCC.e3a isCCC ) ⟩
             g o id1 A N   ≈⟨ idR ⟩
             g  ∎
-        pp :  {c : Obj A} {h : Hom A (Nat TNat) c} → prop33 ( h o nzero TNat ) ( (h o nsuc TNat)  o π)
-        pp {c} {h} = p ( h o nzero TNat ) ( (h o nsuc TNat)  o π)
-        uniq :  {c : Obj A} {h : Hom A (Nat TNat) c} → 
+        pp :  {c : Obj A} {h : Hom A (Nat iNat) c} → prop33 ( h o nzero iNat ) ( (h o nsuc iNat)  o π)
+        pp {c} {h} = p ( h o nzero iNat ) ( (h o nsuc iNat)  o π)
+        uniq :  {c : Obj A} {h : Hom A (Nat iNat) c} → 
             prop33.g pp ≈ h 
         uniq {c} {h} = begin
             prop33.g pp  ≈⟨⟩
-            π' o gNat (prop33.xnat pp) ≈↑⟨ cdr (nat-unique (prop33.xnat pp) (
+            π' o initialNat (prop33.xnat pp) ≈↑⟨ cdr (nat-unique (prop33.xnat pp) (
                begin
-                  < id1 A _ , h > o nzero TNat ≈⟨ IsCCC.distr-π isCCC ⟩
-                  < id1 A _ o nzero TNat , h o nzero TNat > ≈⟨ IsCCC.π-cong isCCC idL refl-hom  ⟩
-                  < nzero TNat , h o nzero TNat > ≈⟨⟩
+                  < id1 A _ , h > o nzero iNat ≈⟨ IsCCC.distr-π isCCC ⟩
+                  < id1 A _ o nzero iNat , h o nzero iNat > ≈⟨ IsCCC.π-cong isCCC idL refl-hom  ⟩
+                  < nzero iNat , h o nzero iNat > ≈⟨⟩
                   nzero (prop33.xnat pp) ∎ )
                (begin
-                  < id1 A _ , h > o nsuc TNat ≈⟨  IsCCC.distr-π isCCC ⟩
-                  < id1 A _ o nsuc TNat   ,  h o nsuc TNat   > ≈⟨  IsCCC.π-cong isCCC idL refl-hom ⟩
-                  < nsuc TNat   ,  h o nsuc TNat   > ≈↑⟨  IsCCC.π-cong isCCC idR idR ⟩
-                  < nsuc TNat o   id1 A _  ,  (h o nsuc TNat ) o  id1 A _   > ≈↑⟨  IsCCC.π-cong isCCC (cdr (IsCCC.e3a isCCC)) (cdr (IsCCC.e3a isCCC))  ⟩
-                  < nsuc TNat o ( π  o  < id1 A _ , h > ) ,  (h o nsuc TNat ) o ( π   o < id1 A _ , h > ) > ≈⟨  IsCCC.π-cong isCCC assoc assoc ⟩
-                  < (nsuc TNat o π ) o  < id1 A _ , h > ,  ((h o nsuc TNat ) o π  )  o < id1 A _ , h > > ≈↑⟨  IsCCC.distr-π isCCC ⟩
-                  < nsuc TNat o π ,  (h o nsuc TNat ) o π  >  o < id1 A _ , h >  ≈⟨⟩
+                  < id1 A _ , h > o nsuc iNat ≈⟨  IsCCC.distr-π isCCC ⟩
+                  < id1 A _ o nsuc iNat   ,  h o nsuc iNat   > ≈⟨  IsCCC.π-cong isCCC idL refl-hom ⟩
+                  < nsuc iNat   ,  h o nsuc iNat   > ≈↑⟨  IsCCC.π-cong isCCC idR idR ⟩
+                  < nsuc iNat o   id1 A _  ,  (h o nsuc iNat ) o  id1 A _   > ≈↑⟨  IsCCC.π-cong isCCC (cdr (IsCCC.e3a isCCC)) (cdr (IsCCC.e3a isCCC))  ⟩
+                  < nsuc iNat o ( π  o  < id1 A _ , h > ) ,  (h o nsuc iNat ) o ( π   o < id1 A _ , h > ) > ≈⟨  IsCCC.π-cong isCCC assoc assoc ⟩
+                  < (nsuc iNat o π ) o  < id1 A _ , h > ,  ((h o nsuc iNat ) o π  )  o < id1 A _ , h > > ≈↑⟨  IsCCC.distr-π isCCC ⟩
+                  < nsuc iNat o π ,  (h o nsuc iNat ) o π  >  o < id1 A _ , h >  ≈⟨⟩
                   nsuc (prop33.xnat pp) o < id1 A _ , h > ∎  )) ⟩
             π' o < id1 A _ , h > ≈⟨ IsCCC.e3b isCCC ⟩
             h  ∎
-        pcong : {a : Obj A } {f f' : Hom A １ a } {g g' : Hom A (Nat TNat) a } → (f=f' : f ≈ f' ) → ( g=g' : g ≈ g' )
+        pcong : {a : Obj A } {f f' : Hom A １ a } {g g' : Hom A (Nat iNat) a } → (f=f' : f ≈ f' ) → ( g=g' : g ≈ g' )
             →  prop33.g (p f (g o π)) ≈ prop33.g (p f' (g' o π))
         pcong {a} {f} {f'} {g} {g'} f=f' g=g' = begin
              prop33.g (p f (g o π))   ≈⟨⟩
-             π' o (gNat (prop33.xnat (p f (g o π)))) ≈↑⟨  cdr (nat-unique (prop33.xnat (p f (g o π))) lem1 lem2 ) ⟩
-             π' o (gNat (prop33.xnat (p f' (g' o π)))) ≈⟨⟩
+             π' o (initialNat (prop33.xnat (p f (g o π)))) ≈↑⟨  cdr (nat-unique (prop33.xnat (p f (g o π))) lem1 lem2 ) ⟩
+             π' o (initialNat (prop33.xnat (p f' (g' o π)))) ≈⟨⟩
              prop33.g (p f' (g' o π))   ∎ where
-                lem1 :  A [ A [ gNat (prop33.xnat (p f' ((A Category.o g') π))) o nzero TNat ] ≈ nzero (prop33.xnat (p f ((A Category.o g) π))) ]
+                lem1 :  A [ A [ initialNat (prop33.xnat (p f' ((A Category.o g') π))) o nzero iNat ] ≈ nzero (prop33.xnat (p f ((A Category.o g) π))) ]
                 lem1 = begin
-                     gNat (prop33.xnat (p f' (g' o π))) o nzero TNat  ≈⟨ IsToposNat.izero isToposN _ ⟩
+                     initialNat (prop33.xnat (p f' (g' o π))) o nzero iNat  ≈⟨ IsToposNat.izero isToposN _ ⟩
                      nzero (prop33.xnat (p f' (g' o π)))  ≈⟨⟩
-                     < nzero TNat , f' > ≈⟨  IsCCC.π-cong isCCC refl-hom (sym f=f') ⟩
-                     < nzero TNat , f > ≈⟨⟩
+                     < nzero iNat , f' > ≈⟨  IsCCC.π-cong isCCC refl-hom (sym f=f') ⟩
+                     < nzero iNat , f > ≈⟨⟩
                      nzero (prop33.xnat (p f (g o π)))   ∎
-                lem2 :   A [ A [ gNat (prop33.xnat (p f' (g' o π))) o nsuc TNat ] ≈ A [ nsuc (prop33.xnat (p f (g o π))) o gNat (prop33.xnat (p f' (g' o π))) ] ]
+                lem2 :   A [ A [ initialNat (prop33.xnat (p f' (g' o π))) o nsuc iNat ] ≈ A [ nsuc (prop33.xnat (p f (g o π))) o initialNat (prop33.xnat (p f' (g' o π))) ] ]
                 lem2 = begin
-                     gNat (prop33.xnat (p f' (g' o π))) o nsuc TNat ≈⟨  IsToposNat.isuc isToposN _ ⟩
-                     nsuc (prop33.xnat (p f' (g' o π))) o gNat (prop33.xnat (p f' (g' o π))) ≈⟨⟩
-                     < (nsuc TNat) o π ,  g' o π > o gNat (prop33.xnat (p f' (g' o π))) ≈⟨ car ( IsCCC.π-cong isCCC refl-hom (car (sym g=g')) ) ⟩
-                     < (nsuc TNat) o π ,  g  o π > o gNat (prop33.xnat (p f' (g' o π))) ≈⟨⟩
-                     nsuc (prop33.xnat (p f (g o π))) o gNat (prop33.xnat (p f' (g' o π))) ∎
+                     initialNat (prop33.xnat (p f' (g' o π))) o nsuc iNat ≈⟨  IsToposNat.isuc isToposN _ ⟩
+                     nsuc (prop33.xnat (p f' (g' o π))) o initialNat (prop33.xnat (p f' (g' o π))) ≈⟨⟩
+                     < (nsuc iNat) o π ,  g' o π > o initialNat (prop33.xnat (p f' (g' o π))) ≈⟨ car ( IsCCC.π-cong isCCC refl-hom (car (sym g=g')) ) ⟩
+                     < (nsuc iNat) o π ,  g  o π > o initialNat (prop33.xnat (p f' (g' o π))) ≈⟨⟩
+                     nsuc (prop33.xnat (p f (g o π))) o initialNat (prop33.xnat (p f' (g' o π))) ∎

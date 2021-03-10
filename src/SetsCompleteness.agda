@@ -9,7 +9,9 @@ open import Relation.Binary.Core
 open import Function
 import Relation.Binary.PropositionalEquality
 -- Extensionality a b = {A : Set a} {B : A → Set b} {f g : (x : A) → B x} → (∀ x → f x ≡ g x) → ( λ x → f x ≡ λ x → g x )
-postulate extensionality : { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) → Relation.Binary.PropositionalEquality.Extensionality c₂ c₂
+import Axiom.Extensionality.Propositional
+postulate extensionality : { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) → Axiom.Extensionality.Propositional.Extensionality c₂ c₂
+-- Relation.Binary.PropositionalEquality.Extensionality c₂ c₂
 
 ≡cong = Relation.Binary.PropositionalEquality.cong
 
@@ -53,6 +55,8 @@ record iproduct {a} (I : Set a)  ( pi0 : I → Set a ) : Set a where
 
 open iproduct
 
+open Small
+
 SetsIProduct :  {  c₂ : Level} → (I : Obj Sets) (ai : I → Obj Sets )
      → IProduct I ( Sets  {  c₂} ) ai
 SetsIProduct I fi = record {
@@ -83,6 +87,61 @@ SetsIProduct I fi = record {
        ip-cong  : {q : Obj Sets} {qi qi' : (i : I) → Hom Sets q (fi i)} → ((i : I) → Sets [ qi i ≈ qi' i ]) → Sets [ iproduct1 qi ≈ iproduct1  qi' ]
        ip-cong {q} {qi} {qi'} qi=qi  = extensionality Sets ( ipcx qi=qi )
 
+data coproduct {c} (a b : Set c) :  Set c where
+       k1 : ( i : a ) → coproduct a b 
+       k2 : ( i : b ) → coproduct a b 
+
+SetsCoProduct :  {  c₂ : Level} → (a b : Obj (Sets  {c₂})) → coProduct Sets a b 
+SetsCoProduct a b = record {
+         coproduct = coproduct a b
+       ; κ1 = λ i → k1 i
+       ; κ2 = λ i → k2 i
+       ; isProduct = record {
+          _+_ = sum
+        ; κ1f+g=f = extensionality Sets (λ x → refl )
+        ; κ2f+g=g = extensionality Sets (λ x → refl )
+        ; uniqueness = λ {c} {h} → extensionality Sets (λ x → uniq {c} {h} x )
+        ; +-cong = λ {c} {f} {f'} {g} {g'} feq geq → extensionality Sets (pccong feq geq)
+       }
+     } where
+        sum : {c : Obj Sets} → Hom Sets a c → Hom Sets b c → Hom Sets (coproduct a b ) c
+        sum {c} f g (k1 i) = f i
+        sum {c} f g (k2 i) = g i
+        uniq :  {c : Obj Sets} {h : Hom Sets (coproduct a b) c} → (x : coproduct a b ) → sum (Sets [ h o (λ i → k1 i) ]) (Sets [ h o (λ i → k2 i) ]) x ≡ h x
+        uniq {c} {h} (k1 i) = refl
+        uniq {c} {h} (k2 i) = refl
+        pccong :  {c : Obj Sets} {f f' : Hom Sets a c} {g g' : Hom Sets b c} → f ≡ f' → g ≡ g' → (x : coproduct a b ) → sum f g x ≡ sum f' g' x
+        pccong refl refl (k1 i) = refl
+        pccong refl refl (k2 i) = refl
+
+
+data icoproduct {a} (I : Set a) (ki : I → Set a) :  Set a where
+       ki1 : (i : I)   (x : ki i ) → icoproduct I ki
+
+SetsICoProduct :  {  c₂ : Level} → (I : Obj (Sets {c₂})) (ci : I → Obj Sets )
+     → ICoProduct I ( Sets  {  c₂} ) ci
+SetsICoProduct I fi = record {
+       icoprod = icoproduct I fi
+       ; ki  = λ i x → ki1 i x
+       ; isICoProduct = record {
+              icoproduct = isum 
+            ; kif=q = λ {q} {qi} {i} → kif=q {q} {qi} {i}
+            ; icp-uniqueness = uniq
+            ; icp-cong  = iccong
+       }
+   } where
+        isum : {q : Obj Sets} → ((i : I) → Hom Sets (fi i) q) → Hom Sets (icoproduct I fi) q
+        isum {q} fi (ki1 i x) = fi i x
+        kif=q : {q : Obj Sets} {qi : (i : I) → Hom Sets (fi i) q} {i : I} → Sets [ Sets [ isum qi o (λ x → ki1 i x) ] ≈ qi i ]
+        kif=q {q} {qi} {i} =  extensionality Sets (λ x → refl )
+        uniq : {q : Obj Sets} {h : Hom Sets (icoproduct I fi) q} → Sets [ isum (λ i → Sets [ h o (λ x → ki1 i x) ]) ≈ h ]
+        uniq {q} {h} =  extensionality Sets u1 where
+           u1 : (x : icoproduct I fi ) → isum (λ i → Sets [ h o (λ x₁ → ki1 i x₁) ]) x ≡ h x
+           u1 (ki1 i x) = refl
+        iccong : {q : Obj Sets} {qi qi' : (i : I) → Hom Sets (fi i) q} → ((i : I) → Sets [ qi i ≈ qi' i ]) → Sets [ isum qi ≈ isum qi' ]
+        iccong {q} {qi} {qi'} ieq =  extensionality Sets u2 where
+           u2 : (x : icoproduct I fi ) → isum qi x ≡ isum qi' x
+           u2 (ki1 i x) = cong (λ k → k x ) (ieq i)
 
         --
         --         e             f
@@ -143,22 +202,63 @@ SetsIsEqualizer {c₂} a b f g = record {
                   open  import  Relation.Binary.PropositionalEquality
                   open ≡-Reasoning
 
+record cequ {c : Level} (A B : Set c) ( f g : A → B )  :  Set c where
+  field
+    sel : B
+    modh : (x : A ) → f x ≡ sel
+    modg : (x : A ) → g x ≡ sel
+
+-- λ f₁ x y → (λ x₁ → x (f₁ x₁)) ≡ (λ x₁ → y (f₁ x₁)) → x ≡ y
+-- λ x y → (λ x₁ → x x₁ ≡ y x₁) → x ≡ y
+-- Y / R
+
+-- equc  :  {  c₂ : Level}  {a b : Obj (Sets {c₂}) } ( f g : Hom (Sets {c₂}) a b )
+--      → (x : b ) → ((y : a) →  f y ≡ x ) → ( (y : a) → g y ≡ x ) → cequ a b f g 
+-- equc {_} {a} {b} f g x fyx gyx = record { sel = x ; modh = fyx ; modg = gyx }
+
+-- SetsIsCoEqualizer :  {  c₂ : Level}  →  (a b : Obj (Sets {c₂}) )  (f g : Hom (Sets {c₂}) a b)
+--    → IsCoEqualizer Sets (λ x →  ((y : a) →  f y ≡ x ) → ( (y : a) → g y ≡ x ) → cequ a b f g) f g
+-- SetsIsCoEqualizer {c₂} a b f g = record {
+--                ef=eg  = extensionality Sets (λ x → {!!} )
+--              ; k = {!!} 
+--              ; ke=h = λ {d} {h} {eq} → ke=h {d} {h} {eq}
+--              ; uniqueness  = {!!}
+--        } where
+--           epi :  { c₂ : Level  } {a b c : Obj (Sets { c₂})} (f : Hom Sets a b ) → (x y : Hom Sets b c) → Set c₂
+--           epi f x y = Sets [ Sets [ x o f ] ≈ Sets [ y o f ] ] → Sets [ x ≈ y ]
+--           c : Set  c₂
+--           c = (cequ a b f g )
+--           k : {d : Obj Sets} (h : Hom Sets b d) → Sets [ Sets [ h o f ] ≈ Sets [ h o g ] ] → Hom Sets c d
+--           k {d} h hf=hg = {!!} where
+--              ca : Sets [ Sets [ h o f ] ≈ Sets [ h o g ] ] → a  -- (λ x → h (f x)) ≡ (λ x → h (g x))
+--              ca eq = {!!}
+--              cd : ( {y : a} → f y ≡ g y → sequ a b f g ) → d
+--              cd = {!!}
+--           ke=h : {d : Obj Sets } {h : Hom Sets b d } → { eq : Sets [ Sets [ h o f ] ≈ Sets [ h o g ] ] }
+--            →   Sets [ Sets [ k h eq o {!!} ] ≈ h ]
+--           ke=h {d} {h} {eq} =  extensionality Sets  ( λ  x → begin
+--              k h eq ( {!!}) ≡⟨ {!!} ⟩
+--              h (f {!!})  ≡⟨ {!!}  ⟩
+--              h (g {!!})  ≡⟨ {!!}  ⟩
+--              h x
+--              ∎ )  where
+--                   open  import  Relation.Binary.PropositionalEquality
+--                   open ≡-Reasoning
+
 
 open Functor
 
 ----
 -- C is locally small i.e. Hom C i j is a set c₁
 --
-record Small  {  c₁ c₂ ℓ : Level} ( C : Category c₁ c₂ ℓ ) ( I :  Set  c₁ )
-                : Set (suc (c₁ ⊔ c₂ ⊔ ℓ )) where
-   field
-     hom→ : {i j : Obj C } →    Hom C i j →  I
-     hom← : {i j : Obj C } →  ( f : I ) →  Hom C i j
-     hom-iso : {i j : Obj C } →  { f : Hom C i j } →   C [ hom← ( hom→ f )  ≈ f ]
-     hom-rev : {i j : Obj C } →  { f : I } →   hom→ ( hom← {i} {j} f )  ≡ f
-     ≡←≈ : {i j : Obj C } →  { f g : Hom C i j } →  C [ f ≈ g ] →   f ≡ g
-
-open Small
+-- record Small  {  c₁ c₂ ℓ : Level} ( C : Category c₁ c₂ ℓ ) ( I :  Set  c₁ )
+--                 : Set (suc (c₁ ⊔ c₂ ⊔ ℓ )) where
+--    field
+--      hom→ : {i j : Obj C } →    Hom C i j →  I
+--      hom← : {i j : Obj C } →  ( f : I ) →  Hom C i j
+--      hom-iso : {i j : Obj C } →  { f : Hom C i j } →   C [ hom← ( hom→ f )  ≈ f ]
+--      hom-rev : {i j : Obj C } →  { f : I } →   hom→ ( hom← {i} {j} f )  ≡ f
+--      ≡←≈ : {i j : Obj C } →  { f g : Hom C i j } →  C [ f ≈ g ] →   f ≡ g
 
 ΓObj :  {  c₁ c₂ ℓ : Level} { C : Category c₁ c₂ ℓ } { I :  Set  c₁ } ( s : Small C I ) ( Γ : Functor C ( Sets { c₁} ))
    (i : Obj C ) →　 Set c₁

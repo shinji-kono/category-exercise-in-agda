@@ -223,13 +223,13 @@ module cat-utility where
 
 
         --
-        --         e             f
-        --    c  -------→ a ---------→ b
-        --    ^        .     ---------→
-        --    |      .            g
-        --    |k   .
-        --    |  . h
-        --    d
+        --         e             f          e
+        --    c  -------→ a ---------→ b -------→ c
+        --    ↑        .    ---------→   .        |
+        --    |      .            g        .      |
+        --    |k   .                         .    | k
+        --    |  . h                        h  .  ↓
+        --    d                                   d
 
         record IsEqualizer { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ )  {c a b : Obj A} (e : Hom A c a) (f g : Hom A a b)  : Set  (ℓ ⊔ (c₁ ⊔ c₂)) where
            field
@@ -246,6 +246,22 @@ module cat-utility where
                 equalizer-c : Obj A
                 equalizer : Hom A equalizer-c a
                 isEqualizer : IsEqualizer A equalizer f g
+
+        record IsCoEqualizer { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ )  {c a b : Obj A} (e : Hom A b c) (f g : Hom A a b)  : Set  (ℓ ⊔ (c₁ ⊔ c₂)) where
+           field
+              ef=eg : A [ A [ e o f ] ≈ A [ e o g ] ]
+              k : {d : Obj A}  (h : Hom A b d) → A [ A [ h  o  f ] ≈ A [ h  o g ] ] → Hom A c d
+              ke=h : {d : Obj A}  → ∀ {h : Hom A b d } →  {eq : A [ A [ h  o  f ] ≈ A [ h  o g ] ] } →  A [ A [ k {d} h eq o e ] ≈ h ]
+              uniqueness : {d : Obj A} →  ∀ {h : Hom A b d } →  {eq : A [ A [ h  o  f ] ≈ A [ h  o g ] ] } →  {k' : Hom A c d} →
+                      A [ A [ k' o e  ] ≈ h ] → A [ k {d} h eq  ≈ k' ]
+           equalizer1 : Hom A b c
+           equalizer1 = e
+
+        record CoEqualizer { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) {a b : Obj A} (f g : Hom A a b) : Set  (ℓ ⊔ (c₁ ⊔ c₂)) where
+           field
+                coEqualizer-c : Obj A
+                coEqualizer : Hom A coEqualizer-c a
+                isCoEqualizer : IsEqualizer A coEqualizer f g
 
         --
         -- Product
@@ -296,6 +312,19 @@ module cat-utility where
               κ2 : Hom A b coproduct 
               isProduct : IsCoProduct A a b coproduct κ1 κ2 
 
+        ----
+        -- C is locally small i.e. Hom C i j is a set c₁
+        --
+        open  import  Relation.Binary.PropositionalEquality using (_≡_)
+        record Small  {  c₁ c₂ ℓ : Level} ( C : Category c₁ c₂ ℓ ) ( I :  Set  c₁ )
+                        : Set (suc (c₁ ⊔ c₂ ⊔ ℓ )) where
+           field
+             hom→ : {i j : Obj C } →    Hom C i j →  I
+             hom← : {i j : Obj C } →  ( f : I ) →  Hom C i j
+             hom-iso : {i j : Obj C } →  { f : Hom C i j } →   C [ hom← ( hom→ f )  ≈ f ]
+             hom-rev : {i j : Obj C } →  { f : I } →   hom→ ( hom← {i} {j} f )  ≡ f
+             ≡←≈ : {i j : Obj C } →  { f g : Hom C i j } →  C [ f ≈ g ] →   f ≡ g
+
         -----
         --
         -- product on arbitrary index
@@ -334,6 +363,40 @@ module cat-utility where
               iprod :  Obj A
               pi : (i : I ) → Hom A iprod  ( ai i )  
               isIProduct :  IsIProduct I A iprod  ai  pi  
+
+        record IsICoProduct { c c₁ c₂ ℓ : Level} ( I : Set c) ( A : Category c₁ c₂ ℓ )  
+              ( p  : Obj A )                        -- coproduct
+              ( ci : I → Obj A  )                   -- cases
+              ( ki :  (i : I ) → Hom A ( ci i ) p ) -- coprojections
+                    : Set  (c ⊔ ℓ ⊔ (c₁ ⊔ c₂)) where
+           field
+              icoproduct : {q : Obj A}  → ( qi : (i : I) → Hom A (ci i)  q ) → Hom A p q
+              kif=q :   {q : Obj A}  → { qi : (i : I) → Hom A (ci i) q }
+                  → ∀ { i : I } → A [ A [ ( icoproduct qi ) o ( ki i )  ] ≈  (qi i) ]
+              icp-uniqueness :  {q : Obj A} { h : Hom A p q } → A [ icoproduct ( λ (i : I) →  A [ h o (ki i) ] )  ≈  h ]
+              icp-cong : {q : Obj A}   → { qi : (i : I) → Hom A (ci i)  q} → { qi' : (i : I) → Hom A (ci i) q }
+                        → ( ∀ (i : I ) →  A [ qi i ≈ qi' i ] ) → A [ icoproduct qi ≈ icoproduct qi' ]
+           -- another form of uniquness
+           icp-uniqueness1 : {q : Obj A}  → ( qi : (i : I) → Hom A (ci i) q ) → ( product' : Hom A p q  )
+                  → ( ∀ { i : I } →  A [ A [   product' o ( ki i )] ≈  (qi i) ] )
+                  → A [ product'  ≈ icoproduct qi ]
+           icp-uniqueness1 {a} qi product' eq =  let  open ≈-Reasoning (A) in begin
+                   product'
+                 ≈↑⟨ icp-uniqueness ⟩
+                   icoproduct (λ i₁ → A [ product' o ki i₁ ])
+                 ≈⟨ icp-cong ( λ i → begin
+                   product' o ki i 
+                 ≈⟨ eq {i} ⟩
+                   qi i
+                 ∎ ) ⟩
+                   icoproduct qi
+                 ∎
+
+        record ICoProduct { c c₁ c₂ ℓ : Level} ( I : Set c) ( A : Category c₁ c₂ ℓ )   (ci : I → Obj A) : Set  (c ⊔ ℓ ⊔ (c₁ ⊔ c₂)) where
+            field
+              icoprod :  Obj A
+              ki : (i : I ) → Hom A ( ci i )  icoprod  
+              isICoProduct :  IsICoProduct I A icoprod  ci  ki  
 
 
         -- Pullback

@@ -183,9 +183,9 @@ record IsTopos {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A)
         (Ker : {a : Obj A} → ( h : Hom A a Ω ) → Equalizer A h (A [ ⊤ o (CCC.○ c a) ]))
         (char : {a b : Obj A} → (m :  Hom A b a) → Mono A m  → Hom A a Ω) :  Set ( suc c₁  ⊔  suc c₂ ⊔ suc ℓ ) where
      field
-         char-ker  : {a b : Obj A } {h : Hom A a Ω}  (m :  Hom A b a) → (mono : Mono A m)  
+         char-uniqueness  : {a b : Obj A } {h : Hom A a Ω}  (m :  Hom A b a) → (mono : Mono A m)  
              → A [ char m mono  ≈ h ]
-         ker-char : {a b : Obj A} →  (m :  Hom A b a) → (mono : Mono A m)  → IsoL A m (equalizer (Ker ( char m mono ))) 
+         ker-iso : {a b : Obj A} →  (m :  Hom A b a) → (mono : Mono A m)  → IsoL A m (equalizer (Ker ( char m mono ))) 
 
 record Topos {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ)  (c : CCC A)  :  Set ( suc c₁  ⊔  suc c₂ ⊔ suc ℓ ) where
      field
@@ -200,7 +200,7 @@ record Topos {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ)  (c : CCC A)  
      Monik h = record { isMono = λ f g → monic (Ker h ) } 
      char-m=⊤ :  {a b : Obj A} → (m :  Hom A b a) → (mono : Mono A m) → A [ A [ char m mono  o m ] ≈ A [ ⊤ o CCC.○ c b ] ]
      char-m=⊤ {a} {b} m mono  = begin
-            char m mono  o m ≈⟨ car (IsTopos.char-ker isTopos m mono) ⟩
+            char m mono  o m ≈⟨ car (IsTopos.char-uniqueness isTopos m mono) ⟩
             (⊤ o  CCC.○ c a) o m ≈↑⟨ assoc ⟩
             ⊤ o  (CCC.○ c a o m ) ≈⟨ cdr (IsCCC.e2 (CCC.isCCC c)) ⟩
             ⊤ o CCC.○ c b  ∎  where   open ≈-Reasoning A
@@ -213,20 +213,20 @@ record NatD {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ)  ( １ : Obj A)
 
 open NatD
 
-record IsToposNat {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ)  ( １ : Obj A) (TNat : NatD A １ )
-       (  gNat : (nat : NatD A １ ) → Hom A (Nat TNat) (Nat nat) )
+record IsToposNat {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ)  ( １ : Obj A) (iNat : NatD A １ )
+       (  initialNat : (nat : NatD A １ ) → Hom A (Nat iNat) (Nat nat) )
   : Set ( suc c₁  ⊔  suc c₂ ⊔ suc ℓ ) where
      field
-         izero : (nat : NatD A １ ) → A [ A [ gNat nat o nzero TNat ] ≈ nzero nat ]
-         isuc  : (nat : NatD A １ ) → A [ A [ gNat nat o nsuc TNat ] ≈ A [ nsuc nat o gNat nat ] ]
+         izero : (nat : NatD A １ ) → A [ A [ initialNat nat o nzero iNat ] ≈ nzero nat ]
+         isuc  : (nat : NatD A １ ) → A [ A [ initialNat nat o nsuc iNat ] ≈ A [ nsuc nat o initialNat nat ] ]
 
 record ToposNat {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ)  ( １  : Obj A) : Set ( suc c₁  ⊔  suc c₂ ⊔ suc ℓ ) where
      field
-         TNat : NatD A １
-         gNat : (nat : NatD A １ ) → Hom A (Nat TNat) (Nat nat)
-         nat-unique : (nat : NatD A １ ) → {g : Hom A (Nat TNat) (Nat nat) }
-             → A [ A [ g o nzero TNat ] ≈ nzero nat ]
-             → A [ A [ g o nsuc TNat ] ≈ A [ nsuc nat o g ] ]
-             → A [ g ≈ gNat nat ]
-         isToposN : IsToposNat A １ TNat gNat
+         iNat : NatD A １
+         initialNat : (nat : NatD A １ ) → Hom A (Nat iNat) (Nat nat)
+         nat-unique : (nat : NatD A １ ) → {g : Hom A (Nat iNat) (Nat nat) }
+             → A [ A [ g o nzero iNat ] ≈ nzero nat ]
+             → A [ A [ g o nsuc iNat ] ≈ A [ nsuc nat o g ] ]
+             → A [ g ≈ initialNat nat ]
+         isToposN : IsToposNat A １ iNat initialNat
 
