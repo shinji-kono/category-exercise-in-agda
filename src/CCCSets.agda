@@ -104,11 +104,11 @@ sets  = record {
 --       a -----------→ Ω
 --             h
 
-data II  {c : Level } : Set c where
-     true : II
-     false : II
+data Bool  {c : Level } : Set c where
+     true : Bool
+     false : Bool
 
-data Tker {c : Level} {a : Set c} ( f : a → II {c} ) : Set c where
+data Tker {c : Level} {a : Set c} ( f : a → Bool {c} ) : Set c where
      isTrue : (x : a ) → f x ≡ true → Tker f
 
 irr : { c₂ : Level}  {d : Set c₂ }  { x y : d } ( eq eq' :  x  ≡ y ) → eq ≡ eq'
@@ -116,16 +116,16 @@ irr refl refl = refl
 
 topos : {c : Level } → Topos (Sets {c}) sets
 topos {c}  = record {
-         Ω = II
+         Ω = Bool
       ;  ⊤ = λ _ → true
       ;  Ker = tker
       ;  char = tchar
       ;  isTopos = record {
-                 char-uniqueness  = λ {a} {b} {h} m mono →  extensionality Sets ( λ x → {!!} )
+                 char-uniqueness  = λ {a} {b} {h} m mono →  extensionality Sets ( λ x → uniq h m mono x )
               ;  ker-iso = {!!}
          }
     } where
-        tker   : {a : Obj Sets} (h : Hom Sets a II) → Equalizer Sets h (Sets [ (λ _ → true) o CCC.○ sets a ])
+        tker   : {a : Obj Sets} (h : Hom Sets a Bool) → Equalizer Sets h (Sets [ (λ _ → true) o CCC.○ sets a ])
         tker {a} h = record {
                 equalizer-c = Tker h
               ; equalizer = etker 
@@ -151,8 +151,26 @@ topos {c}  = record {
                 (k'   : Hom Sets d (Tker h)) (ek=h : Sets [ Sets [ etker o k' ] ≈ h1 ]) (x    : d) →  k h1 eq x ≡ k' x
            uniq h1 eq k' ek=h x with cong (λ j → j x) ek=h --  etker (k h1 eq x) ≡ etker (k' x)
            ... | t = tker-cong (k h1 eq x) (k' x) (sym t)
-        tchar : {a b : Obj Sets} (m : Hom Sets b a) → Mono Sets m → Hom Sets a II
+        kiso : {a b : Obj Sets} (m : Hom Sets b a) (mono : Mono Sets m) → IsoL Sets m (Equalizer.equalizer (tker (λ x → true)))
+        kiso {a} {b} m mono = record { iso-L = record {
+            ≅→ = λ x → isTrue (m x) refl ; ≅← = ki1 ; iso→  = {!!} ; iso←  = {!!} } ; iso≈L   = {!!} } where
+          ki1 : Hom Sets (Equalizer.equalizer-c (tker (λ x → true))) b
+          ki1 (isTrue x eq) = {!!}
+        tchar : {a b : Obj Sets} (m : Hom Sets b a) → Mono Sets m → Hom Sets a Bool
         tchar {a} {b} m mono x = true
+        uniq : {a : Obj (Sets {c})} {b : Obj Sets} (h : Hom Sets a Bool) (m : Hom Sets b a) (mono : Mono Sets m) (x : a) → true ≡ h x
+        uniq {a} {b} h m mono x = begin
+            true ≡⟨⟩
+            (λ × → true ) x ≡⟨ {!!} ⟩
+            {!!} ≡⟨ cong (λ k → h (k x)  ) (IsEqualizer.ek=h (Equalizer.isEqualizer (tker h)) {{!!}} {{!!}} )  ⟩
+            h x  ∎  where
+              open ≡-Reasoning 
+              yyy : {c : Obj Sets } → (f g : c → b ) → Sets [ Sets [ m o f ] ≈ Sets [ m o g ] ] → f ≡ g
+              yyy f g eq = Mono.isMono mono f g eq
+              yyy1 : {c : Obj Sets } → (f g : c → b ) → Sets [ Sets [ m o f ] ≈ Sets [ m o g ] ] → f ≡ g
+              yyy1 f g eq = Mono.isMono mono f g eq
+
+           
 
 open import graph
 module ccc-from-graph {c₁ c₂ : Level }  (G : Graph {c₁} {c₂})  where

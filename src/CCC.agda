@@ -156,6 +156,30 @@ record CCC {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) :  Set ( c₁  �
          ε : {a b : Obj A } → Hom A ((a <= b ) ∧ b) a 
          isCCC : IsCCC A １ ○ _∧_ <_,_> π π' _<=_ _* ε 
 
+open Functor
+
+record CCCFunctor {c₁ c₂ ℓ c₁' c₂' ℓ' : Level} (A : Category c₁ c₂ ℓ) (B : Category c₁' c₂' ℓ')
+         (ca : CCC A) (cb : CCC B) (functor : Functor A B)
+         : Set (suc (c₁ ⊔ c₂ ⊔ ℓ ⊔ c₁' ⊔ c₂' ⊔ ℓ')) where
+     field
+       f１ : FObj functor (CCC.１ ca) ≡ CCC.１ cb 
+       f○ : {a : Obj A} → B [ FMap functor (CCC.○ ca a) ≈
+           subst (λ k → Hom B (FObj functor a) k) (sym f１) (CCC.○ cb (FObj functor a)) ]
+       f∧  : {a b : Obj A}   → FObj functor ( CCC._∧_ ca a b ) ≡ CCC._∧_ cb (FObj functor a ) (FObj functor b)
+       f<= : {a b : Obj A}   → FObj functor ( CCC._<=_ ca a b ) ≡ CCC._<=_ cb (FObj functor a ) (FObj functor b)
+       f<> : {a b c : Obj A} → (f : Hom A c a ) → (g : Hom A c b )
+           → B [ FMap functor (CCC.<_,_> ca f  g )  ≈
+                   subst (λ k → Hom B (FObj functor c) k ) (sym f∧ ) ( CCC.<_,_> cb (FMap functor f ) ( FMap functor g )) ]
+       fπ  : {a b : Obj A} → B [ FMap functor (CCC.π ca {a} {b})  ≈
+                   subst (λ k → Hom B k (FObj functor a) ) (sym f∧ ) (CCC.π  cb {FObj functor a} {FObj functor b}) ]
+       fπ' : {a b : Obj A} → B [ FMap functor (CCC.π' ca {a} {b})  ≈
+                   subst (λ k → Hom B k (FObj functor b) ) (sym f∧ ) (CCC.π' cb {FObj functor a} {FObj functor b}) ]
+       f*  : {a b c : Obj A} → (f : Hom A (CCC._∧_ ca a b) c )  → B [ FMap functor (CCC._* ca f)  ≈
+                   subst (λ k → Hom B (FObj functor a) k) (sym f<=) (CCC._*  cb ((subst (λ k → Hom B k (FObj functor c) ) f∧ (FMap functor f) ))) ]
+       fε  : {a b : Obj A} → B [ FMap functor (CCC.ε ca {a} {b} )
+          ≈  subst (λ k → Hom B k (FObj functor a)) (trans (cong (λ k → CCC._∧_ cb k (FObj functor b)) (sym f<=)) (sym f∧))
+              (CCC.ε cb {FObj functor a} {FObj functor b}) ]
+
 ----
 --
 -- Sub Object Classifier as Topos

@@ -3,6 +3,8 @@ module stdalone-kleisli where
 open import Level
 open import Relation.Binary
 open import Relation.Binary.Core
+open import Relation.Binary.PropositionalEquality hiding ( [_] )
+
 
 --        h       g       f
 --     a ---→ b ---→ c ---→ d
@@ -113,8 +115,8 @@ _●_ {l} {A} {B} {C} S T  = record {
            ∎
 
 
---  {A : Set c₁ } {B : Set c₂ } → { f g : A → B }   →  f x  ≡ g x → f  ≡ g
-postulate extensionality : { c₁ c₂ : Level}  → Relation.Binary.PropositionalEquality.Extensionality c₂ c₂
+import Axiom.Extensionality.Propositional
+postulate extensionality : {  c₂  : Level} ( A : Category  {c₂} ) → Axiom.Extensionality.Propositional.Extensionality c₂ c₂
 
 --
 --            t a 
@@ -171,13 +173,6 @@ record Monad {l : Level} { C : Category {l} } (T : Functor C C) : Set (suc l) wh
       μ :  NTrans (T ● T) T 
       isMonad : IsMonad T η μ
 
-record KleisliHom { c : Level} { A : Category {c} } { T : Functor A A } (a : Obj A)  (b : Obj A)
-      : Set c where
-    field
-        KMap :  Hom A a ( FObj T b )
-
-open KleisliHom
-
                           
 Left : {l : Level} (C : Category {l} ) {a b c : Obj C } {f f' : Hom C b c } {g : Hom C a b } →  f ≡ f' → C [ f  o g ] ≡ C [ f'  o g ]
 Left {l} C {a} {b} {c} {f} {f'} {g} refl = cong ( λ z → C [ z  o g  ] ) refl
@@ -191,111 +186,114 @@ Assoc {l} C = IsCategory.assoc ( isCategory C )
 
 
 Kleisli : {l : Level} (C : Category {l} ) (T : Functor C C ) ( M : Monad T ) → Category {l}
-Kleisli C T M = record {
+Kleisli {l} C T M = record {
        Obj = Obj C 
-    ;  Hom = λ a b → KleisliHom {_} {C} {T} a b
+    ;  Hom = λ a b → Hom C a ( FObj T b )
     ;  _o_ = λ {a} {b} {c} f g  → join {a} {b} {c} f g
-    ;  id = λ a  → record { KMap = TMap (Monad.η M) a }
+    ;  id = λ a  → TMap (Monad.η M) a 
     ;  isCategory = record {
             idL = idL
           ; idR = idR
           ; assoc = assoc
        }
   } where
+      open Monad M
+      KleisliHom : (a b : Obj C) →  Set l
+      KleisliHom a b = Hom C a ( FObj T b )
       join : { a b c : Obj C } → KleisliHom b c → KleisliHom a b → KleisliHom a c
-      join {a} {b} {c} f g = record { KMap =  ( C [ TMap (Monad.μ M) c o  C [ FMap T ( KMap f ) o  KMap g  ] ] ) } 
-      idL : {a b : Obj C} {f : KleisliHom a b} → join (record { KMap = TMap (Monad.η M) b }) f ≡ f
+      join {a} {b} {c} f g =  C [ TMap (Monad.μ M) c o  C [ FMap T ( f ) o  g  ] ] 
+      idL : {a b : Obj C} {f : KleisliHom a b} → join (TMap η b ) f ≡ f
       idL {a} {b} {f} =  let open ≡-Reasoning in begin
-              record { KMap = C [  TMap (Monad.μ M) b o C [  FMap T (TMap (Monad.η M) b) o KMap f ] ] }
-           ≡⟨ cong ( λ z → record { KMap = z } ) ( begin
-                C [  TMap (Monad.μ M) b o C [  FMap T (TMap (Monad.η M) b) o KMap f ] ]
+              C [  TMap μ b o C [  FMap T (TMap η b) o f ] ] 
+           ≡⟨ ( begin
+                C [  TMap μ b o C [  FMap T (TMap η b) o f ] ]
              ≡⟨ IsCategory.assoc ( isCategory C ) ⟩
-                C [  C [ TMap (Monad.μ M) b o  FMap T (TMap (Monad.η M) b) ] o KMap f  ]
-             ≡⟨ cong ( λ z → C [ z  o KMap f ] ) ( IsMonad.unity2 (Monad.isMonad M )  )   ⟩
-                C [ id C (FObj T b) o KMap f  ]
+                C [  C [ TMap μ b o  FMap T (TMap η b) ] o f  ]
+             ≡⟨ cong ( λ z → C [ z  o f ] ) ( IsMonad.unity2 (Monad.isMonad M )  )   ⟩
+                C [ id C (FObj T b) o f  ]
              ≡⟨ IsCategory.idL ( isCategory C ) ⟩
-                KMap f
+                f
              ∎ ) ⟩
-              record { KMap = KMap f }
+              f
             ∎
-      idR : {a b : Obj C} {f : KleisliHom a b} → join f (record { KMap = TMap (Monad.η M) a }) ≡ f
+      idR : {a b : Obj C} {f : KleisliHom a b} → join f ( TMap η a ) ≡ f
       idR {a} {b} {f} =  let open ≡-Reasoning in begin
-              record { KMap =  C [ TMap (Monad.μ M) b o C [ FMap T (KMap f) o TMap (Monad.η M) a ] ]  }
-           ≡⟨ cong ( λ z → record { KMap = z } ) ( begin
-                C [ TMap (Monad.μ M) b o C [ FMap T (KMap f) o TMap (Monad.η M) a ] ]
-             ≡⟨  cong ( λ z → C [ TMap (Monad.μ M) b  o z ] ) ( IsNTrans.commute (isNTrans  (Monad.η M) ))  ⟩
-                C [ TMap (Monad.μ M) b o C [ TMap (Monad.η M) (FObj T b) o  KMap f  ] ]
+              C [ TMap μ b o C [ FMap T f o TMap η a ] ]  
+           ≡⟨ ( begin
+                C [ TMap μ b o C [ FMap T f o TMap η a ] ]
+             ≡⟨  cong ( λ z → C [ TMap μ b  o z ] ) ( IsNTrans.commute (isNTrans  η ))  ⟩
+                C [ TMap μ b o C [ TMap η (FObj T b) o  f  ] ]
              ≡⟨  IsCategory.assoc ( isCategory C )  ⟩
-                C [ C [ TMap (Monad.μ M) b o TMap (Monad.η M) (FObj T b) ] o  KMap f  ] 
-             ≡⟨ cong ( λ z → C [ z  o KMap f ] ) ( IsMonad.unity1 (Monad.isMonad M )  )  ⟩
-                C [ id C  (FObj T b)  o  KMap f  ] 
+                C [ C [ TMap μ b o TMap η (FObj T b) ] o  f  ] 
+             ≡⟨ cong ( λ z → C [ z  o f ] ) ( IsMonad.unity1 (Monad.isMonad M )  )  ⟩
+                C [ id C  (FObj T b)  o  f  ] 
              ≡⟨ IsCategory.idL ( isCategory C )  ⟩
-                KMap f
+                f
              ∎ ) ⟩
-              record { KMap = KMap f }
+              f 
            ∎
-      --
-      --        TMap (Monad.μ M) d ・ (  FMap T (KMap f) ・ (  TMap (Monad.μ M) c ・ (  FMap T (KMap g) ・ KMap h ) ) ) ) 
-      --
-      --      h                T g                       μ c          
-      --   a ---→ T b -----------------→ T T c -------------------------→ T c 
-      --            |                       |                                |
-      --            |                       |                                |
-      --            |                       | T T f     NAT μ                | T f
-      --            |                       |                                |
-      --            |                       v            μ (T d)             v  
-      --            |      distr T       T T T d -------------------------→ T T d 
-      --            |                       |                                |
-      --            |                       |                                |
-      --            |                       | T μ d     Monad-assoc          | μ d
-      --            |                       |                                |
-      --            |                       v                                v
-      --            +------------------→ T T d -------------------------→ T d 
-      --               T (μ d・T f・g)                   μ d
-      --
-      --        TMap (Monad.μ M) d ・ (  FMap T (( TMap (Monad.μ M) d ・ (  FMap T (KMap f) ・ KMap g ) ) ) ・ KMap h ) )  
-      --
+--
+--        TMap μ d ・ (  FMap T f ・ (  TMap μ c ・ (  FMap T g ・ h ) ) ) ) 
+--
+--      h       T g               μ c          
+--   a -→ T b -----→ T T c ---------------→ T c 
+--        |          |                      |
+--        |          |                      |
+--        |          | T T f     NAT μ      | T f
+--        |          |                      |
+--        |          v            μ (T d)   v  
+--        |distr T   T T T d -------------→ T T d 
+--        |          |                      |
+--        |          |                      |
+--        |          | T μ d                | μ d
+--        |          |      Monad-assoc     |
+--        |          v                      v
+--        +--------→ T T d ----------------→ T d 
+--   T (μ d・T f・g)              μ d
+--
+--        TMap μ d ・ (  FMap T (( TMap μ d ・ (  FMap T f ・ g ) ) ) ・ h ) )  
+--
       _・_ : {a b c : Obj C } ( f : Hom C b c ) ( g : Hom C a b ) → Hom C a c
       f ・ g  = C [ f  o g ]
       assoc :  {a b c d : Obj C} {f : KleisliHom c d} {g : KleisliHom b c} {h : KleisliHom a b} → join f (join g h) ≡ join (join f g) h
       assoc {a} {b} {c} {d} {f} {g} {h} =  let open ≡-Reasoning in begin
             join f (join g h)
          ≡⟨⟩
-            record { KMap =  TMap (Monad.μ M) d ・ ( FMap T (KMap f) ・ ( TMap (Monad.μ M) c ・ ( FMap T (KMap g) ・  KMap h ))) }
-         ≡⟨ cong ( λ z → record { KMap = z } ) ( begin
-                 (  TMap (Monad.μ M) d ・ (  FMap T (KMap f) ・ (  TMap (Monad.μ M) c ・ (  FMap T (KMap g) ・ KMap h ) ) ) ) 
+             TMap μ d ・ ( FMap T f ・ ( TMap μ c ・ ( FMap T g ・  h ))) 
+         ≡⟨ ( begin
+                 (  TMap μ d ・ (  FMap T f ・ (  TMap μ c ・ (  FMap T g ・ h ) ) ) ) 
              ≡⟨ Right C ( Right C (Assoc C)) ⟩
-                 (  TMap (Monad.μ M) d ・ (  FMap T (KMap f) ・ (  ( TMap (Monad.μ M) c ・ FMap T (KMap g) ) ・ KMap h ) ) ) 
+                 (  TMap μ d ・ (  FMap T f ・ (  ( TMap μ c ・ FMap T g ) ・ h ) ) ) 
              ≡⟨  Assoc C  ⟩
-                 ( (  TMap (Monad.μ M) d ・  FMap T (KMap f) ) ・  ( ( TMap (Monad.μ M) c ・ FMap T (KMap g) ) ・ KMap h ) ) 
+                 ( (  TMap μ d ・  FMap T f ) ・  ( ( TMap μ c ・ FMap T g ) ・ h ) ) 
              ≡⟨  Assoc C  ⟩
-                 ( ( ( TMap (Monad.μ M) d ・  FMap T (KMap f) ) ・  ( TMap (Monad.μ M) c ・ FMap T (KMap g) ) )  ・ KMap h  ) 
+                 ( ( ( TMap μ d ・  FMap T f ) ・  ( TMap μ c ・ FMap T g ) )  ・ h  ) 
              ≡⟨ sym ( Left  C (Assoc C )) ⟩
-                 ( (  TMap (Monad.μ M) d  ・ (  FMap T (KMap f)  ・  ( TMap (Monad.μ M) c ・ FMap T (KMap g) ) ) )  ・ KMap h  ) 
+                 ( (  TMap μ d  ・ (  FMap T f  ・  ( TMap μ c ・ FMap T g ) ) )  ・ h  ) 
              ≡⟨ Left C ( Right C (Assoc C)) ⟩
-                 ( (  TMap (Monad.μ M) d  ・ ( ( FMap T (KMap f)   ・  TMap (Monad.μ M) c )  ・  FMap T (KMap g)  ) ) ・ KMap h  ) 
+                 ( (  TMap μ d  ・ ( ( FMap T f   ・  TMap μ c )  ・  FMap T g  ) ) ・ h  ) 
              ≡⟨ Left C (Assoc C)⟩
-                 ( (  ( TMap (Monad.μ M) d  ・  ( FMap T (KMap f)   ・  TMap (Monad.μ M) c ) )  ・  FMap T (KMap g)  ) ・ KMap h  ) 
-             ≡⟨ Left C ( Left C ( Right C  ( IsNTrans.commute (isNTrans  (Monad.μ M) )  ) ))  ⟩
-                ( ( ( TMap (Monad.μ M) d ・ ( TMap (Monad.μ M) (FObj T d) ・ FMap (T ● T) (KMap f) ) ) ・ FMap T (KMap g) ) ・ KMap h )
+                 ( (  ( TMap μ d  ・  ( FMap T f   ・  TMap μ c ) )  ・  FMap T g  ) ・ h  ) 
+             ≡⟨ Left C ( Left C ( Right C  ( IsNTrans.commute (isNTrans  μ )  ) ))  ⟩
+                ( ( ( TMap μ d ・ ( TMap μ (FObj T d) ・ FMap (T ● T) f ) ) ・ FMap T g ) ・ h )
              ≡⟨ sym ( Left  C (Assoc C)) ⟩
-                ( ( TMap (Monad.μ M) d ・ ( ( TMap (Monad.μ M) (FObj T d) ・ FMap (T ● T) (KMap f) ) ・ FMap T (KMap g) ) ) ・ KMap h )
+                ( ( TMap μ d ・ ( ( TMap μ (FObj T d) ・ FMap (T ● T) f ) ・ FMap T g ) ) ・ h )
              ≡⟨ sym ( Left C ( Right  C (Assoc C))) ⟩
-                ( ( TMap (Monad.μ M) d ・ ( TMap (Monad.μ M) (FObj T d) ・ ( FMap (T ● T) (KMap f) ・ FMap T (KMap g) ) ) ) ・ KMap h )
+                ( ( TMap μ d ・ ( TMap μ (FObj T d) ・ ( FMap (T ● T) f ・ FMap T g ) ) ) ・ h )
              ≡⟨ sym ( Left C ( Right C (Right C (IsFunctor.distr (isFunctor T ) ) ) )) ⟩
-                ( ( TMap (Monad.μ M) d ・ ( TMap (Monad.μ M) (FObj T d) ・ FMap T (( FMap T (KMap f) ・ KMap g )) ) ) ・ KMap h )
+                ( ( TMap μ d ・ ( TMap μ (FObj T d) ・ FMap T (( FMap T f ・ g )) ) ) ・ h )
              ≡⟨ Left C (Assoc C)  ⟩
-                ( ( ( TMap (Monad.μ M) d ・ TMap (Monad.μ M) (FObj T d) ) ・ FMap T (( FMap T (KMap f) ・ KMap g )) ) ・ KMap h )
+                ( ( ( TMap μ d ・ TMap μ (FObj T d) ) ・ FMap T (( FMap T f ・ g )) ) ・ h )
              ≡⟨ Left C (Left C ( IsMonad.assoc (Monad.isMonad M ) ) ) ⟩
-                ( ( ( TMap (Monad.μ M) d ・ FMap T (TMap (Monad.μ M) d) ) ・ FMap T (( FMap T (KMap f) ・ KMap g )) ) ・ KMap h )
+                ( ( ( TMap μ d ・ FMap T (TMap μ d) ) ・ FMap T (( FMap T f ・ g )) ) ・ h )
              ≡⟨ sym ( Left C (Assoc C)) ⟩
-                ( ( TMap (Monad.μ M) d ・ ( FMap T (TMap (Monad.μ M) d) ・ FMap T (( FMap T (KMap f) ・ KMap g )) ) ) ・ KMap h )
+                ( ( TMap μ d ・ ( FMap T (TMap μ d) ・ FMap T (( FMap T f ・ g )) ) ) ・ h )
              ≡⟨ sym (Assoc C) ⟩
-                ( TMap (Monad.μ M) d ・ ( ( FMap T (TMap (Monad.μ M) d) ・ FMap T (( FMap T (KMap f) ・ KMap g )) ) ・ KMap h ) )
+                ( TMap μ d ・ ( ( FMap T (TMap μ d) ・ FMap T (( FMap T f ・ g )) ) ・ h ) )
              ≡⟨ sym (Right C ( Left C (IsFunctor.distr (isFunctor T ))))  ⟩
-                 (  TMap (Monad.μ M) d ・ (  FMap T (( TMap (Monad.μ M) d ・ (  FMap T (KMap f) ・ KMap g ) ) ) ・ KMap h ) )  
+                 (  TMap μ d ・ (  FMap T (( TMap μ d ・ (  FMap T f ・ g ) ) ) ・ h ) )  
              ∎ ) ⟩
-            record { KMap = (  TMap (Monad.μ M) d ・ (  FMap T (( TMap (Monad.μ M) d ・ (  FMap T (KMap f) ・ KMap g ) ) ) ・ KMap h ) )  }
+            TMap μ d ・ (  FMap T (( TMap μ d ・ (  FMap T f ・ g ) ) ) ・ h )   
          ≡⟨⟩
             join (join f g) h
          ∎
@@ -304,16 +302,21 @@ Kleisli C T M = record {
 --       U : Functor C    D   
 --       F : Functor D    C      
 --
---       Hom C     a    b     ←---→ Hom D    a (U●F b )
+--       natural iso in Hom C    (F a) b   ←-→  Hom D    a U(b) 
 --
---       Hom C    (F a) (F b) ←---→ Hom D    a (U●F b )
+--       Hom C    (F a) b     ←---→  Hom D    a U(b) 
+--           |                       |
+--         Ff|                      f|
+--           |                       |
+--           ↓                       ↓
+--       Hom C    (F (f a)) b ←---→  Hom D    (f a) U(b)
 --
---       Hom C    (F a) b     ←---→  Hom D    a U(b)                 Hom C    (F a) b     ←---→  Hom D    a U(b) 
---           |                       |                                |                             |
---         Ff|                      f|                                |f                            |Uf
---           |                       |                                |                             |
---           ↓                       ↓                                ↓                             ↓
---       Hom C    (F (f a)) b ←---→  Hom D    (f a) U(b)             Hom C    (F a) (f b) ←---→  Hom D    a U(f b) 
+--       Hom C    (F a) b     ←---→  Hom D    a U(b) 
+--           |                       |
+--           |f                      |Uf
+--           |                       |  
+--           ↓                       ↓ 
+--       Hom C    (F a) (f b) ←---→  Hom D    a U(f b) 
 --
 --
 
@@ -356,45 +359,43 @@ record UnityOfOppsite ( C D : Category )  ( U : Functor C D ) ( F : Functor D C 
          ∎
 
 
-
-
 _・_ : {a b c : Obj Sets } ( f : Hom Sets b c ) ( g : Hom Sets a b ) → Hom Sets a c
 f ・ g  = Sets [ f  o g ]
 
 U :  ( T : Functor Sets Sets ) → { m : Monad T } → Functor (Kleisli  Sets T m)  Sets
 U T {m} = record {
        FObj = FObj T
-     ; FMap = λ {a} {b} f x → TMap ( μ m ) b ( FMap T ( KMap f ) x )
+     ; FMap = λ {a} {b} f x → TMap ( μ m ) b ( FMap T ( f ) x )
      ; isFunctor = record { identity =  IsMonad.unity2 (isMonad m)  ; distr = distr }
   } where
       open Monad
       distr :  {a b c : Obj (Kleisli Sets T m)} {f : Hom (Kleisli Sets T m) a b} {g : Hom (Kleisli Sets T m) b c} → 
-           (λ x → TMap (μ m) c (FMap T (KMap (Kleisli Sets T m [ g o f ])) x))
-               ≡ (( (λ x → TMap (μ m) c (FMap T (KMap g) x)) ・ (λ x → TMap (μ m) b (FMap T (KMap f) x)) ))  
+           (λ x → TMap (μ m) c (FMap T ((Kleisli Sets T m [ g o f ])) x))
+               ≡ (( (λ x → TMap (μ m) c (FMap T g x)) ・ (λ x → TMap (μ m) b (FMap T f x)) ))  
       distr {a} {b} {c} {f} {g}  = let open ≡-Reasoning in begin
-            ( TMap (μ m) c ・ FMap T (KMap (Kleisli Sets T m [ g o f ])) )
+            ( TMap (μ m) c ・ FMap T ((Kleisli Sets T m [ g o f ])) )
          ≡⟨⟩
-            ( TMap (μ m) c ・ FMap T ( ( TMap (μ m) c  ・ ( FMap T ( KMap g ) ・ KMap f ) ) ) )
+            ( TMap (μ m) c ・ FMap T ( ( TMap (μ m) c  ・ ( FMap T ( g ) ・ f ) ) ) )
          ≡⟨ Right Sets {_} {_} {_} {TMap (μ m) c} {_} {_} ( IsFunctor.distr (Functor.isFunctor T) )  ⟩
-            ( TMap (μ m) c  ・ (  FMap T ( TMap (μ m) c) ・ FMap T ( ( FMap T (KMap g)  ・ KMap f ) ) ) ) 
+            ( TMap (μ m) c  ・ (  FMap T ( TMap (μ m) c) ・ FMap T ( ( FMap T g  ・ f ) ) ) ) 
          ≡⟨ sym ( Left Sets  (IsMonad.assoc (isMonad m )))  ⟩
-           ( ( TMap (μ m) c ・ TMap (μ m) (FObj T c) ) ・ (FMap T (( FMap T (KMap g) ・ KMap f ))) )
+           ( ( TMap (μ m) c ・ TMap (μ m) (FObj T c) ) ・ (FMap T (( FMap T g ・ f ))) )
          ≡⟨ Right Sets {_} {_} {_} {TMap (μ m) c} ( Right Sets {_} {_} {_} {TMap (μ m) (FObj T c)} ( IsFunctor.distr (Functor.isFunctor T) ) ) ⟩
-           ( ( TMap (μ m) c ・ TMap (μ m) (FObj T c) ) ・ ( FMap T ( FMap T (KMap g)) ・ FMap T ( KMap f ) ) )
+           ( ( TMap (μ m) c ・ TMap (μ m) (FObj T c) ) ・ ( FMap T ( FMap T g) ・ FMap T ( f ) ) )
          ≡⟨ sym ( Right Sets {_} {_} {_} {TMap (μ m) c} ( Left Sets (IsNTrans.commute ( NTrans.isNTrans (μ m))))) ⟩
-            ( ( TMap (μ m) c ・ FMap T (KMap g) ) ・ ( TMap (μ m) b ・ FMap T (KMap f) ) ) 
+            ( ( TMap (μ m) c ・ FMap T g ) ・ ( TMap (μ m) b ・ FMap T f ) ) 
          ∎
 
 
 F :  ( T : Functor Sets Sets ) → {m : Monad T} → Functor Sets ( Kleisli Sets T m)
 F T {m} = record {
-       FObj = λ a → a ; FMap = λ {a} {b} f → record { KMap = λ x →  TMap (η m) b (f x) }  
+       FObj = λ a → a ; FMap = λ {a} {b} f →  λ x →  TMap (η m) b (f x) 
      ; isFunctor = record { identity = refl ; distr = distr }
   } where
       open Monad
-      distr : {a b c : Obj Sets} {f : Hom Sets a b} {g : Hom Sets b c} → record { KMap = λ x → TMap (η m) c ((( g ・ f )) x) } ≡
-          Kleisli Sets T m [ record { KMap = λ x → TMap (η m) c (g x) } o record { KMap = λ x → TMap (η m) b (f x) } ]
-      distr {a} {b} {c} {f} {g}  = let open ≡-Reasoning in ( cong ( λ z → record { KMap = z } ) ( begin
+      distr : {a b c : Obj Sets} {f : Hom Sets a b} {g : Hom Sets b c} →  (λ x → TMap (η m) c ((( g ・ f )) x))  ≡
+          ( (Kleisli Sets T m ) [ (λ x → TMap (η m) c (g x))  o  (λ x → TMap (η m) b (f x) ) ] )
+      distr {a} {b} {c} {f} {g}  = let open ≡-Reasoning in  ( begin
            ( TMap (η m) c ・ ( g ・ f ) )
          ≡⟨ Left Sets {_} {_} {_} {( TMap (η m) c ・ g ) } ( sym ( IsNTrans.commute ( NTrans.isNTrans (η m) ) ))  ⟩
            ( ( FMap T g  ・ TMap (η m) b )  ・ f )
@@ -404,7 +405,7 @@ F T {m} = record {
             ( ( TMap (μ m) c ・ FMap T (TMap (η m) c) ) ・ ( FMap T g ・  ( TMap (η m) b ・ f ) ) )
          ≡⟨ sym ( Right Sets {_} {_} {_} {TMap (μ m) c} {_} ( Left Sets {_} {_} {_} { FMap T (( TMap (η m) c  ・ g ) )} ( IsFunctor.distr (Functor.isFunctor T) )))  ⟩
            ( TMap (μ m) c ・ ( (  FMap T (( TMap (η m) c  ・ g ) ) ・ ( TMap (η m) b  ・ f ) ) ) )
-         ∎ ))
+         ∎ )
 
 --
 --   Hom Sets     a         (FObj U b)   = Hom Sets a (T b)
@@ -415,8 +416,8 @@ lemma→ :  ( T : Functor Sets Sets ) → (m : Monad T ) → UnityOfOppsite (Kle
 lemma→ T m =
      let open Monad in
       record {
-          left  = λ {a} {b} f → record { KMap = f }
-       ;  right   = λ {a} {b} f x → TMap (μ m) b ( TMap ( η m ) (FObj T b) ( (KMap f) x ) )
+          left  = λ {a} {b} f → f
+       ;  right   = λ {a} {b} f x → TMap (μ m) b ( TMap ( η m ) (FObj T b) ( f x ) )
        ;  left-injective = left-injective
        ;  right-injective = right-injective
        ;  right-commute1 = right-commute1
@@ -433,37 +434,37 @@ lemma→ T m =
              f
            ∎
          right-injective : {a : Obj Sets} {b : Obj (Kleisli Sets T m)} {f : Hom (Kleisli Sets T m) (FObj (F T {m}) a) b}
-            → record { KMap = λ x → TMap (μ m) b (TMap (η m) (FObj T b) (KMap f x)) } ≡ f
-         right-injective {a} {b} {f} = let open ≡-Reasoning in cong ( λ z → record { KMap = z } ) ( begin
-              ( TMap (μ m) b  ・ ( TMap (η m) (FObj T b)  ・ KMap f ) )
+            →  (λ x → TMap (μ m) b (TMap (η m) (FObj T b) (f x)))  ≡ f
+         right-injective {a} {b} {f} = let open ≡-Reasoning in ( begin
+              ( TMap (μ m) b  ・ ( TMap (η m) (FObj T b)  ・ f ) )
            ≡⟨ Left Sets ( IsMonad.unity1 ( isMonad m ) )  ⟩
-             KMap f
+             f
            ∎ )
          right-commute1 : {a : Obj Sets} {b b' : Obj (Kleisli Sets T m)} {f : Hom (Kleisli Sets T m) (FObj (F T {m}) a) b} {k : Hom (Kleisli Sets T m) b b'} →
-               (λ x → TMap (μ m) b' (TMap (η m) (FObj T b') (KMap (Kleisli Sets T m [ k o f ] ) x)))
-                  ≡ (( FMap (U T {m}) k ・ (λ x → TMap (μ m) b (TMap (η m) (FObj T b) (KMap f x))) ))
+               (λ x → TMap (μ m) b' (TMap (η m) (FObj T b') ((Kleisli Sets T m [ k o f ] ) x)))
+                  ≡ (( FMap (U T {m}) k ・ (λ x → TMap (μ m) b (TMap (η m) (FObj T b) (f x))) ))
          right-commute1 {a} {b} {b'} {f} {k} = let open ≡-Reasoning in begin
-              ( TMap (μ m) b'  ・ ( TMap (η m) (FObj T b')  ・ KMap (Kleisli Sets T m [ k o f ] ) ) )
+              ( TMap (μ m) b'  ・ ( TMap (η m) (FObj T b')  ・ (Kleisli Sets T m [ k o f ] ) ) )
             ≡⟨⟩
-              TMap (μ m) b'  ・ ( TMap (η m) (FObj T b')  ・ ( TMap (μ m) b' ・ ( FMap T (KMap k)  ・ KMap f  )))
+              TMap (μ m) b'  ・ ( TMap (η m) (FObj T b')  ・ ( TMap (μ m) b' ・ ( FMap T (k)  ・ f  )))
             ≡⟨ Left Sets  ( IsMonad.unity1 ( isMonad m ))  ⟩
-              TMap (μ m) b'  ・ ( FMap T (KMap k)  ・  KMap f  )
-            ≡⟨ Right Sets {_} {_} {_} {TMap ( μ m ) b' ・ FMap T ( KMap k )} ( Left Sets ( sym ( IsMonad.unity1 ( isMonad m )  )  ) )  ⟩
-              ( TMap ( μ m ) b' ・ FMap T ( KMap k ) ) ・ ( TMap (μ m) b  ・ ( TMap (η m) (FObj T b)  ・ KMap f ) ) 
+              TMap (μ m) b'  ・ ( FMap T (k)  ・  f  )
+            ≡⟨ Right Sets {_} {_} {_} {TMap ( μ m ) b' ・ FMap T ( k )} ( Left Sets ( sym ( IsMonad.unity1 ( isMonad m )  )  ) )  ⟩
+              ( TMap ( μ m ) b' ・ FMap T ( k ) ) ・ ( TMap (μ m) b  ・ ( TMap (η m) (FObj T b)  ・ f ) ) 
             ≡⟨⟩
-              ( FMap (U T {m}) k ・ ( TMap (μ m) b  ・ ( TMap (η m) (FObj T b)  ・ KMap f ) ) )
+              ( FMap (U T {m}) k ・ ( TMap (μ m) b  ・ ( TMap (η m) (FObj T b)  ・ f ) ) )
             ∎ 
          right-commute2 :   {a a' : Obj Sets} {b : Obj (Kleisli Sets T m)} {f : Hom (Kleisli Sets T m) (FObj (F T {m}) a) b} {h : Hom Sets a' a} →
-                (λ x → TMap (μ m) b (TMap (η m) (FObj T b) (KMap (Kleisli Sets T m [ f o FMap (F T {m}) h ] ) x)))
-                    ≡ (( (λ x → TMap (μ m) b (TMap (η m) (FObj T b) (KMap f x)))・ h ))
+                (λ x → TMap (μ m) b (TMap (η m) (FObj T b) ((Kleisli Sets T m [ f o FMap (F T {m}) h ] ) x)))
+                    ≡ (( (λ x → TMap (μ m) b (TMap (η m) (FObj T b) (f x)))・ h ))
          right-commute2 {a} {a'} {b} {f} {h} = let open ≡-Reasoning in begin
-              TMap (μ m) b ・ (TMap (η m) (FObj T b) ・ (KMap (Kleisli Sets T m [ f o FMap (F T {m}) h ] )))
+              TMap (μ m) b ・ (TMap (η m) (FObj T b) ・ ((Kleisli Sets T m [ f o FMap (F T {m}) h ] )))
             ≡⟨⟩
-              TMap (μ m) b ・ (TMap (η m) (FObj T b) ・ ( (TMap (μ m) b ・ FMap T  (KMap f) ) ・ ( TMap (η m) a ・ h )))
+              TMap (μ m) b ・ (TMap (η m) (FObj T b) ・ ( (TMap (μ m) b ・ FMap T  f ) ・ ( TMap (η m) a ・ h )))
             ≡⟨  Left Sets (IsMonad.unity1 ( isMonad m ))  ⟩
-              (TMap (μ m) b ・ FMap T  (KMap f) ) ・ ( TMap (η m) a ・ h )
+              (TMap (μ m) b ・ FMap T  f ) ・ ( TMap (η m) a ・ h )
             ≡⟨  Right Sets {_} {_} {_} {TMap (μ m) b} ( Left Sets ( IsNTrans.commute ( isNTrans (η m)  )))    ⟩
-              TMap (μ m) b ・ (( TMap (η m) (FObj T  b)・ KMap f ) ・ h )
+              TMap (μ m) b ・ (( TMap (η m) (FObj T  b)・ f ) ・ h )
             ∎
 
 
@@ -550,9 +551,4 @@ lemma← U F uo = record {
          ≡⟨⟩
             TMap μ a ・ FMap (U ● F) (TMap μ a) 
          ∎
-
-
-
-
-
 

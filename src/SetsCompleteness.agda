@@ -202,48 +202,58 @@ SetsIsEqualizer {c₂} a b f g = record {
                   open  import  Relation.Binary.PropositionalEquality
                   open ≡-Reasoning
 
-record cequ {c : Level} (A B : Set c) ( f g : A → B )  :  Set c where
-  field
-    sel : B
-    modh : (x : A ) → f x ≡ sel
-    modg : (x : A ) → g x ≡ sel
 
--- λ f₁ x y → (λ x₁ → x (f₁ x₁)) ≡ (λ x₁ → y (f₁ x₁)) → x ≡ y
--- λ x y → (λ x₁ → x x₁ ≡ y x₁) → x ≡ y
--- Y / R
+-- -- we have to make this Level c, that is {B : Set c} → (A → B) is iso to I : Set c
+-- record cequ {c : Level} (A B : Set c)  :  Set (suc c) where
+--   field
+--     rev : {B : Set c} → (A → B) → B → A
+--     surjective : {B : Set c } (x : B ) → (g : A → B)  → g (rev g x) ≡ x
 
--- equc  :  {  c₂ : Level}  {a b : Obj (Sets {c₂}) } ( f g : Hom (Sets {c₂}) a b )
---      → (x : b ) → ((y : a) →  f y ≡ x ) → ( (y : a) → g y ≡ x ) → cequ a b f g 
--- equc {_} {a} {b} f g x fyx gyx = record { sel = x ; modh = fyx ; modg = gyx }
+-- -- λ f₁ x y → (λ x₁ → x (f₁ x₁)) ≡ (λ x₁ → y (f₁ x₁)) → x ≡ y
+-- -- λ x y → (λ x₁ → x x₁ ≡ y x₁) → x ≡ y
+-- -- Y / R
 
--- SetsIsCoEqualizer :  {  c₂ : Level}  →  (a b : Obj (Sets {c₂}) )  (f g : Hom (Sets {c₂}) a b)
---    → IsCoEqualizer Sets (λ x →  ((y : a) →  f y ≡ x ) → ( (y : a) → g y ≡ x ) → cequ a b f g) f g
--- SetsIsCoEqualizer {c₂} a b f g = record {
---                ef=eg  = extensionality Sets (λ x → {!!} )
---              ; k = {!!} 
---              ; ke=h = λ {d} {h} {eq} → ke=h {d} {h} {eq}
---              ; uniqueness  = {!!}
---        } where
---           epi :  { c₂ : Level  } {a b c : Obj (Sets { c₂})} (f : Hom Sets a b ) → (x y : Hom Sets b c) → Set c₂
---           epi f x y = Sets [ Sets [ x o f ] ≈ Sets [ y o f ] ] → Sets [ x ≈ y ]
---           c : Set  c₂
---           c = (cequ a b f g )
---           k : {d : Obj Sets} (h : Hom Sets b d) → Sets [ Sets [ h o f ] ≈ Sets [ h o g ] ] → Hom Sets c d
---           k {d} h hf=hg = {!!} where
---              ca : Sets [ Sets [ h o f ] ≈ Sets [ h o g ] ] → a  -- (λ x → h (f x)) ≡ (λ x → h (g x))
---              ca eq = {!!}
---              cd : ( {y : a} → f y ≡ g y → sequ a b f g ) → d
---              cd = {!!}
---           ke=h : {d : Obj Sets } {h : Hom Sets b d } → { eq : Sets [ Sets [ h o f ] ≈ Sets [ h o g ] ] }
---            →   Sets [ Sets [ k h eq o {!!} ] ≈ h ]
---           ke=h {d} {h} {eq} =  extensionality Sets  ( λ  x → begin
---              k h eq ( {!!}) ≡⟨ {!!} ⟩
---              h (f {!!})  ≡⟨ {!!}  ⟩
---              h (g {!!})  ≡⟨ {!!}  ⟩
---              h x
---              ∎ )  where
---                   open  import  Relation.Binary.PropositionalEquality
---                   open ≡-Reasoning
+-- open import HomReasoning
+
+-- etsIsCoEqualizer :  {  c₂ : Level}  →  (a b : Obj (Sets {c₂}) )  (f g : Hom (Sets {c₂}) a b)
+--   → IsCoEqualizer Sets (λ x → {!!}    ) f g
+-- etsIsCoEqualizer {c₂} a b f g = record {
+--               ef=eg  = extensionality Sets (λ x → {!!} )
+--             ; k = {!!} 
+--             ; ke=h = λ {d} {h} {eq} → ke=h {d} {h} {eq}
+--             ; uniqueness  = {!!}
+--       } where
+--          c : Set  c₂
+--          c = {!!} --cequ a b   
+--          d : cequ a b   
+--          d = {!!}
+--          ef=eg :  Sets [ Sets [ cequ.rev d f o f ] ≈ Sets [ cequ.rev d g o g ] ]
+--          ef=eg = begin
+--              Sets [ cequ.rev d f o f ]  ≈↑⟨ idL ⟩
+--              Sets [ id1 Sets _ o Sets [ cequ.rev d f o f ]  ] ≈↑⟨ assoc ⟩
+--              Sets [ Sets [ id1 Sets _ o  cequ.rev d f ] o f ] ≈⟨ {!!}  ⟩
+--              Sets [ Sets [ id1 Sets _ o  cequ.rev d (id1 Sets _) ] o {!!} ] ≈⟨ car ( extensionality Sets (λ x →  cequ.surjective d {!!} {!!} ))  ⟩
+--              Sets [ {!!} o f ] ≈⟨ {!!}  ⟩
+--              Sets [ id1 Sets _ o Sets [ cequ.rev d g o g ]  ] ≈⟨ idL ⟩
+--              Sets [ cequ.rev d g o g ]  ∎  where open ≈-Reasoning Sets
+--          epi :  { c₂ : Level  } {a b c : Obj (Sets { c₂})} (e : Hom Sets b c ) → (f g : Hom Sets a b) → Set c₂
+--          epi e f g = Sets [ Sets [ e o f ] ≈ Sets [ e o g ] ] → Sets [ f ≈ g ]
+--          k : {d : Obj Sets} (h : Hom Sets b d) → Sets [ Sets [ h o f ] ≈ Sets [ h o g ] ] → Hom Sets c d
+--          k {d} h hf=hg = {!!} where
+--             ca : Sets [ Sets [ h o f ] ≈ Sets [ h o g ] ] → a  -- (λ x → h (f x)) ≡ (λ x → h (g x))
+--             ca eq = {!!}
+--             cd : ( {y : a} → f y ≡ g y → sequ a b f g ) → d
+--             cd = {!!}
+--          ke=h : {d : Obj Sets } {h : Hom Sets b d } → { eq : Sets [ Sets [ h o f ] ≈ Sets [ h o g ] ] }
+--           →   Sets [ Sets [ k h eq o {!!} ] ≈ h ]
+--          ke=h {d} {h} {eq} =  extensionality Sets  ( λ  x → begin
+--             k h eq ( {!!}) ≡⟨ {!!} ⟩
+--             h (f {!!})  ≡⟨ {!!}  ⟩
+--             h (g {!!})  ≡⟨ {!!}  ⟩
+--             h x
+--             ∎ )  where
+--                  open  import  Relation.Binary.PropositionalEquality
+--                  open ≡-Reasoning
 
 
 open Functor

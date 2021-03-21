@@ -387,35 +387,17 @@ Yoneda-epi {b} {x} {y} g h yg=yh = begin
              s : CatSurjective A SetsAop YonedaFunctor 
              s = Yoneda-surjective 
 
+--- How to prove it? from smallness?
 
-data [_]_~_ {c₁ c₂ ℓ} (C : Category c₁ c₂ ℓ) {A B : Obj C} (f : Hom C A B)
-     : ∀{X Y : Obj C} → Hom C X Y → Set (suc (c₁ ⊔ c₂ ⊔ ℓ)) where
-  refl : {g : Hom C A B} → (eqv : C [ f ≈ g ]) → [ C ] f ~ g
+data _~_   {a b : Obj A} (f : Hom A a b)
+     : ∀{x y : Obj A} → Hom A x y → Set (suc (c₁ ⊔ c₂ ⊔ ℓ)) where
+  refl : {g : Hom A a b} → (eqv : A [ f ≈ g ]) →  f ~ g
 
-≃→a=a : {c₁ ℓ : Level}  (B : Category c₁ c₁ ℓ ) → {a b a' b' : Obj B }
-     → ( f : Hom B a b )
-     → ( g : Hom B a' b' )
-     → [_]_~_ B f g → a ≡ a'
-≃→a=a B f g (refl eqv) = refl
-
-a2 : {a : Obj A } → [ A ] id1 A a ~ id1 A a
-a2 = refl (≈-Reasoning.refl-hom A)
-
-postule
-   eqObj1 : {a b a' b' : Obj A } → Hom A a b ≡ Hom A a' b' → b ≡ b'
---  eqObj1 = ≃→a=a A ? ? a2    close but ...
-
-open import  Relation.Binary.HeterogeneousEquality as HE using (_≅_) 
-
-a1 : { c₁ : Level} {A B : Set c₁ } {a : A } { b : B } → a ≅ b → A ≡ B 
-a1 HE.refl = refl
+postulate  -- ?
+     eqObj1 : {a b a' b' : Obj A } → Hom A a b ≡ Hom A a' b' → b ≡ b'
 
 Yoneda-full-embed : {a b : Obj A } → FObj YonedaFunctor a ≡ FObj YonedaFunctor b → a ≡ b
-Yoneda-full-embed {a} {b} eq = eqObj1 A ylem1 where
+Yoneda-full-embed {a} {b} eq = eqObj1 ylem1 where
      ylem1 : Hom A a a ≡ Hom A a b
      ylem1 = cong (λ k → FObj k a) eq
-     ylem2 : (x : Obj  A) → Category.cod SetsAop (FMap YonedaFunctor (id1 A x)) ≡ FObj YonedaFunctor x
-     ylem2 x = refl
-     ylem3 : {a b : Obj A } →  Hom A a b →  Obj A
-     ylem3 x = Category.cod A x
 
