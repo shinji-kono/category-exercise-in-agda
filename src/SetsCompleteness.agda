@@ -166,6 +166,8 @@ fe=ge0 (elem x eq )  =  eq
 
 irr : { c₂ : Level}  {d : Set c₂ }  { x y : d } ( eq eq' :  x  ≡ y ) → eq ≡ eq'
 irr refl refl = refl
+elm-cong : {  c₂ : Level}  {a b : Set c₂}  {f g : Hom (Sets {c₂}) a b}  (x y : sequ a b f g) → equ x ≡ equ y →  x  ≡ y
+elm-cong ( elem x eq  ) (elem .x eq' ) refl   =  ≡cong ( λ ee → elem x ee ) ( irr eq eq' )
 
 open sequ
 
@@ -187,8 +189,6 @@ SetsIsEqualizer {c₂} a b f g = record {
            ek=h {d} {h} {eq} = refl
            injection :  { c₂ : Level  } {a b  : Obj (Sets { c₂})} (f  : Hom Sets a b) → Set c₂
            injection f =  ∀ x y  → f x ≡ f y →  x  ≡ y
-           elm-cong :   (x y : sequ a b f g) → equ x ≡ equ y →  x  ≡ y
-           elm-cong ( elem x eq  ) (elem .x eq' ) refl   =  ≡cong ( λ ee → elem x ee ) ( irr eq eq' )
            lemma5 :   {d : Obj Sets} {h : Hom Sets d a} {fh=gh : Sets [ Sets [ f o h ] ≈ Sets [ g o h ] ]} {k' : Hom Sets d (sequ a b f g)} →
                 Sets [ Sets [ (λ e → equ e) o k' ] ≈ h ] → (x : d ) → equ (k h fh=gh x) ≡ equ (k' x)
            lemma5 refl  x  = refl   -- somehow this is not equal to lemma1

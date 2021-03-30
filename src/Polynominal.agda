@@ -254,6 +254,7 @@ module Polynominal { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) ( C :
               f ∙  < π , π' >  ≈⟨ cdr (IsCCC.π-id isCCC) ⟩
               f ∙  id1 A _ ≈⟨ idR ⟩
               f ∎  ) where
+          -- fc1 may be wrong. is should be a field of PHom, and  k x {x ∙ ○ b} i may be proved standalone.
           fc1 : {b c : Obj A} (p : PHom b c) → A [ k x (phi p)  ≈ k x {hom p} i ]    -- it looks like (*) in page 60
           fc1 {b} {c} p = uniq record { hom =  hom p ; phi = i }  ( k x (phi p)) ( begin -- non terminating because of the record, which we may avoid
                k x (phi p) ∙ < x ∙ ○ b , id1 A b > ≈⟨ fc0 p ⟩

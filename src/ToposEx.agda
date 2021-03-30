@@ -77,40 +77,26 @@ module ToposEx   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A
     ; π1 = m    
     ; π2 = ○ b   
     ; isPullback = record {
-              commute = char-m=⊤ t m mono
-         ;    pullback = λ {d} {p1} {p2} eq →  f← o k  p1 p2 eq
+              commute = IsTopos.char-m=⊤ (Topos.isTopos t) m mono
+         ;    pullback = λ {d} {p1} {p2} eq →  k  p1 p2 eq
          ;    π1p=π1 = λ {d} {p1'} {p2'} {eq} → lemma3 p1' p2' eq
          ;    π2p=π2 = λ {d} {p1'} {p2'} {eq} → trans-hom (IsCCC.e2 isCCC) (sym (IsCCC.e2 isCCC))
          ;    uniqueness = uniq
       }
     } where
-        f← = Iso.≅← (IsoL.iso-L (IsTopos.ker-iso (isTopos t) m mono ))
-        f→ = Iso.≅→ (IsoL.iso-L (IsTopos.ker-iso (isTopos t) m mono ))
-        k : {d : Obj A} (p1 : Hom A d a) → (p2 : Hom A d １) →  A [ A [ char t m mono o p1 ] ≈ A [ ⊤ t o p2 ] ] → Hom A d (equalizer-c (Ker t (char t m mono)))
-        k p1 p2 eq = IsEqualizer.k (isEqualizer (Ker t (char t m mono))) p1 (mh=⊤ (char t m mono) p1 p2 eq )
+        k : {d : Obj A} (p1 : Hom A d a) → (p2 : Hom A d １) →  A [ A [ char t m mono o p1 ] ≈ A [ ⊤ t o p2 ] ] → Hom A d b
+        k p1 p2 eq = IsEqualizer.k (IsTopos.ker-m (isTopos t) m mono) p1 (mh=⊤ (char t m mono) p1 p2 eq )
         lemma3 : {d : Obj A} (p1 : Hom A d a) → (p2 : Hom A d １)
-            →  (eq : A [ A [ char t m mono o p1 ] ≈ A [ ⊤ t o p2 ] ] ) → m o (f← o k p1 p2 eq ) ≈ p1 
+            →  (eq : A [ A [ char t m mono o p1 ] ≈ A [ ⊤ t o p2 ] ] ) → m o (k p1 p2 eq ) ≈ p1 
         lemma3 {d} p1 p2 eq = begin
-           m o (f← o k p1 p2 eq ) ≈⟨ assoc ⟩
-           (m o f← ) o k p1 p2 eq ≈⟨ car (IsoL.iso≈L (IsTopos.ker-iso (isTopos t) m mono )) ⟩
-           equalizer (Ker t (char t m mono)) o k p1 p2 eq ≈⟨ IsEqualizer.ek=h (isEqualizer (Ker t (char t m mono))) ⟩
+           m  o k p1 p2 eq ≈⟨ IsEqualizer.ek=h (IsTopos.ker-m (isTopos t) m mono)  ⟩
            p1 ∎
         uniq : {d : Obj A} (p' : Hom A d b) (π1' : Hom A d a) (π2' : Hom A d １)
             (eq : A [ A [ char t m mono o π1' ] ≈ A [ ⊤ t o π2' ] ]) →
-            A [ A [ m o p' ] ≈ π1' ] → A [ A [ ○ b o p' ] ≈ π2' ] → f← o k π1' π2' eq ≈ p' 
+            A [ A [ m o p' ] ≈ π1' ] → A [ A [ ○ b o p' ] ≈ π2' ] → k π1' π2' eq ≈ p' 
         uniq {d} p p1 p2 eq pe1 pe2 = begin
-             f← o k p1 p2 eq ≈⟨ cdr ( IsEqualizer.uniqueness  (isEqualizer (Ker t  (char t m mono))) lemma4) ⟩
-             f← o (f→ o p ) ≈⟨ assoc ⟩
-             (f← o f→ ) o p  ≈⟨ car (Iso.iso→ (IsoL.iso-L (IsTopos.ker-iso (isTopos t) m mono ))) ⟩
-             id1 A _ o p  ≈⟨ idL ⟩
-             p ∎ where
-                lemma4 : A [ A [ equalizer (Ker t (char t m mono)) o (f→ o p) ] ≈ p1 ]
-                lemma4 = begin
-                  equalizer (Ker t (char t m mono)) o (f→ o p)  ≈⟨ assoc ⟩
-                  (equalizer (Ker t (char t m mono)) o f→ ) o p  ≈⟨ car (IsoL.L≈iso (IsTopos.ker-iso (isTopos t) m mono )) ⟩
-                  m o p  ≈⟨ pe1  ⟩
-                  p1 ∎ where
-
+             k p1 p2 eq ≈⟨  IsEqualizer.uniqueness  (IsTopos.ker-m (isTopos t) m mono) pe1 ⟩
+             p ∎ 
 
   δmono : {b : Obj A } → Mono A < id1 A b , id1 A b >
   δmono  = record {
@@ -149,7 +135,7 @@ module ToposEx   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A
             char t < id1 A b , id1 A b > δmono o < f , f >  ≈↑⟨ cdr ( IsCCC.π-cong isCCC idL idL ) ⟩
             char t < id1 A b , id1 A b > δmono o < id1 A _ o f , id1 A _ o f >    ≈↑⟨ cdr ( IsCCC.distr-π isCCC ) ⟩
             char t < id1 A b , id1 A b > δmono o (< id1 A _ , id1 A _ > o f)   ≈⟨ assoc ⟩
-           (char t < id1 A b , id1 A b > δmono o < id1 A b , id1 A b > ) o f  ≈⟨ car (char-m=⊤ t < id1 A b , id1 A b > δmono  ) ⟩
+           (char t < id1 A b , id1 A b > δmono o < id1 A b , id1 A b > ) o f  ≈⟨ car (IsTopos.char-m=⊤ (Topos.isTopos t) _  δmono ) ⟩
             (⊤ t o  ○  b)  o f  ≈↑⟨ assoc ⟩
             ⊤ t o  (○  b  o f)  ≈⟨ cdr (IsCCC.e2 isCCC)  ⟩
             ⊤ t o  ○  a  ∎ 

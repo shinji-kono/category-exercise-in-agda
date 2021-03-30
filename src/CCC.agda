@@ -184,13 +184,14 @@ record CCCFunctor {c₁ c₂ ℓ c₁' c₂' ℓ' : Level} (A : Category c₁ c�
 --
 -- Sub Object Classifier as Topos
 -- pull back on
---             ○ b
---       b -----------→ 1
---       |              |
---     m |              | ⊤
---       ↓    char m    ↓
---       a -----------→ Ω
---             h
+--
+--     iso          ○ b
+--  e ⇐====⇒  b -----------→ 1         m ∙ f ≈ m ∙ g → f ≈ g
+--  |         |              |
+--  |       m |              | ⊤
+--  |         ↓    char m    ↓    Ker h = Equalizer (char m mono)  (⊤ ∙ ○ a )
+--  + ------→ a -----------→ Ω        m = Equalizer (char m mono)  (⊤ ∙ ○ a )
+--     ker h        h
 --
 open Equalizer
 open import equalizer
@@ -208,8 +209,16 @@ record IsTopos {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A)
         (char : {a b : Obj A} → (m :  Hom A b a) → Mono A m  → Hom A a Ω) :  Set ( suc c₁  ⊔  suc c₂ ⊔ suc ℓ ) where
      field
          char-uniqueness  : {a b : Obj A } {h : Hom A a Ω}  (m :  Hom A b a) → (mono : Mono A m)  
-             → A [ char m mono  ≈ h ]
-         ker-iso : {a b : Obj A} →  (m :  Hom A b a) → (mono : Mono A m)  → IsoL A m (equalizer (Ker ( char m mono ))) 
+             → A [ char (equalizer (Ker h)) (record { isMono = λ f g → monic (Ker h)}) ≈ h ]
+         ker-m : {a b : Obj A} → (m : Hom A b a ) → (mono : Mono A m) → IsEqualizer A m (char m mono) (A [ ⊤ o (CCC.○ c a) ])
+     ker : {a : Obj A} → ( h : Hom A a Ω )  → Hom A ( equalizer-c (Ker h) ) a
+     ker h = equalizer (Ker h)
+     char-m=⊤ :  {a b : Obj A} → (m :  Hom A b a) → (mono : Mono A m) → A [ A [ char m mono  o m ] ≈ A [ ⊤ o CCC.○ c b ] ]
+     char-m=⊤ {a} {b} m mono  = begin
+            char m mono  o m ≈⟨ IsEqualizer.fe=ge (ker-m m mono)  ⟩
+            (⊤ o  CCC.○ c a) o m ≈↑⟨ assoc ⟩
+            ⊤ o  (CCC.○ c a o m ) ≈⟨ cdr (IsCCC.e2 (CCC.isCCC c)) ⟩
+            ⊤ o CCC.○ c b  ∎  where   open ≈-Reasoning A
 
 record Topos {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ)  (c : CCC A)  :  Set ( suc c₁  ⊔  suc c₂ ⊔ suc ℓ ) where
      field
@@ -218,16 +227,8 @@ record Topos {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ)  (c : CCC A)  
          Ker : {a : Obj A} → ( h : Hom A a Ω ) → Equalizer A h (A [ ⊤ o (CCC.○ c a) ])
          char : {a b : Obj A} → (m : Hom A b a ) → Mono A m → Hom A a Ω
          isTopos : IsTopos A c Ω ⊤ Ker char
-     ker : {a : Obj A} → ( h : Hom A a Ω )  → Hom A ( equalizer-c (Ker h) ) a
-     ker h = equalizer (Ker h)
      Monik : {a : Obj A} (h : Hom A a Ω)  → Mono A (equalizer (Ker h))
      Monik h = record { isMono = λ f g → monic (Ker h ) } 
-     char-m=⊤ :  {a b : Obj A} → (m :  Hom A b a) → (mono : Mono A m) → A [ A [ char m mono  o m ] ≈ A [ ⊤ o CCC.○ c b ] ]
-     char-m=⊤ {a} {b} m mono  = begin
-            char m mono  o m ≈⟨ car (IsTopos.char-uniqueness isTopos m mono) ⟩
-            (⊤ o  CCC.○ c a) o m ≈↑⟨ assoc ⟩
-            ⊤ o  (CCC.○ c a o m ) ≈⟨ cdr (IsCCC.e2 (CCC.isCCC c)) ⟩
-            ⊤ o CCC.○ c b  ∎  where   open ≈-Reasoning A
 
 record NatD {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ)  ( １ : Obj A) : Set ( suc c₁  ⊔  suc c₂ ⊔ suc ℓ ) where
      field

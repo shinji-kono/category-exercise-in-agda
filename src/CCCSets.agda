@@ -20,16 +20,18 @@ open import Category.Sets
 
 -- Sets is a CCC
 
-import Axiom.Extensionality.Propositional
-postulate extensionality : { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) → Axiom.Extensionality.Propositional.Extensionality  c₂ c₂
+open import SetsCompleteness hiding (ki1)
+
+-- import Axiom.Extensionality.Propositional
+-- postulate extensionality : { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) → Axiom.Extensionality.Propositional.Extensionality  c₂ c₂
 
 data One  {c : Level } : Set c where
-  OneObj : One   -- () in Haskell ( or any one object set )
+  ! : One   -- () in Haskell ( or any one object set )
 
 sets : {c : Level } → CCC (Sets {c})
 sets  = record {
          １  = One
-       ; ○ = λ _ → λ _ → OneObj
+       ; ○ = λ _ → λ _ → !
        ; _∧_ = _∧_
        ; <_,_> = <,>
        ; π = π
@@ -42,7 +44,7 @@ sets  = record {
          １ : Obj Sets 
          １ = One 
          ○ : (a : Obj Sets ) → Hom Sets a １
-         ○ a = λ _ → OneObj
+         ○ a = λ _ → !
          _∧_ : Obj Sets → Obj Sets → Obj Sets
          _∧_ a b =  a /\  b
          <,> : {a b c : Obj Sets } → Hom Sets c a → Hom Sets c b → Hom Sets c ( a ∧ b)
@@ -73,7 +75,7 @@ sets  = record {
                   where
                         e20 : (x : a ) → f x ≡ ○ a x
                         e20 x with f x
-                        e20 x | OneObj = refl
+                        e20 x | ! = refl
                 e3a : {a b c : Obj Sets} {f : Hom Sets c a} {g : Hom Sets c b} →
                     Sets [ ( Sets [  π  o ( <,> f g)  ] ) ≈ f ]
                 e3a = refl
@@ -96,80 +98,144 @@ sets  = record {
                     Sets [ f ≈ f' ] → Sets [ f * ≈ f' * ]
                 *-cong refl = refl
 
---             ○ b
---       b -----------→ 1
---       |              |
---     m |              | ⊤
---       ↓    char m    ↓
---       a -----------→ Ω
---             h
+open import Relation.Nullary
+open import Data.Empty
+open import equalizer
 
-data Bool  {c : Level } : Set c where
+data Bool { c : Level } : Set c where
      true : Bool
      false : Bool
 
-data Tker {c : Level} {a : Set c} ( f : a → Bool {c} ) : Set c where
-     isTrue : (x : a ) → f x ≡ true → Tker f
+¬f≡t  : { c : Level } → ¬ (false {c} ≡ true )
+¬f≡t ()
 
-irr : { c₂ : Level}  {d : Set c₂ }  { x y : d } ( eq eq' :  x  ≡ y ) → eq ≡ eq'
-irr refl refl = refl
+¬x≡t∧x≡f  : { c : Level } → {x : Bool {c}} → ¬ ((x ≡ false) /\ (x ≡ true) )
+¬x≡t∧x≡f {_} {true} p = ⊥-elim (¬f≡t (sym (proj₁ p)))
+¬x≡t∧x≡f {_} {false} p = ⊥-elim (¬f≡t (proj₂ p))
+     
+data _∨_ {c c' : Level } (a : Set c) (b : Set c') : Set (c ⊔ c') where
+    case1 : a → a ∨ b
+    case2 : b → a ∨ b
 
-topos : {c : Level } → Topos (Sets {c}) sets
-topos {c}  = record {
-         Ω = Bool
+--
+-- m : b → a determins a subset of a as an image
+-- b and m-image in a has one to one correspondence with an equalizer (x : b) → (y : a) ≡ m x.
+--   so tchar m mono and ker (tchar m mono) is Iso.
+--   Finding (x : b) from (y : a) is non constructive. Assuming LEM of image.
+--
+data image {c : Level} {a b : Set c} (m : Hom Sets b a) : a → Set c where
+   isImage : (x : b ) → image m (m x) 
+
+topos : {c : Level } → ({ c : Level} →  (b : Set c) → b ∨ (¬ b)) → Topos (Sets {c}) sets
+topos {c} lem = record {
+         Ω =  Bool
       ;  ⊤ = λ _ → true
       ;  Ker = tker
-      ;  char = tchar
+      ;  char = λ m mono → tchar m mono
       ;  isTopos = record {
                  char-uniqueness  = λ {a} {b} {h} m mono →  extensionality Sets ( λ x → uniq h m mono x )
-              ;  ker-iso = {!!}
+              ;  ker-m =  imequ
          }
     } where
-        tker   : {a : Obj Sets} (h : Hom Sets a Bool) → Equalizer Sets h (Sets [ (λ _ → true) o CCC.○ sets a ])
+--
+-- In Sets, equalizers exist as
+-- data sequ {c : Level} (A B : Set c) ( f g : A → B ) :  Set c where
+--     elem : (x : A ) → (eq : f x ≡ g x) → sequ A B f g
+-- m have to be isomorphic to ker (char m).
+--
+--                   i          ○ b
+--   ker (char m)  ----→ b -----------→ 1
+--       |         ←---- |              |
+--       |           j   |m             | ⊤   char m : a → Ω = {true,false}
+--       |   e           ↓    char m    ↓     if y : a ≡ m (∃ x : b) → true  ( data char )
+--       +-------------→ a -----------→ Ω     else         false
+--                             h
+--
+        tker   : {a : Obj Sets} (h : Hom Sets a Bool) → Equalizer Sets h (Sets [ (λ _ → true ) o CCC.○ sets a ])
         tker {a} h = record {
-                equalizer-c = Tker h
-              ; equalizer = etker 
-              ; isEqualizer = record {
-                      fe=ge = extensionality Sets ( λ x → e-eq x )
-                   ;  k = k
-                   ;  ek=h = λ {d} {h1} {eq} → extensionality Sets ( λ x → refl )
-                   ;  uniqueness = λ {d} {h1} {eq} {k'} ek=h  → extensionality Sets ( λ x → uniq h1 eq k' ek=h x )
-              }
-          } where
-           etker : Hom Sets ( Tker h ) a
-           etker (isTrue x eq) = x
-           e-eq : (x : Tker h ) → h ( etker  x ) ≡ true 
-           e-eq (isTrue x eq ) = eq
-           k :  {d : Obj Sets} (h₁ : Hom Sets d a) →
-                    Sets [ Sets [ h o h₁ ] ≈ Sets [ Sets [ (λ _ → true) o CCC.○ sets a ] o h₁ ] ] →
-                    Hom Sets d (Tker h)
-           k {d} h1 hf=hg x = isTrue (h1 x) ( cong ( λ k → k x) hf=hg )
-           tker-cong :   (x y : Tker h ) → etker x ≡ etker y  →  x  ≡ y
-           tker-cong ( isTrue x eq  ) (isTrue .x eq' ) refl   =  cong ( λ ee → isTrue x ee ) ( irr eq eq' )
-           uniq : {d    : Obj Sets} (h1   : Hom Sets d a) -- etker (k h1 eq x) ≡ etker (k' x)
-                (eq   : Sets [ Sets [ h o h1 ] ≈ Sets [ Sets [ (λ _ → true) o (λ _ → OneObj) ] o h1 ] ])
-                (k'   : Hom Sets d (Tker h)) (ek=h : Sets [ Sets [ etker o k' ] ≈ h1 ]) (x    : d) →  k h1 eq x ≡ k' x
-           uniq h1 eq k' ek=h x with cong (λ j → j x) ek=h --  etker (k h1 eq x) ≡ etker (k' x)
-           ... | t = tker-cong (k h1 eq x) (k' x) (sym t)
-        kiso : {a b : Obj Sets} (m : Hom Sets b a) (mono : Mono Sets m) → IsoL Sets m (Equalizer.equalizer (tker (λ x → true)))
-        kiso {a} {b} m mono = record { iso-L = record {
-            ≅→ = λ x → isTrue (m x) refl ; ≅← = ki1 ; iso→  = {!!} ; iso←  = {!!} } ; iso≈L   = {!!} } where
-          ki1 : Hom Sets (Equalizer.equalizer-c (tker (λ x → true))) b
-          ki1 (isTrue x eq) = {!!}
-        tchar : {a b : Obj Sets} (m : Hom Sets b a) → Mono Sets m → Hom Sets a Bool
-        tchar {a} {b} m mono x = true
-        uniq : {a : Obj (Sets {c})} {b : Obj Sets} (h : Hom Sets a Bool) (m : Hom Sets b a) (mono : Mono Sets m) (x : a) → true ≡ h x
-        uniq {a} {b} h m mono x = begin
-            true ≡⟨⟩
-            (λ × → true ) x ≡⟨ {!!} ⟩
-            {!!} ≡⟨ cong (λ k → h (k x)  ) (IsEqualizer.ek=h (Equalizer.isEqualizer (tker h)) {{!!}} {{!!}} )  ⟩
-            h x  ∎  where
-              open ≡-Reasoning 
-              yyy : {c : Obj Sets } → (f g : c → b ) → Sets [ Sets [ m o f ] ≈ Sets [ m o g ] ] → f ≡ g
-              yyy f g eq = Mono.isMono mono f g eq
-              yyy1 : {c : Obj Sets } → (f g : c → b ) → Sets [ Sets [ m o f ] ≈ Sets [ m o g ] ] → f ≡ g
-              yyy1 f g eq = Mono.isMono mono f g eq
+                equalizer-c =  sequ a Bool h (λ _ → true )
+              ; equalizer = λ e → equ e
+              ; isEqualizer = SetsIsEqualizer _ _ _ _ }
+        tchar : {a b : Obj Sets} (m : Hom Sets b a) → (mono : Mono Sets m ) → a → Bool {c}
+        tchar {a} {b} m mono y with lem (image m y )
+        ... | case1 t = true
+        ... | case2 f = false
 
+        open import Relation.Binary.HeterogeneousEquality as HE using (_≅_ ) 
+        img-cong : {a b : Obj (Sets {c}) } (m : Hom Sets b a) → (mono : Mono Sets m ) → (y y' : a) → y ≡ y' → (s : image m y ) (t : image m y') → s ≅ t
+        img-cong {a} {b} m mono .(m x) .(m x₁) eq (isImage x) (isImage x₁)
+            with cong (λ k → k ! ) ( Mono.isMono mono {One} (λ _ → x) (λ _ → x₁ ) ( extensionality Sets ( λ _ → eq )) )
+        ... | refl = HE.refl
+        image-uniq : {a b : Obj (Sets {c})} (m : Hom Sets b a) → (mono : Mono Sets m )  (y : a) → (i0 i1 : image m y ) → i0 ≡ i1
+        image-uniq {a} {b} m mono y i0 i1 = HE.≅-to-≡ (img-cong m mono y y refl i0 i1)
+        tchar¬Img : {a b : Obj Sets} (m : Hom Sets b a) → (mono : Mono Sets m )  (y : a) → tchar m mono y ≡ false → ¬ image m y
+        tchar¬Img  m mono y eq im with lem (image m y) 
+        ... | case2 n  = n im
+        b2i : {a b : Obj (Sets {c}) } (m : Hom Sets b a) → (x : b) → image m (m x)
+        b2i m x = isImage x
+        i2b : {a b : Obj (Sets {c}) } (m : Hom Sets b a) →  {y : a} → image m y → b
+        i2b m (isImage x) = x
+        img-mx=y :  {a b : Obj (Sets {c}) } (m : Hom Sets b a) →  {y : a} → (im : image m y ) → m (i2b m im) ≡ y
+        img-mx=y m (isImage x) = refl
+        b2i-iso : {a b : Obj (Sets {c}) } (m : Hom Sets b a) →  (x : b) → i2b m (b2i m x) ≡ x
+        b2i-iso m x = refl
+        b2s : {a b : Obj (Sets {c}) } (m : Hom Sets b a) → (mono : Mono Sets m ) → (x : b) →  sequ a Bool (tchar m mono)  (λ _ → true )
+        b2s m mono x with tchar m mono (m x) | inspect (tchar m mono) (m x)
+        ... | true | record {eq = eq1} = elem (m x) eq1
+        ... | false | record { eq = eq1 } with tchar¬Img m mono (m x) eq1
+        ... | t = ⊥-elim (t (isImage x)) 
+        s2i  : {a b : Obj (Sets {c}) } (m : Hom Sets b a) → (mono : Mono Sets m ) → (e : sequ a Bool (tchar m mono)  (λ _ → true )) → image m (equ e)
+        s2i {a} {b} m mono (elem y eq) with lem (image m y)
+        ... | case1 im = im
+        isol : {a b : Obj (Sets {c}) } (m : Hom Sets b a) → (mono : Mono Sets m ) → IsoL Sets m (λ (e : sequ a Bool (tchar m mono)  (λ _ → true )) → equ e )
+        isol {a} {b} m mono  = record { iso-L = record { ≅→ = b→s ; ≅← = b←s ;
+               iso→  =  extensionality Sets ( λ x → iso1 x )
+             ; iso←  =  extensionality Sets ( λ x → iso2 x) } ; iso≈L = extensionality Sets ( λ s → iso3 s ) } where
+          b→s : Hom Sets b (sequ a Bool (tchar m mono) (λ _ → true))
+          b→s x = b2s m mono x
+          b←s : Hom Sets (sequ a Bool (tchar m mono) (λ _ → true)) b
+          b←s (elem y eq) = i2b m (s2i m mono (elem y eq))
+          iso3 : (s : sequ a Bool (tchar m mono) (λ _ → true)) → m (b←s s) ≡ equ s
+          iso3 (elem y eq) with lem (image m y)
+          ... | case1 (isImage x) = refl
+          iso1 : (x : b) → b←s ( b→s x ) ≡  x
+          iso1 x with  tchar m mono (m x) | inspect (tchar m mono ) (m x)
+          ... | true | record { eq = eq1 }  = begin
+             b←s ( elem (m x) eq1 )  ≡⟨⟩
+             i2b m (s2i m mono (elem (m x ) eq1 ))  ≡⟨ cong (λ k → i2b m k) (image-uniq m mono (m x) (s2i m mono (elem (m x ) eq1 )) (isImage x) ) ⟩
+             i2b m (isImage x)  ≡⟨⟩
+             x ∎ where open ≡-Reasoning
+          iso1 x | false | record { eq = eq1 } = ⊥-elim ( tchar¬Img m mono (m x) eq1 (isImage x))
+          iso2 : (x : sequ a Bool (tchar m mono) (λ _ → true) ) →  (Sets [ b→s o b←s ]) x ≡ id1 Sets (sequ a Bool (tchar m mono) (λ _ → true)) x
+          iso2 (elem y eq) = begin
+             b→s ( b←s (elem y eq)) ≡⟨⟩
+             b2s m mono ( i2b m (s2i m mono (elem y eq)))  ≡⟨⟩
+             b2s m mono x  ≡⟨ elm-cong _ _ (iso21 x ) ⟩
+             elem (m x) eq1 ≡⟨ elm-cong _ _ mx=y ⟩
+             elem y eq  ∎ where
+               open ≡-Reasoning
+               x : b
+               x = i2b m (s2i m mono (elem y eq))
+               eq1 : tchar m mono (m x) ≡ true
+               eq1 with lem (image m (m x))
+               ... | case1 t = refl
+               ... | case2 n = ⊥-elim (n (isImage x))
+               mx=y : m x ≡ y
+               mx=y = img-mx=y m (s2i m mono (elem y eq))
+               iso21 : (x : b)  → equ (b2s m mono x ) ≡ m x
+               iso21 x with  tchar m mono (m x) | inspect (tchar m mono) (m x)
+               ... | true | record {eq = eq1} = refl
+               ... | false | record { eq = eq1 } with tchar¬Img m mono (m x) eq1
+               ... | t = ⊥-elim (t (isImage x)) 
+        imequ   : {a b : Obj Sets} (m : Hom Sets b a) (mono : Mono Sets m) → IsEqualizer Sets m (tchar m mono) (Sets [ (λ _ → true ) o CCC.○ sets a ])
+        imequ {a} {b} m mono = equalizerIso _ _ (tker (tchar m mono)) m (isol m mono)
+        uniq : {a : Obj (Sets {c})} {b : Obj Sets} (h : Hom Sets a Bool) (m : Hom Sets b a) (mono : Mono Sets m) (y : a) →
+               tchar (Equalizer.equalizer (tker h)) (record { isMono = λ f g → monic (tker h) }) y ≡ h y
+        uniq {a} {b} h m mono y with h y  | inspect h y | lem (image (Equalizer.equalizer (tker h)) y ) | inspect (tchar (Equalizer.equalizer (tker h)) (record { isMono = λ f g → monic (tker h) })) y
+        ... | true  | record { eq = eqhy } | case1 x | record { eq = eq1 } = eq1 
+        ... | true  | record { eq = eqhy } | case2 x | record { eq = eq1 } = ⊥-elim (x (isImage (elem y eqhy)))
+        ... | false | record { eq = eqhy } | case1 (isImage (elem x eq)) | record { eq = eq1 } = ⊥-elim ( ¬x≡t∧x≡f record {fst = eqhy ; snd = eq })
+        ... | false | record { eq = eqhy } | case2 x | record { eq = eq1 } = eq1
            
 
 open import graph
@@ -273,7 +339,7 @@ module ccc-from-graph {c₁ c₂ : Level }  (G : Graph {c₁} {c₂})  where
    amap ε (f , x ) = f x
    amap (f *) x = λ y →  fmap f ( x , y ) 
    fmap (id a) x = x
-   fmap (○ a) x = OneObj
+   fmap (○ a) x = !
    fmap < f , g > x = ( fmap f x , fmap g x )
    fmap (iv x f) a = amap x ( fmap f a )
 

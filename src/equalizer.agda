@@ -166,6 +166,61 @@ equalizer+iso  {a} {b} {c'} {f} {g} eqa h-1 h  hh-1=1 h-1h=1  =  record {
                    j
              ∎
 
+
+equalizerIso : {a b c : Obj A} → (f g : Hom A a b ) → (equ : Equalizer A f g )
+   → (m :  Hom A c a) 
+   → ( ker-iso : IsoL A m (equalizer equ) )
+   → IsEqualizer A m f g
+equalizerIso {a} {b} {c} f g equ m ker-iso = record {
+     fe=ge = fe-ge
+   ; k = λ {d} h eq  → A [ Iso.≅← (IsoL.iso-L ker-iso) o  IsEqualizer.k (Equalizer.isEqualizer equ) h eq  ]
+   ; ek=h = ek=h1
+   ; uniqueness = uniqueness1 } where
+     ker : Hom A ( equalizer-c equ ) a
+     ker  = equalizer equ
+     mm : A [ A [ equalizer equ o Iso.≅→ (IsoL.iso-L ker-iso ) ] ≈  m ]
+     mm = IsoL.L≈iso  ker-iso 
+     fe-ge : A [ A [ f o m ] ≈ A [ g o m ] ]
+     fe-ge = begin
+        f o m ≈↑⟨ cdr mm ⟩
+        f o (equalizer equ o Iso.≅→ (IsoL.iso-L ker-iso)) ≈⟨ assoc ⟩
+        (f o equalizer equ) o Iso.≅→ (IsoL.iso-L ker-iso) ≈⟨ car ( IsEqualizer.fe=ge (Equalizer.isEqualizer equ) )  ⟩
+        (g o equalizer equ ) o Iso.≅→ (IsoL.iso-L ker-iso) ≈↑⟨ assoc ⟩
+        g o (equalizer equ  o Iso.≅→ (IsoL.iso-L ker-iso)) ≈⟨ cdr mm  ⟩
+        g o m ∎  where   open ≈-Reasoning A 
+     ek=h1 : {d : Obj A} {h : Hom A d a}
+           {eq : A [ A [ f o h ] ≈ A [ g o h ] ]} →
+            A [ A [ m o (A Category.o Iso.≅← (IsoL.iso-L ker-iso)) (IsEqualizer.k (isEqualizer equ) h eq) ] ≈ h ]
+     ek=h1  {d} {h} {eq} = begin
+            m o (  Iso.≅← (IsoL.iso-L ker-iso) o IsEqualizer.k (Equalizer.isEqualizer equ) h eq ) ≈↑⟨ car mm ⟩
+            (equalizer equ o Iso.≅→ (IsoL.iso-L ker-iso)) o (  Iso.≅← (IsoL.iso-L ker-iso) o IsEqualizer.k (Equalizer.isEqualizer equ) h eq ) ≈↑⟨ assoc ⟩
+            _ o (Iso.≅→ (IsoL.iso-L ker-iso) o (  Iso.≅← (IsoL.iso-L ker-iso) o IsEqualizer.k (Equalizer.isEqualizer equ) h eq )) ≈⟨ cdr assoc ⟩
+            equalizer equ o ((Iso.≅→ (IsoL.iso-L ker-iso) o   Iso.≅← (IsoL.iso-L ker-iso)) o IsEqualizer.k (Equalizer.isEqualizer equ) h eq ) ≈⟨ cdr (car (Iso.iso←  (IsoL.iso-L ker-iso))) ⟩
+            equalizer equ o (id1 A _ o IsEqualizer.k (Equalizer.isEqualizer equ) h eq ) ≈⟨ cdr idL ⟩
+            equalizer equ o IsEqualizer.k (Equalizer.isEqualizer equ) h eq  ≈⟨ IsEqualizer.ek=h (isEqualizer equ) ⟩
+            h ∎  where   open ≈-Reasoning A
+     uniqueness1 : {d : Obj A} {h : Hom A d a}
+            {eq : A [ A [ f o h ] ≈ A [ g o h ] ]}
+            {k' : Hom A d c} → A [ A [ m o k' ] ≈ h ]
+               → A [ (A Category.o Iso.≅← (IsoL.iso-L ker-iso)) (IsEqualizer.k (isEqualizer equ) h eq) ≈ k' ]
+     uniqueness1  {d} {h} {eq} {k'} eqk = begin
+            Iso.≅← (IsoL.iso-L ker-iso)  o  (IsEqualizer.k (isEqualizer equ) h eq) ≈⟨ cdr ( IsEqualizer.uniqueness (Equalizer.isEqualizer equ) (  begin
+             equalizer equ o ((Iso.≅→ (IsoL.iso-L ker-iso))  o k' ) ≈⟨ assoc  ⟩
+             (equalizer equ o Iso.≅→ (IsoL.iso-L ker-iso))  o k'  ≈⟨ car mm  ⟩
+             m o k' ≈⟨ eqk  ⟩
+             h ∎ ))   ⟩
+            Iso.≅← (IsoL.iso-L ker-iso) o ( Iso.≅→ (IsoL.iso-L ker-iso) o k' ) ≈⟨ assoc ⟩
+            (Iso.≅← (IsoL.iso-L ker-iso) o  Iso.≅→ (IsoL.iso-L ker-iso) ) o k'  ≈⟨ car (Iso.iso→  (IsoL.iso-L ker-iso) )⟩
+            id1 A _ o k' ≈⟨  idL ⟩
+            k' ∎  where   open ≈-Reasoning A
+     mequ : Equalizer A f g
+     mequ = record { equalizer-c = c ; equalizer =  m ; isEqualizer = record {
+           fe=ge = fe-ge 
+         ; k = λ {d} h fh=gh → A [ Iso.≅← (IsoL.iso-L ker-iso) o IsEqualizer.k (Equalizer.isEqualizer equ) h fh=gh ]
+         ; ek=h = ek=h1 
+         ; uniqueness = uniqueness1 
+         } }
+
 --------------------------------
 --
 -- If we have two equalizers on c and c', there are isomorphic pair h, h'
@@ -325,6 +380,23 @@ lemma-equ1  eqa  = record {
                open ≈-Reasoning A
                h : Hom A d a
                h = equalizer (eqa f g) o j
+--     cong-γ1 :  {a b c d : Obj A } → {f g : Hom A a b} {h h' : Hom A d a } →  A [ h ≈ h' ] →  
+--                     A [  k (ieqa f g ) {_} ( A [ h  o (equalizer1 ( ieqa (A [ f  o  h  ] ) (A [ g o h  ] )  )) ] ) (lemma-equ4 {a} {b} {d} f g h ) 
+--                       ≈  A [ k (ieqa f g ) {_} ( A [ h' o (equalizer1 ( ieqa (A [ f  o  h' ] ) (A [ g o h' ] )  )) ] ) (lemma-equ4 {a} {b} {d} f g h' ) o {!!} ] ]
+--     cong-γ1 {a} {b} {c} {d} {f} {g} {h} {h'} h=h'  = let open ≈-Reasoning (A) in begin
+--                 k (ieqa f g ) {_} ( A [ h  o (equalizer1 ( ieqa (A [ f  o  h  ] ) (A [ g o h  ] ))) ] ) (lemma-equ4 {a} {b} {d} f g h )
+--             ≈⟨ uniqueness (ieqa f g) {!!} ⟩    
+--                 {!!} -- k (ieqa f g ) {_} ( A [ h' o (equalizer1 ( ieqa (A [ f  o  h' ] ) (A [ g o h' ] ))) ] ) (lemma-equ4 {a} {b} {d} f g h' )
+--             ∎
+--     cong-δ1 : {a b c : Obj A} {e : Hom A c a } {f f' : Hom A a b} → A [ f ≈ f' ] →  A [ k (ieqa  f f ) (id1 A a)  (f1=f1 f)  ≈ 
+--                                                                            A [ {!!} o k (ieqa  f' f' ) (id1 A a)  (f1=f1 f')  ] ]
+--     cong-δ1 {a} {b} {c} {e} {f} {f'} f=f' =  let open ≈-Reasoning (A) in
+--             begin
+--                 k (ieqa  f  f  ) (id a)  (f1=f1 f) 
+--             ≈⟨  uniqueness (ieqa f f) {!!} ⟩
+--                 {!!} -- k (ieqa  f' f' ) (id a)  (f1=f1 f') 
+--             ∎
+
 
 
 --------------------------------
