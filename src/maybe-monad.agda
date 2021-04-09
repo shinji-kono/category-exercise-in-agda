@@ -8,9 +8,9 @@ open import cat-utility
 open import Relation.Binary.Core
 open import Category.Cat
 
-import Relation.Binary.PropositionalEquality
+open import Relation.Binary.PropositionalEquality hiding ([_])
 -- Extensionality a b = {A : Set a} {B : A → Set b} {f g : (x : A) → B x} → (∀ x → f x ≡ g x) → f ≡ g → ( λ x → f x ≡ λ x → g x )
-postulate extensionality : { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) → Relation.Binary.PropositionalEquality.Extensionality c₂ c₂
+-- postulate extensionality : { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) → Relation.Binary.PropositionalEquality.Extensionality c₂ c₂
 
 data maybe  (A : Set c) :  Set c where
     just :  A → maybe A
@@ -87,9 +87,12 @@ Maybe-μ = record {
         A [ A [ FMap Maybe f o tmap a ] ≈ A [ tmap b o FMap (Maybe ○ Maybe) f ] ]
      comm {a} {b} {f} = extensionality A ( λ x → comm1 a b f x )
 
-MaybeMonad : Monad A Maybe Maybe-η Maybe-μ 
+MaybeMonad : Monad A 
 MaybeMonad = record {
-       isMonad = record {
+       T = Maybe
+     ; η = Maybe-η
+     ; μ = Maybe-μ
+     ; isMonad = record {
            unity1 = unity1
            ; unity2 = unity2
            ; assoc  = assoc

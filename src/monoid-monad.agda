@@ -111,11 +111,6 @@ Lemma-MM36 : ∀( x y z : Carrier M ) → (x ∙ y) ∙ z ≡ x ∙ (y ∙ z )
 Lemma-MM36  x y z = ( IsMonoid.assoc ( isMonoid M ))  x y z
 
 import Relation.Binary.PropositionalEquality
--- postulate extensionality : { a b : Obj A } {f g : Hom A a b } →  Relation.Binary.PropositionalEquality.Extensionality c c
--- postulate extensionality : Axiom.Extensionality.Propositional.Extensionality c c
-
-import Axiom.Extensionality.Propositional
-postulate extensionality : { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) → Axiom.Extensionality.Propositional.Extensionality  c₂ c₂
 
 -- Multi Arguments Functional Extensionality
 extensionality30 : {f g : Carrier M → Carrier M → Carrier M → Carrier M } → 

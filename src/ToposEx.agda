@@ -1,3 +1,4 @@
+{-# OPTIONS --allow-unsolved-metas #-}
 open import CCC
 open import Level
 open import Category
@@ -10,7 +11,7 @@ module ToposEx   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A
   open ≈-Reasoning A
   open CCC.CCC c
 
-
+--
 --             ○ b
 --       b -----------→ 1
 --       |              |
@@ -115,7 +116,7 @@ module ToposEx   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A
 
 --
 --
---   Hom equality and Ω
+--   Hom equality and Ω    (p.94 cl(Δ a) in Takeuchi )
 --
 --
 --       a -----------→ +
@@ -178,6 +179,7 @@ module ToposEx   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A
 
   N : Obj A
   N = Nat iNat 
+  --  if h : Hom A (N  ∧ a) a is π', A is a constant
 
   record prop33   {a : Obj A} (f : Hom A １ a ) ( h : Hom A (N  ∧ a) a )  : Set  ( suc c₁  ⊔  suc c₂ ⊔ suc ℓ ) where
      field 
@@ -318,3 +320,61 @@ module ToposEx   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A
                      < (nsuc iNat) o π ,  g' o π > o initialNat (prop33.xnat (p f' (g' o π))) ≈⟨ car ( IsCCC.π-cong isCCC refl-hom (car (sym g=g')) ) ⟩
                      < (nsuc iNat) o π ,  g  o π > o initialNat (prop33.xnat (p f' (g' o π))) ≈⟨⟩
                      nsuc (prop33.xnat (p f (g o π))) o initialNat (prop33.xnat (p f' (g' o π))) ∎
+ 
+  open Functor
+  open import Category.Sets hiding (_o_)
+  open import Relation.Binary.PropositionalEquality hiding ( [_] ; sym)
+
+  record Singleton (a : Obj A) : Set (c₁ ⊔ c₂ ⊔ ℓ) where
+     field
+        singleton : Hom A (a ∧ a) ( CCC._<=_ c (Ω t) (a ∧ a) )
+        scommute  : A [ A [ CCC.ε c o < singleton , id1 A _ > ] ≈  char t < id1 A _ , id1 A _ > δmono ]  
+
+  tequalizer : {a b : Obj A} → (f g : Hom A a b ) → Equalizer A f g
+  tequalizer {a} {b} f g = record {
+      equalizer-c = equalizer-c  ker
+    ; equalizer = equalizer ker
+    ; isEqualizer = record {
+          fe=ge = {!!}
+        ; k = {!!}
+        ; ek=h = {!!}
+        ; uniqueness = {!!}
+      }
+    } where
+        ker : Equalizer A ( A [  char t < id1 A _ , id1 A b > δmono o < f , g > ] ) (A [ ⊤ t o (CCC.○ c a) ])
+        ker = Ker t ( A [  char t < id1 A _ , id1 A b > δmono o < f , g > ] )
+
+  singleton→mono : {a : Obj A} (s : Singleton a ) → Mono A (Singleton.singleton s)
+  singleton→mono {a} s = record { isMono = λ {b} f g eq → {!!} }
+
+  record Partialmap  (a b : Obj A) :  Set (c₁ ⊔ c₂ ⊔ ℓ) where
+      field
+         p : Obj A
+         d : Hom A p a
+         f : Hom A p b
+         dm  : Mono A d
+
+  record PartialmapClassifier  (b : Obj A) :  Set (c₁ ⊔ c₂ ⊔ ℓ) where
+      field
+         b1 : Obj A
+         η : Hom A b b1
+         pm : Partialmap b1 b
+         pmc : {a : Obj A} ( d f : Hom A a b) → Mono A d → Hom A a b1
+         pb : {a : Obj A} ( d f : Hom A a b) → (dm : Mono A d ) → Pullback A (pmc d f dm) η 
+         uniq : {a : Obj A} ( d f : Hom A a b) → (dm : Mono A d ) → (p : Hom A a b1) → Pullback A p η → A [ pmc d f dm ≈ p ]
+
+  partialmapClassifier : (b : Obj A) → PartialmapClassifier b
+  partialmapClassifier = {!!}
+
+  postulate
+    I : Set c₁
+    small : Small A I 
+
+  open import yoneda A I small
+
+  cs : CCC SetsAop
+  cs = {!!}
+  
+  toposS : Topos SetsAop cs
+  toposS = {!!}
+

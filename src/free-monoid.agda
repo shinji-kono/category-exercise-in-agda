@@ -11,16 +11,16 @@ open import Category.Sets
 open import Category.Cat
 open import HomReasoning
 open import cat-utility
-open import Relation.Binary.Core
+open import Relation.Binary.Structures
 open import universal-mapping 
 open import  Relation.Binary.PropositionalEquality 
 
 -- from https://github.com/danr/Agda-projects/blob/master/Category-Theory/FreeMonoid.agda
 
-open import Algebra.FunctionProperties using (Op₁; Op₂)
+open import Algebra.Definitions -- using (Op₁; Op₂)
+open import Algebra.Core
 open import Algebra.Structures
 open import Data.Product
-
 
 record ≡-Monoid : Set (suc c) where
   infixr 9 _∙_
@@ -112,7 +112,7 @@ _==_  f g =  morph f ≡ morph g
 
 -- Functional Extensionality Axiom (We cannot prove this in Agda / Coq, just assumming )
 -- postulate extensionality : { a b : Obj A } {f g : Hom A a b } → (∀ {x} → (f x ≡ g x))  → ( f ≡ g ) 
-postulate extensionality : Relation.Binary.PropositionalEquality.Extensionality c c 
+-- postulate extensionality : Relation.Binary.PropositionalEquality.Extensionality c c 
 
 isMonoids : IsCategory ≡-Monoid Monomorph _==_  _+_  (M-id)
 isMonoids  = record  { isEquivalence =  isEquivalence1 
@@ -132,7 +132,7 @@ isMonoids  = record  { isEquivalence =  isEquivalence1
                           f ==  g → h ==  i → (h + f) ==  (i + g)
         o-resp-≈ {a} {b} {c} {f} {g} {h} {i} f==g h==i =  let open ≡-Reasoning in begin
              morph ( h + f )
-         ≡⟨ ≡-cong ( λ  g → ( ( λ (x : Carrier a ) →  g x ) )) (extensionality {Carrier a} lemma11) ⟩
+         ≡⟨ ≡-cong ( λ  g → ( ( λ (x : Carrier a ) →  g x ) )) (extensionality (Sets ) {Carrier a} lemma11) ⟩
              morph ( i + g )
          ∎  
              where
@@ -184,15 +184,12 @@ list a = record {
     Carrier    =  List a
     ;  _∙_ = _++_
     ; ε        = []
-    ; isMonoid = record {
-          identity = ( ( λ x → list-id-l {a}  ) , ( λ x → list-id-r {a} ) ) ;
-          isSemigroup = record {
-               assoc =  λ x → λ y → λ z → sym ( list-assoc {a} {x} {y} {z} )
-             ; isEquivalence = list-isEquivalence
-             ; ∙-cong = λ x → λ y →  list-o-resp-≈ y x
-          }
-      }
-    }
+    ;  isMonoid  = record { isSemigroup = record { isMagma = record {
+       isEquivalence =  list-isEquivalence
+       ; ∙-cong =  λ x → λ y →  list-o-resp-≈ y x }
+       ; assoc = λ x → λ y → λ z → sym ( list-assoc {a} {x} {y} {z} ) }
+       ; identity =  ( ( λ x → list-id-l {a}  ) , ( λ x → list-id-r {a} ) )
+      } }
 
 Generator : Obj A → Obj B
 Generator s =  list s
@@ -257,7 +254,7 @@ FreeMonoidUniveralMapping =
                          ( λ (x : a ) →  b < ( f x ) ∙ (Φ {a} {b} f [] ) > )
                      ≡⟨⟩
                          ( λ (x : a ) →  b <    ( f x ) ∙ ( ε b ) > )
-                     ≡⟨ ≡-cong ( λ  g → ( ( λ (x : a ) →  g x ) )) (extensionality {a} lemma-ext1) ⟩
+                     ≡⟨ ≡-cong ( λ  g → ( ( λ (x : a ) →  g x ) )) (extensionality A {a} lemma-ext1) ⟩
                          ( λ (x : a ) →  f x  )
                      ≡⟨⟩
                           f
@@ -267,7 +264,7 @@ FreeMonoidUniveralMapping =
         uniquness :  {a : Obj A } {b : Obj B} { f : Hom A a (FObj U b) } →
              { g :  Hom B (Generator a) b } → (FMap U g) o (eta a )  ≡ f  → B [ solution a b f ≈ g ]
         uniquness {a} {b} {f} {g} eq =  
-                     extensionality  lemma-ext2 where
+                     extensionality  A lemma-ext2 where
                         lemma-ext2 : ( ∀( x : List a ) → (morph ( solution a b f)) x  ≡ (morph g) x  )
                         -- (morph ( solution a b f)) []  ≡ (morph g) []  )
                         lemma-ext2 [] = let open ≡-Reasoning in
@@ -288,7 +285,7 @@ FreeMonoidUniveralMapping =
                              ≡⟨  ≡-cong ( λ k → ( b <   ( k x ) ∙ ((morph g) ( xs )) >  )) (
                                  begin
                                      ( λ x → (morph ( solution a b f)) ( x :: [] ) )
-                                 ≡⟨ extensionality {a} lemma-ext3 ⟩
+                                 ≡⟨ extensionality A {a} lemma-ext3 ⟩
                                      ( λ x → (morph g) ( x :: [] ) )
                                  ∎  
                              ) ⟩

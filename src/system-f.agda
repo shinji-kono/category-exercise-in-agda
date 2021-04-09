@@ -167,7 +167,7 @@ lemma22 x y = refl
 lemma21 : {l : Level} {X : Set l} ( x y : Int X ) → add x Zero  ≡ x
 lemma21 x y = refl
 
-postulate extensionality : {l : Level } → Relation.Binary.PropositionalEquality.Extensionality l l
+-- postulate extensionality : {l : Level } → Relation.Binary.PropositionalEquality.Extensionality l l
 
 --lemma23 : {l : Level} {X : Set l} ( x y : Int X ) → add x (S y)  ≡ S ( add x y )
 --lemma23 x y = extensionality ( λ z → {!!} )

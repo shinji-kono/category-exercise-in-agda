@@ -193,6 +193,10 @@ record CCCFunctor {c₁ c₂ ℓ c₁' c₂' ℓ' : Level} (A : Category c₁ c�
 --  + ------→ a -----------→ Ω        m = Equalizer (char m mono)  (⊤ ∙ ○ a )
 --     ker h        h
 --
+--  if m is an equalizer, there is an iso between e and b as k, and if we have the iso, m becomes an equalizer.
+--    equalizer.equalizerIso : {a b c : Obj A} → (f g : Hom A a b ) → (equ : Equalizer A f g )
+--      → (m :  Hom A c a) → ( ker-iso : IsoL A m (equalizer equ) ) → IsEqualizer A m f g
+
 open Equalizer
 open import equalizer
 

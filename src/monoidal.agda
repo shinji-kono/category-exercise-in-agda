@@ -21,6 +21,14 @@ open Functor
 --          iso←  :  C [ C [ ≅→ o ≅←  ] ≈  id1 C y ]
 
 -- Monoidal Category
+--
+--                       αA□BCD                        αAB□CD
+--   (((a □ b) □ c ) □ d)   →    ((a □ (b □ c)) □ d)     →  (a □ ((b □ c ) □ d))
+--
+--     ↓ αA□BCD                1A□BCD      ↓                      ↓  αAB□CD   
+--
+--   ((a □ b ) □ (c □ d))   ←   (a □ (b □ ( c □ d) ))    ← -------+
+--                       αABC□D
 
 record IsMonoidal  {c₁ c₂ ℓ : Level} (C : Category c₁ c₂ ℓ) (I : Obj C) ( BI : Functor ( C × C ) C )
         : Set ( suc  (c₁ ⊔ c₂ ⊔ ℓ ⊔ c₁)) where
@@ -267,8 +275,6 @@ record MonoidalFunctor {c₁ c₂ ℓ : Level} {C D : Category c₁ c₂ ℓ}  (
 open import Category.Sets
 
 import Relation.Binary.PropositionalEquality
--- Extensionality a b = {A : Set a} {B : A → Set b} {f g : (x : A) → B x} → (∀ x → f x ≡ g x) → f ≡ g → ( λ x → f x ≡ λ x → g x )
-postulate extensionality : { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) → Relation.Binary.PropositionalEquality.Extensionality c₂ c₂
 
 ------
 -- Data.Product as a Tensor Product for Monoidal Category

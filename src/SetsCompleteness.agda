@@ -9,8 +9,8 @@ open import Relation.Binary.Core
 open import Function
 import Relation.Binary.PropositionalEquality
 -- Extensionality a b = {A : Set a} {B : A → Set b} {f g : (x : A) → B x} → (∀ x → f x ≡ g x) → ( λ x → f x ≡ λ x → g x )
-import Axiom.Extensionality.Propositional
-postulate extensionality : { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) → Axiom.Extensionality.Propositional.Extensionality c₂ c₂
+-- import Axiom.Extensionality.Propositional
+-- postulate extensionality : { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) → Axiom.Extensionality.Propositional.Extensionality c₂ c₂
 -- Relation.Binary.PropositionalEquality.Extensionality c₂ c₂
 
 ≡cong = Relation.Binary.PropositionalEquality.cong

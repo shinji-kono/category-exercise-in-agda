@@ -6,7 +6,7 @@ module freyd2
    where
 
 open import HomReasoning
-open import cat-utility
+open import cat-utility hiding (Yoneda ; Representable )
 open import Relation.Binary.Core
 open import Function
 
@@ -26,7 +26,7 @@ postulate ≡←≈ :  { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ )  
 
 import Axiom.Extensionality.Propositional
 -- Extensionality a b = {A : Set a} {B : A → Set b} {f g : (x : A) → B x} → (∀ x → f x ≡ g x) → f ≡ g → ( λ x → f x ≡ λ x → g x )
-postulate extensionality : { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) → Axiom.Extensionality.Propositional.Extensionality c₂ c₂
+-- postulate extensionality : { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) → Axiom.Extensionality.Propositional.Extensionality c₂ c₂
 
 ----
 --
@@ -68,7 +68,7 @@ Yoneda  {c₁} {c₂} {ℓ} A a = record {
                 A [ g o x ]
              ∎ )
 
--- Representable  U  ≈　Hom(A,-)
+-- -- Representable  U  ≈　Hom(A,-)
 
 record Representable  { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) ( U : Functor A (Sets {c₂}) ) (a : Obj A) : Set  (suc ℓ ⊔ (suc (suc c₂) ⊔ suc c₁ ))  where
    field
@@ -104,7 +104,7 @@ open LimitPreserve
 YonedaFpreserveLimit0 : {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (I : Category c₁ c₂ ℓ)
       (b : Obj A ) 
       (Γ : Functor I A) (limita : Limit I A Γ) →
-        IsLimit I Sets (Yoneda A b ○ Γ) (FObj (Yoneda A b) (a0 limita)) (LimitNat I A Sets Γ (a0 limita) (t0 limita) (Yoneda A b))
+        IsLimit I Sets (Yoneda A  b ○ Γ) (FObj (Yoneda A  b) (a0 limita)) (LimitNat I A Sets Γ (a0 limita) (t0 limita) (Yoneda A b))
 YonedaFpreserveLimit0 {c₁} {c₂} {ℓ} A I b Γ lim = record {
          limit = λ a t → ψ a t
        ; t0f=t = λ {a t i} → t0f=t0 a t i
@@ -281,7 +281,7 @@ UisRepresentable : {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ)
      (U : Functor A (Sets {c₂}) )
      ( i : Obj ( K A Sets * ↓ U) )
      (In : HasInitialObject ( K A Sets * ↓ U) i ) 
-       → Representable A U (obj i)
+       → Representable A  U (obj i)
 UisRepresentable A U i In = record {
         repr→ = record { TMap = tmap1 ; isNTrans = record { commute = comm1 } }
         ; repr← = record { TMap = tmap2 ; isNTrans = record { commute = comm2 } }

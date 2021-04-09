@@ -17,8 +17,8 @@ open Functor
 
 open import Category.Sets
 
-import Axiom.Extensionality.Propositional
-postulate extensionality : { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) → Axiom.Extensionality.Propositional.Extensionality  c₂ c₂
+-- import Axiom.Extensionality.Propositional
+-- postulate extensionality : { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) → Axiom.Extensionality.Propositional.Extensionality  c₂ c₂
 
 open import CCCSets
 
@@ -310,7 +310,7 @@ ccc-graph-univ {c₁}  = record {
        c-map {g} {c} {atom x} {atom b} f y = {!!}  where
             cmpa1 : ((y₁ : vertex g) → C g y₁ x ) → {!!}
             cmpa1 = {!!}
-       c-map {g} {c} {⊤} {atom b} f y with y OneObj b
+       c-map {g} {c} {⊤} {atom b} f y with y ! b
        ... | id .b = {!!}
        ... | next x t = (cat c) [ emap f x o c-map f {!!} ]
        c-map {g} {c} {a ∧ a₁} {atom b} f y = {!!}

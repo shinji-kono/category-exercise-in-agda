@@ -79,10 +79,6 @@ SetsAop  = record { Obj = YObj
 -- A is Locally small
 postulate ≈-≡ :  { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ )  {a b : Obj A } { x y : Hom A a b } →  (x≈y : A [ x ≈ y  ]) → x ≡ y
 
-import Axiom.Extensionality.Propositional
--- Extensionality a b = {A : Set a} {B : A → Set b} {f g : (x : A) → B x} → (∀ x → f x ≡ g x) → f ≡ g → ( λ x → f x ≡ λ x → g x )
-postulate extensionality : { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) → Axiom.Extensionality.Propositional.Extensionality c₂ c₂
-
 ----
 --
 --  Object mapping in Yoneda Functor

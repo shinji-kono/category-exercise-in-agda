@@ -115,8 +115,8 @@ _●_ {l} {A} {B} {C} S T  = record {
            ∎
 
 
-import Axiom.Extensionality.Propositional
-postulate extensionality : {  c₂  : Level} ( A : Category  {c₂} ) → Axiom.Extensionality.Propositional.Extensionality c₂ c₂
+-- import Axiom.Extensionality.Propositional
+-- postulate extensionality : {  c₂  : Level} ( A : Category  {c₂} ) → Axiom.Extensionality.Propositional.Extensionality c₂ c₂
 
 --
 --            t a 

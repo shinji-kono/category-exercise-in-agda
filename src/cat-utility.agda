@@ -529,3 +529,43 @@ module cat-utility where
              initialObject :  Obj A 
              hasInitialObject :  HasInitialObject A initialObject
 
+        open import Category.Sets
+        import Axiom.Extensionality.Propositional
+        postulate extensionality : { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) → Axiom.Extensionality.Propositional.Extensionality c₂ c₂
+        
+        Yoneda : { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) ( ≡←≈ :   {a b : Obj A } { x y : Hom A a b } →  (x≈y : A [ x ≈ y  ]) → x ≡ y )
+           (a : Obj A) → Functor (Category.op A) (Sets {c₂})
+        Yoneda  {c₁} {c₂} {ℓ} A ≡←≈ a = record {
+            FObj = λ b → Hom (Category.op A) a b
+          ; FMap = λ {x} {y} (f : Hom A y x ) → λ ( g : Hom A x a ) →  (Category.op A)  [ f o g ]    --   f : Hom A x y  → Hom Sets (Hom A a x ) (Hom A a y)
+          ; isFunctor = record {
+                     identity =  λ {b} → extensionality  (Category.op A)  ( λ x → lemma-y-obj1 {b} x ) ;
+                     distr = λ {a} {b} {c} {f} {g} → extensionality A ( λ x → lemma-y-obj2 a b c f g x ) ;
+                     ≈-cong = λ eq → extensionality  (Category.op A)  ( λ x →  lemma-y-obj3 x eq ) 
+                } 
+            }  where
+                lemma-y-obj1 : {b : Obj A } → (x : Hom A b a) →   (Category.op A)  [ id1 A b o x ] ≡ x
+                lemma-y-obj1 {b} x = let open ≈-Reasoning  (Category.op A)   in ≡←≈ idL
+                lemma-y-obj2 :  (a₁ b c : Obj A) (f : Hom A b a₁)  (g : Hom A c b ) → (x : Hom A a₁ a )→ 
+                        (Category.op A)  [  (Category.op A)  [ g o f ] o x ] ≡ (Sets [ _[_o_]  (Category.op A)  g o _[_o_]  (Category.op A)  f ]) x
+                lemma-y-obj2 a₁ b c f g x = let open ≈-Reasoning  (Category.op A)  in ≡←≈ ( sym assoc )
+                lemma-y-obj3 :  {b c : Obj A} {f g : Hom A c b } → (x : Hom A b a ) →  (Category.op A)  [ f ≈ g ] →    (Category.op A)  [ f o x ] ≡  (Category.op A)  [ g o x ]
+                lemma-y-obj3 {_} {_} {f} {g} x eq =  let open ≈-Reasoning  (Category.op A)  in ≡←≈ ( resp refl-hom eq )
+        
+        -- Representable  U  ≈　Hom(A,-)
+        
+        record Representable  { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ )
+              ( ≡←≈ :   {a b : Obj A } { x y : Hom A b a } →  (x≈y :  (Category.op A)  [ x ≈ y  ]) → x ≡ y )
+              ( U : Functor  (Category.op A)  (Sets {c₂}) ) (a : Obj A) : Set  (suc ℓ ⊔ (suc (suc c₂) ⊔ suc c₁ ))  where
+           field
+                 -- FObj U x  :  A  → Set
+                 -- FMap U f  =  Set → Set (locally small)
+                 -- λ b → Hom (a,b) :  A → Set
+                 -- λ f → Hom (a,-) = λ b → Hom  a b    
+        
+                 repr→ : NTrans  (Category.op A)  (Sets {c₂}) U (Yoneda A  ≡←≈  a )
+                 repr← : NTrans  (Category.op A)  (Sets {c₂}) (Yoneda A  ≡←≈  a)  U
+                 reprId→  :  {x : Obj A} →  Sets [ Sets [ TMap repr→ x  o  TMap repr← x ] ≈ id1 (Sets {c₂}) (FObj (Yoneda A  ≡←≈  a) x )]
+                 reprId←  :  {x : Obj A} →  Sets [ Sets [ TMap repr← x  o  TMap repr→ x ] ≈ id1 (Sets {c₂}) (FObj U x)]
+        
+

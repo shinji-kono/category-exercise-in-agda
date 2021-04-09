@@ -117,6 +117,9 @@ data _∨_ {c c' : Level } (a : Set c) (b : Set c') : Set (c ⊔ c') where
     case1 : a → a ∨ b
     case2 : b → a ∨ b
 
+---------------------------------------------
+--
+-- a binary Topos of Sets
 --
 -- m : b → a determins a subset of a as an image
 -- b and m-image in a has one to one correspondence with an equalizer (x : b) → (y : a) ≡ m x.
@@ -134,7 +137,7 @@ topos {c} lem = record {
       ;  char = λ m mono → tchar m mono
       ;  isTopos = record {
                  char-uniqueness  = λ {a} {b} {h} m mono →  extensionality Sets ( λ x → uniq h m mono x )
-              ;  ker-m =  imequ
+              ;  ker-m = λ m mono → equalizerIso _ _ (tker (tchar m mono)) m (isol m mono) 
          }
     } where
 --
@@ -143,10 +146,10 @@ topos {c} lem = record {
 --     elem : (x : A ) → (eq : f x ≡ g x) → sequ A B f g
 -- m have to be isomorphic to ker (char m).
 --
---                   i          ○ b
+--                  b→s         ○ b
 --   ker (char m)  ----→ b -----------→ 1
 --       |         ←---- |              |
---       |           j   |m             | ⊤   char m : a → Ω = {true,false}
+--       |          b←s  |m             | ⊤   char m : a → Ω = {true,false}
 --       |   e           ↓    char m    ↓     if y : a ≡ m (∃ x : b) → true  ( data char )
 --       +-------------→ a -----------→ Ω     else         false
 --                             h
@@ -160,7 +163,17 @@ topos {c} lem = record {
         tchar {a} {b} m mono y with lem (image m y )
         ... | case1 t = true
         ... | case2 f = false
-
+        -- imequ   : {a b : Obj Sets} (m : Hom Sets b a) (mono : Mono Sets m) → IsEqualizer Sets m (tchar m mono) (Sets [ (λ _ → true ) o CCC.○ sets a ])
+        -- imequ {a} {b} m mono = equalizerIso _ _ (tker (tchar m mono)) m (isol m mono)
+        uniq : {a : Obj (Sets {c})} {b : Obj Sets} (h : Hom Sets a Bool) (m : Hom Sets b a) (mono : Mono Sets m) (y : a) →
+               tchar (Equalizer.equalizer (tker h)) (record { isMono = λ f g → monic (tker h) }) y ≡ h y
+        uniq {a} {b} h m mono y with h y  | inspect h y | lem (image (Equalizer.equalizer (tker h)) y ) | inspect (tchar (Equalizer.equalizer (tker h)) (record { isMono = λ f g → monic (tker h) })) y
+        ... | true  | record { eq = eqhy } | case1 x | record { eq = eq1 } = eq1 
+        ... | true  | record { eq = eqhy } | case2 x | record { eq = eq1 } = ⊥-elim (x (isImage (elem y eqhy)))
+        ... | false | record { eq = eqhy } | case1 (isImage (elem x eq)) | record { eq = eq1 } = ⊥-elim ( ¬x≡t∧x≡f record {fst = eqhy ; snd = eq })
+        ... | false | record { eq = eqhy } | case2 x | record { eq = eq1 } = eq1
+           
+        -- technical detail of equalizer-image isomorphism (isol) below
         open import Relation.Binary.HeterogeneousEquality as HE using (_≅_ ) 
         img-cong : {a b : Obj (Sets {c}) } (m : Hom Sets b a) → (mono : Mono Sets m ) → (y y' : a) → y ≡ y' → (s : image m y ) (t : image m y') → s ≅ t
         img-cong {a} {b} m mono .(m x) .(m x₁) eq (isImage x) (isImage x₁)
@@ -227,16 +240,6 @@ topos {c} lem = record {
                ... | true | record {eq = eq1} = refl
                ... | false | record { eq = eq1 } with tchar¬Img m mono (m x) eq1
                ... | t = ⊥-elim (t (isImage x)) 
-        imequ   : {a b : Obj Sets} (m : Hom Sets b a) (mono : Mono Sets m) → IsEqualizer Sets m (tchar m mono) (Sets [ (λ _ → true ) o CCC.○ sets a ])
-        imequ {a} {b} m mono = equalizerIso _ _ (tker (tchar m mono)) m (isol m mono)
-        uniq : {a : Obj (Sets {c})} {b : Obj Sets} (h : Hom Sets a Bool) (m : Hom Sets b a) (mono : Mono Sets m) (y : a) →
-               tchar (Equalizer.equalizer (tker h)) (record { isMono = λ f g → monic (tker h) }) y ≡ h y
-        uniq {a} {b} h m mono y with h y  | inspect h y | lem (image (Equalizer.equalizer (tker h)) y ) | inspect (tchar (Equalizer.equalizer (tker h)) (record { isMono = λ f g → monic (tker h) })) y
-        ... | true  | record { eq = eqhy } | case1 x | record { eq = eq1 } = eq1 
-        ... | true  | record { eq = eqhy } | case2 x | record { eq = eq1 } = ⊥-elim (x (isImage (elem y eqhy)))
-        ... | false | record { eq = eqhy } | case1 (isImage (elem x eq)) | record { eq = eq1 } = ⊥-elim ( ¬x≡t∧x≡f record {fst = eqhy ; snd = eq })
-        ... | false | record { eq = eqhy } | case2 x | record { eq = eq1 } = eq1
-           
 
 open import graph
 module ccc-from-graph {c₁ c₂ : Level }  (G : Graph {c₁} {c₂})  where
