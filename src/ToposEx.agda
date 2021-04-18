@@ -366,6 +366,19 @@ module ToposEx   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A
   partialmapClassifier : (b : Obj A) → PartialmapClassifier b
   partialmapClassifier = {!!}
 
+  record SubObject (a : Obj A) : Set (c₁ ⊔ c₂ ⊔ ℓ)  where
+     field
+        sb : Obj A
+        sm : Hom A sb a 
+        smono : Mono A sm
+
+  record SubObjectClassifier  (b : Obj A) :  Set (c₁ ⊔ c₂ ⊔ ℓ) where
+      field
+         sm : SubObject b
+         smc : {a : Obj A} ( d f : Hom A a b) → Mono A d → Hom A a b
+         pb : {a : Obj A} ( d f : Hom A a b) → (dm : Mono A d ) → Pullback A (smc d f dm) (id1 A _) 
+         uniq : {a : Obj A} ( d f : Hom A a b) → (dm : Mono A d ) → (p : Hom A a b) → Pullback A p (id1 A _) → A [ smc d f dm ≈ p ]
+
   postulate
     I : Set c₁
     small : Small A I 
