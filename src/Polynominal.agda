@@ -35,7 +35,7 @@ module Polynominal { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) ( C :
      iii : {b c' c'' : Obj A } { f : Hom A b c' } { g : Hom A b c'' } (ψ : φ x f ) (χ : φ x g ) → φ x {b} {c'  ∧ c''} < f , g > 
      iv  : {b c d : Obj A } { f : Hom A d c } { g : Hom A b d } (ψ : φ x f ) (χ : φ x g ) → φ x ( f ∙ g )
      v   : {b c' c'' : Obj A } { f : Hom A (b ∧ c') c'' }  (ψ : φ x f )  → φ x {b} {c'' <= c'} ( f * )
-     φ-cong   : {b c : Obj A} {k k' : Hom A b c } → A [ k ≈ k' ] → φ x k  → φ x k'
+     φ-cong   : {b c : Obj A} {k k' : Hom A b c } → A [ k ≈ k' ] → φ x k  → φ x k'  -- may be we don't need this
   
   α : {a b c : Obj A } → Hom A (( a ∧ b ) ∧ c ) ( a ∧ ( b ∧ c ) )
   α = < π  ∙ π   , < π'  ∙ π  , π'  > >
@@ -74,11 +74,14 @@ module Polynominal { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) ( C :
   --   we have (x y :  Hom A １ a) → x ≡ y (minimul equivalende assumption). this makes all k x ii case valid
   --   all other cases, arguments are reduced to f ∙ π' .
   postulate
-     x-singleon : {a b c : Obj A}  → (f :  Poly a c b ) → (x y : Hom A b a) → x ≡ y  -- minimul equivalende assumption
+     x-singleon : {a b c : Obj A}  → (f :  Poly a c b ) → (x y : Hom A b a) → x ≡ y  -- minimul equivalende assumption (variables are the same except its name)
      k-cong : {a b c : Obj A}  → (f g :  Poly a c b ) → A [ Poly.f f ≈ Poly.f g ] → A [ k (Poly.x f) (Poly.phi f)   ≈ k (Poly.x g) (Poly.phi g) ]
 
+  -- we may prove k-cong from x-singleon
   -- k-cong' : {a b c : Obj A}  → (f g :  Poly a c b ) → A [ Poly.f f ≈ Poly.f g ] → A [ k (Poly.x f) (Poly.phi f)   ≈ k (Poly.x g) (Poly.phi g) ]
   -- k-cong' {a} {b} {c} f g f=g with Poly.phi f | Poly.phi g
+
+  -- since we have A[x] now, we can proceed the proof on p.64 in some possible future
 
   --
   --  Proposition 6.1
@@ -96,6 +99,7 @@ module Polynominal { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) ( C :
       uniq : ( f : Hom A (a ∧ b) c) → A [ f ∙ < x ∙ ○ b   , id1 A b  >  ≈ Poly.f p ] 
          → A [ f  ≈ fun  ]
 
+  -- ε form
   -- f ≡ λ (x ∈ a) → φ x , ∃ (f : b <= a) →  f ∙ x ≈  φ x  
   record Fc {a b : Obj A } ( φ :  Poly a b １ ) 
          :  Set ( suc c₁  ⊔  suc c₂ ⊔ suc ℓ ) where
@@ -108,6 +112,7 @@ module Polynominal { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) ( C :
       isUnique : (f : Hom A １ (b <= a) )  → A [  A [ ε o < f , Poly.x φ  > ]  ≈  Poly.f φ  ]
         →  A [ g   ≈ f ]
 
+  -- we should open IsCCC isCCC
   π-cong = IsCCC.π-cong isCCC
   *-cong = IsCCC.*-cong isCCC
   distr-* = IsCCC.distr-* isCCC
@@ -198,7 +203,7 @@ module Polynominal { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) ( C :
   --            
   --   fun ∙ <  x ∙ ○ b   , id1 A b  >  ≈ Poly.f p
   --   (ε ∙ < g ∙ π , π' >) ∙ <  x ∙ ○ b   , id1 A b  >  ≈ Poly.f p
-  --
+  --      could be simpler
   FC : {a b : Obj A}  → (φ  : Poly a b １ )  → Fc {a} {b} φ 
   FC {a} {b} φ = record {
      sl = A [ k (Poly.x φ ) (Poly.phi φ) o < id1 A _ ,  ○ a  > ] 

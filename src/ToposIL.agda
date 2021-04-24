@@ -8,7 +8,7 @@ module ToposIL   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A
 
   open Topos
   open Equalizer
-  open ≈-Reasoning A
+  -- open ≈-Reasoning A hiding (_∙_)
   open CCC.CCC c
 
   open Functor
@@ -27,6 +27,7 @@ module ToposIL   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A
   --    field
   --        a : {!!}
 
+
   record InternalLanguage (Ω : Obj A) (⊤ : Hom A １ Ω) (P  : Obj A → Obj A)
           :   Set ( suc c₁  ⊔  suc c₂ ⊔ suc ℓ ) where
      field
@@ -35,10 +36,10 @@ module ToposIL   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A
          -- { x ∈ a | φ x } : P a
          select : {a : Obj A} → ( φ :  Poly a Ω １ ) → Hom A １ (P a)
          -- isTL : IsLogic c Ω ⊤ P _==_ _∈_  _|-_
-     -- _|-_  :  (List (Hom A １ Ω)) → (p : Hom A １ Ω ) → Set ℓ
-     -- [] |-  p = A [ p ≈  ⊤ ] 
-     -- (h ∷ t) |-  p = {!!}
-  
+     _⊢_  : {a : Obj A}  (p : Poly a  Ω １ ) (q : Poly a  Ω １ ) → Set  ( c₁  ⊔  c₂ ⊔ ℓ ) 
+     _⊢_  {a}  p q = {c : Obj A} (h : Hom A c １ ) → A [ Poly.f p ∙  h  ≈  ⊤ ∙  ○  c  ]
+         → A [   Poly.f q ∙ h  ≈  ⊤ ∙  ○  c  ] 
+
 --             ○ b
 --       b -----------→ 1
 --       |              |
@@ -69,3 +70,13 @@ module ToposIL   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A
       ;  select = λ {a} φ →  Fc.g ( fc t φ )
       -- ;  isTL = {!!}
     } 
+
+  module IL1 (Ω : Obj A) (⊤ : Hom A １ Ω) (P  : Obj A → Obj A) (il : InternalLanguage  Ω ⊤ P) where
+     open InternalLanguage il
+     il00 : {a : Obj A}  (p : Poly a  Ω １ )  → p  ⊢ p
+     il00 {a}  p h eq = eq
+
+     il01 : {a : Obj A}  (p : Poly a  Ω １ ) (q : Poly a  Ω １ )
+        → p ⊢ q → q ⊢ p →  A [ Poly.f p ≈ Poly.f q ]
+     il01 {a} p q p<q q<p = {!!}
+  
