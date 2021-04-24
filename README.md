@@ -1,8 +1,9 @@
 Category Exercise on Higher order categorical logic
 ====
 
-These are set of Agda exercise for
-<a hrref="Introduction to Higher order categorical logic"> https://www.amazon.co.jp/gp/product/0521356539/ref=as_li_qf_asin_il_tl?ie=UTF8&tag=shinjkonoshom-22&creative=1211&linkCode=as2&creativeASIN=0521356539&linkId=3936dc0e621e5928345a40bf3ccf4216    </a>
+These are set of Agda exercise for Introduction to Higher order categorical logic.
+
+https://www.amazon.co.jp/gp/product/0521356539
 
 Based on Category Library (https://github.com/shinji-kono/category-agda)
 
