@@ -1,3 +1,4 @@
+{-# OPTIONS --allow-unsolved-metas #-}
 open import Level
 open import Category
 module CCC where
@@ -180,6 +181,50 @@ record CCCFunctor {c₁ c₂ ℓ c₁' c₂' ℓ' : Level} (A : Category c₁ c�
           ≈  subst (λ k → Hom B k (FObj functor a)) (trans (cong (λ k → CCC._∧_ cb k (FObj functor b)) (sym f<=)) (sym f∧))
               (CCC.ε cb {FObj functor a} {FObj functor b}) ]
 
+open Equalizer
+open import equalizer
+
+record Mono  {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) {b a : Obj A} (mono : Hom A b a) : Set  (c₁ ⊔ c₂ ⊔ ℓ)  where
+     field
+         isMono : {c : Obj A} ( f g : Hom A c b ) → A [ A [ mono o f ]  ≈ A [ mono o g ] ] → A [ f ≈ g ]
+
+open Mono
+
+eMonic : {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) {b a : Obj A} { f g : Hom A b a } → (equ : Equalizer A f g ) → Mono A (equalizer equ)
+eMonic A equ = record { isMono = λ f g → monic equ }
+
+iso-mono :  {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) {a b c : Obj A } {m : Hom A a b}  ( mono : Mono A m ) (i : Iso A a c ) → Mono A (A [ m o Iso.≅← i ] )
+iso-mono A {a} {b} {c} {m} mono i = record { isMono = λ {d} f g → im  f g } where
+     im : {d : Obj A} (f g : Hom A d c ) →   A [ A [ A [ m o Iso.≅← i ]  o f ] ≈ A [  A [ m o Iso.≅← i ] o g ] ] → A [ f ≈ g ]
+     im {d} f g mf=mg = begin
+       f ≈↑⟨ idL ⟩
+       id1 A _  o f ≈↑⟨ car (Iso.iso← i)  ⟩
+       ( Iso.≅→ i o Iso.≅← i) o f ≈↑⟨ assoc ⟩
+        Iso.≅→ i o (Iso.≅← i  o f) ≈⟨ cdr ( Mono.isMono mono _ _ (if=ig mf=mg) ) ⟩
+        Iso.≅→ i o (Iso.≅← i  o g) ≈⟨ assoc ⟩
+       ( Iso.≅→ i o Iso.≅← i) o g ≈⟨ car (Iso.iso← i) ⟩
+       id1 A _  o g ≈⟨ idL ⟩
+       g ∎  where
+          open ≈-Reasoning A
+          if=ig : ( m o Iso.≅← i ) o f  ≈ ( m o Iso.≅← i ) o g  →  m o (Iso.≅← i o f ) ≈  m o ( Iso.≅← i o g ) 
+          if=ig eq = trans-hom assoc (trans-hom eq (sym-hom assoc ) ) 
+
+iso-mono→ :  {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) {a b c : Obj A } {m : Hom A a b}  ( mono : Mono A m ) (i : Iso A c a ) → Mono A (A [ m o Iso.≅→ i ] )
+iso-mono→ A {a} {b} {c} {m} mono i = record { isMono = λ {d} f g → im f g } where
+     im : {d : Obj A} (f g : Hom A d c ) →   A [ A [ A [ m o Iso.≅→ i ]  o f ] ≈ A [  A [ m o Iso.≅→ i ] o g ] ] → A [ f ≈ g ]
+     im {d} f g mf=mg = begin
+       f ≈↑⟨ idL ⟩
+       id1 A _  o f ≈↑⟨ car (Iso.iso→ i)  ⟩
+       ( Iso.≅← i o Iso.≅→ i) o f ≈↑⟨ assoc ⟩
+        Iso.≅← i o (Iso.≅→ i  o f) ≈⟨ cdr ( Mono.isMono mono _ _ (if=ig mf=mg) ) ⟩
+        Iso.≅← i o (Iso.≅→ i  o g) ≈⟨ assoc ⟩
+       ( Iso.≅← i o Iso.≅→ i) o g ≈⟨ car (Iso.iso→ i) ⟩
+       id1 A _  o g ≈⟨ idL ⟩
+       g ∎  where
+          open ≈-Reasoning A
+          if=ig : ( m o Iso.≅→ i ) o f  ≈ ( m o Iso.≅→ i ) o g  →  m o (Iso.≅→ i o f ) ≈  m o ( Iso.≅→ i o g ) 
+          if=ig eq = trans-hom assoc (trans-hom eq (sym-hom assoc ) ) 
+
 ----
 --
 -- Sub Object Classifier as Topos
@@ -197,24 +242,20 @@ record CCCFunctor {c₁ c₂ ℓ c₁' c₂' ℓ' : Level} (A : Category c₁ c�
 --    equalizer.equalizerIso : {a b c : Obj A} → (f g : Hom A a b ) → (equ : Equalizer A f g )
 --      → (m :  Hom A c a) → ( ker-iso : IsoL A m (equalizer equ) ) → IsEqualizer A m f g
 
-open Equalizer
-open import equalizer
-
-record Mono  {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) {b a : Obj A} (mono : Hom A b a) : Set  (c₁ ⊔ c₂ ⊔ ℓ)  where
-     field
-         isMono : {c : Obj A} ( f g : Hom A c b ) → A [ A [ mono o f ]  ≈ A [ mono o g ] ] → A [ f ≈ g ]
-
-open Mono
-
 record IsTopos {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A) 
         ( Ω : Obj A )
         ( ⊤ : Hom A (CCC.１ c) Ω )
         (Ker : {a : Obj A} → ( h : Hom A a Ω ) → Equalizer A h (A [ ⊤ o (CCC.○ c a) ]))
         (char : {a b : Obj A} → (m :  Hom A b a) → Mono A m  → Hom A a Ω) :  Set ( suc c₁  ⊔  suc c₂ ⊔ suc ℓ ) where
      field
-         char-uniqueness  : {a b : Obj A } {h : Hom A a Ω}  (m :  Hom A b a) → (mono : Mono A m)  
-             → A [ char (equalizer (Ker h)) (record { isMono = λ f g → monic (Ker h)}) ≈ h ]
          ker-m : {a b : Obj A} → (m : Hom A b a ) → (mono : Mono A m) → IsEqualizer A m (char m mono) (A [ ⊤ o (CCC.○ c a) ])
+         char-uniqueness  : {a b : Obj A } {h : Hom A a Ω}  
+             → A [ char (equalizer (Ker h)) (record { isMono = λ f g → monic (Ker h)}) ≈ h ]
+         char-iso :  {a a' b : Obj A} → (p : Hom A a b ) (q : Hom A a' b ) → (mp : Mono A p) →(mq : Mono A q) →
+                Iso A a a'  → A [ char p mp  ≈ char q mq ]
+     char-cong  : {a b : Obj A } { m m' :  Hom A b a } { mono : Mono A m } { mono' : Mono A m' }
+             → A [ m  ≈  m'  ] → A [ char m mono ≈ char m' mono'  ]
+     char-cong {a} {b} {m} {m'} {mo} {mo'} m=m' = char-iso m m' mo mo' (≡-iso A _)
      ker : {a : Obj A} → ( h : Hom A a Ω )  → Hom A ( equalizer-c (Ker h) ) a
      ker h = equalizer (Ker h)
      char-m=⊤ :  {a b : Obj A} → (m :  Hom A b a) → (mono : Mono A m) → A [ A [ char m mono  o m ] ≈ A [ ⊤ o CCC.○ c b ] ]

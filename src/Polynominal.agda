@@ -74,7 +74,7 @@ module Polynominal { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) ( C :
   --   we have (x y :  Hom A １ a) → x ≡ y (minimul equivalende assumption). this makes all k x ii case valid
   --   all other cases, arguments are reduced to f ∙ π' .
   postulate
-     x-singleon : {a b c : Obj A}  → (f :  Poly a c b ) → (x y : Hom A b a) → x ≡ y  -- minimul equivalende assumption (variables are the same except its name)
+     -- x-singleon : {a b c : Obj A}  → (f :  Poly a c b ) → (x y : Hom A b a) → x ≡ y  -- minimul equivalende assumption (variables are the same except its name)
      k-cong : {a b c : Obj A}  → (f g :  Poly a c b ) → A [ Poly.f f ≈ Poly.f g ] → A [ k (Poly.x f) (Poly.phi f)   ≈ k (Poly.x g) (Poly.phi g) ]
 
   -- we may prove k-cong from x-singleon
@@ -207,30 +207,10 @@ module Polynominal { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) ( C :
   FC : {a b : Obj A}  → (φ  : Poly a b １ )  → Fc {a} {b} φ 
   FC {a} {b} φ = record {
      sl = A [ k (Poly.x φ ) (Poly.phi φ) o < id1 A _ ,  ○ a  > ] 
-     ; isSelect = begin
-        ε ∙ <  ((k (Poly.x φ) (Poly.phi φ)∙ < id1 A _ ,  ○ a > ) ∙ π')  * ,  Poly.x φ  > ≈↑⟨ cdr (π-cong idR refl-hom ) ⟩
-        ε ∙ (< ((( k (Poly.x φ ) (Poly.phi φ) ∙ < id1 A _ ,  ○ a  >)  ∙ π' ) * )  ∙   id1 A _   ,  Poly.x φ > )  ≈⟨ cdr (π-cong (cdr e2) refl-hom ) ⟩
-        ε ∙ (< ((( k (Poly.x φ ) (Poly.phi φ) ∙ < id1 A _ ,  ○ a  >)  ∙ π' ) * )  ∙   ○ １ ,  Poly.x φ > )  ≈↑⟨ cdr (π-cong (cdr e2) refl-hom ) ⟩
-        ε ∙ (< ((( k (Poly.x φ ) (Poly.phi φ) ∙ < id1 A _ ,  ○ a  >)  ∙ π' ) * )  ∙   (○ a  ∙ Poly.x φ)  ,  Poly.x φ > )  ≈↑⟨ cdr (π-cong (sym assoc) idL ) ⟩
-        ε ∙ (< (((( k (Poly.x φ ) (Poly.phi φ) ∙ < id1 A _ ,  ○ a  >)  ∙ π' ) * )  ∙   ○ a ) ∙ Poly.x φ  ,  id1 A _ ∙ Poly.x φ > )
-            ≈↑⟨ cdr (IsCCC.distr-π isCCC)  ⟩
-        ε ∙ ((< (((( k (Poly.x φ ) (Poly.phi φ) ∙ < id1 A _ ,  ○ a  >)  ∙ π' ) * )  ∙   ○ a ) ,  id1 A _ > )  ∙ Poly.x φ )
-            ≈↑⟨ cdr (car (π-cong (cdr (IsCCC.e3a isCCC) ) refl-hom))  ⟩
-        ε ∙ ((< (((( k (Poly.x φ ) (Poly.phi φ) ∙ < id1 A _ ,  ○ a  >)  ∙ π' ) * )  ∙  (π  ∙ <  ○ a , id1 A _ > )) ,  id1 A _ > )  ∙ Poly.x φ )
-            ≈⟨ cdr (car (π-cong assoc (sym (IsCCC.e3b isCCC)) )) ⟩
-        ε ∙ ((< ((((( k (Poly.x φ ) (Poly.phi φ) ∙ < id1 A _ ,  ○ a  >)  ∙ π' ) * )  ∙  π ) ∙ <  ○ a , id1 A _ > ) , (π' ∙  <  ○ a , id1 A _ > ) > )  ∙ Poly.x φ )
-            ≈↑⟨ cdr (car (IsCCC.distr-π isCCC)) ⟩
-        ε ∙ ((< ((( k (Poly.x φ ) (Poly.phi φ) ∙ < id1 A _ ,  ○ a  >)  ∙ π' ) * )  ∙  π , π' >  ∙ <  ○ a , id1 A _ > )  ∙ Poly.x φ )  ≈⟨ assoc ⟩
-        (ε ∙ (< ((( k (Poly.x φ ) (Poly.phi φ) ∙ < id1 A _ ,  ○ a  >)  ∙ π' ) * )  ∙  π , π' >  ∙ <  ○ a , id1 A _ > ) ) ∙ Poly.x φ   ≈⟨ car assoc ⟩
-        ((ε ∙ < ((( k (Poly.x φ ) (Poly.phi φ) ∙ < id1 A _ ,  ○ a  >)  ∙ π' ) * )  ∙  π , π' > ) ∙ <  ○ a , id1 A _ >  ) ∙ Poly.x φ
-            ≈⟨ car (car (IsCCC.e4a isCCC))  ⟩
-        ((( k (Poly.x φ ) (Poly.phi φ) ∙ < id1 A _ ,  ○ a  >)  ∙ π' ) ∙ <  ○ a , id1 A _ >  ) ∙ Poly.x φ   ≈↑⟨ car assoc ⟩
-        (( k (Poly.x φ ) (Poly.phi φ) ∙ < id1 A _ ,  ○ a  > ) ∙ (π' ∙ <  ○ a , id1 A _ > ) ) ∙ Poly.x φ   ≈⟨ car (cdr (IsCCC.e3b isCCC)) ⟩
-        (( k (Poly.x φ ) (Poly.phi φ) ∙ < id1 A _ ,  ○ a  > ) ∙ id1 A _ ) ∙ Poly.x φ   ≈⟨ car idR ⟩
-        ( k (Poly.x φ ) (Poly.phi φ) ∙ < id1 A _ ,  ○ a  > ) ∙ Poly.x φ   ≈⟨ gg  ⟩
-        Poly.f φ ∎
+     ; isSelect = isSelect
      ; isUnique = uniq 
     }  where
+        π-exchg = IsCCC.π-exchg isCCC
         fc0 :  {b c : Obj A} (p : Poly b c １) → A [  k (Poly.x p ) (Poly.phi p) ∙ <  Poly.x p  ∙  ○ １  , id1 A １ >  ≈ Poly.f p ]
         fc0 p =  Functional-completeness.fp (functional-completeness p)
         gg : A [ (  k (Poly.x φ ) (Poly.phi φ) ∙ < id1 A _ ,  ○ a  > ) ∙ Poly.x φ ≈ Poly.f φ ]
@@ -240,7 +220,29 @@ module Polynominal { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) ( C :
           k (Poly.x φ ) (Poly.phi φ) ∙ <   Poly.x φ  ,  ○ １ >  ≈⟨ cdr (π-cong (trans-hom (sym idR) (cdr e2) )  (sym e2) ) ⟩
           k (Poly.x φ ) (Poly.phi φ) ∙ <  Poly.x φ  ∙  ○ １  , id1 A １ >  ≈⟨ fc0 φ  ⟩
           Poly.f φ ∎
-        π-exchg = IsCCC.π-exchg isCCC
+        isSelect :  A [ ε ∙ < ( ( k (Poly.x φ ) (  Poly.phi φ) ∙ < id1 A _ , ○ a > ) ∙ π' ) * , Poly.x φ >  ≈ Poly.f φ ]
+        isSelect =      begin
+          ε ∙ <  ((k (Poly.x φ) (Poly.phi φ)∙ < id1 A _ ,  ○ a > ) ∙ π')  * ,  Poly.x φ  > ≈↑⟨ cdr (π-cong idR refl-hom ) ⟩
+          ε ∙ (< ((( k (Poly.x φ ) (Poly.phi φ) ∙ < id1 A _ ,  ○ a  >)  ∙ π' ) * )  ∙   id1 A _   ,  Poly.x φ > )  ≈⟨ cdr (π-cong (cdr e2) refl-hom ) ⟩
+          ε ∙ (< ((( k (Poly.x φ ) (Poly.phi φ) ∙ < id1 A _ ,  ○ a  >)  ∙ π' ) * )  ∙   ○ １ ,  Poly.x φ > )  ≈↑⟨ cdr (π-cong (cdr e2) refl-hom ) ⟩
+          ε ∙ (< ((( k (Poly.x φ ) (Poly.phi φ) ∙ < id1 A _ ,  ○ a  >)  ∙ π' ) * )  ∙   (○ a  ∙ Poly.x φ)  ,  Poly.x φ > )  ≈↑⟨ cdr (π-cong (sym assoc) idL ) ⟩
+          ε ∙ (< (((( k (Poly.x φ ) (Poly.phi φ) ∙ < id1 A _ ,  ○ a  >)  ∙ π' ) * )  ∙   ○ a ) ∙ Poly.x φ  ,  id1 A _ ∙ Poly.x φ > )
+              ≈↑⟨ cdr (IsCCC.distr-π isCCC)  ⟩
+          ε ∙ ((< (((( k (Poly.x φ ) (Poly.phi φ) ∙ < id1 A _ ,  ○ a  >)  ∙ π' ) * )  ∙   ○ a ) ,  id1 A _ > )  ∙ Poly.x φ )
+              ≈↑⟨ cdr (car (π-cong (cdr (IsCCC.e3a isCCC) ) refl-hom))  ⟩
+          ε ∙ ((< (((( k (Poly.x φ ) (Poly.phi φ) ∙ < id1 A _ ,  ○ a  >)  ∙ π' ) * )  ∙  (π  ∙ <  ○ a , id1 A _ > )) ,  id1 A _ > )  ∙ Poly.x φ )
+              ≈⟨ cdr (car (π-cong assoc (sym (IsCCC.e3b isCCC)) )) ⟩
+          ε ∙ ((< ((((( k (Poly.x φ ) (Poly.phi φ) ∙ < id1 A _ ,  ○ a  >)  ∙ π' ) * )  ∙  π ) ∙ <  ○ a , id1 A _ > ) , (π' ∙  <  ○ a , id1 A _ > ) > )  ∙ Poly.x φ )
+              ≈↑⟨ cdr (car (IsCCC.distr-π isCCC)) ⟩
+            ε ∙ ((< ((( k (Poly.x φ ) (Poly.phi φ) ∙ < id1 A _ ,  ○ a  >)  ∙ π' ) * )  ∙  π , π' >  ∙ <  ○ a , id1 A _ > )  ∙ Poly.x φ )  ≈⟨ assoc ⟩
+            (ε ∙ (< ((( k (Poly.x φ ) (Poly.phi φ) ∙ < id1 A _ ,  ○ a  >)  ∙ π' ) * )  ∙  π , π' >  ∙ <  ○ a , id1 A _ > ) ) ∙ Poly.x φ   ≈⟨ car assoc ⟩
+          ((ε ∙ < ((( k (Poly.x φ ) (Poly.phi φ) ∙ < id1 A _ ,  ○ a  >)  ∙ π' ) * )  ∙  π , π' > ) ∙ <  ○ a , id1 A _ >  ) ∙ Poly.x φ
+              ≈⟨ car (car (IsCCC.e4a isCCC))  ⟩
+          ((( k (Poly.x φ ) (Poly.phi φ) ∙ < id1 A _ ,  ○ a  >)  ∙ π' ) ∙ <  ○ a , id1 A _ >  ) ∙ Poly.x φ   ≈↑⟨ car assoc ⟩
+          (( k (Poly.x φ ) (Poly.phi φ) ∙ < id1 A _ ,  ○ a  > ) ∙ (π' ∙ <  ○ a , id1 A _ > ) ) ∙ Poly.x φ   ≈⟨ car (cdr (IsCCC.e3b isCCC)) ⟩
+          (( k (Poly.x φ ) (Poly.phi φ) ∙ < id1 A _ ,  ○ a  > ) ∙ id1 A _ ) ∙ Poly.x φ   ≈⟨ car idR ⟩
+          ( k (Poly.x φ ) (Poly.phi φ) ∙ < id1 A _ ,  ○ a  > ) ∙ Poly.x φ   ≈⟨ gg  ⟩
+          Poly.f φ ∎
         uniq  :  (f : Hom A １ (b <= a)) → A [ A [ ε o < f , Poly.x φ > ] ≈ Poly.f φ ] →
             A [ (( k (Poly.x φ) (Poly.phi φ) ∙  < id1 A _  , ○ a > )∙ π' ) * ≈ f ]
         uniq f eq = begin

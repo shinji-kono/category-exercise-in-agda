@@ -22,36 +22,10 @@ module cat-utility where
                  iso→  :  C [ C [ ≅← o ≅→  ] ≈  id1 C x ]
                  iso←  :  C [ C [ ≅→ o ≅←  ] ≈  id1 C y ]
 
-        record IsoR  {c₁ c₂ ℓ : Level} (C : Category c₁ c₂ ℓ)
-                 {a b c : Obj C }
-                 ( f :  Hom C a b )
-                 ( g :  Hom C a c )
-                : Set ( suc  (c₁ ⊔ c₂ ⊔ ℓ ⊔ c₁)) where
-           field
-                 iso-R   : Iso C b c
-                 iso≈R  :  C [ C [ Iso.≅→ iso-R  o f  ] ≈  g ]
-           R≈iso  :  C [ C [ Iso.≅← iso-R o g ] ≈  f ]
-           R≈iso  = begin  Iso.≅← iso-R o g ≈↑⟨ cdr iso≈R ⟩
-                Iso.≅← iso-R  o (Iso.≅→ iso-R o f) ≈⟨ assoc ⟩
-                (Iso.≅← iso-R  o Iso.≅→ iso-R ) o f ≈⟨ car (Iso.iso→ iso-R ) ⟩
-                id1 C _  o f  ≈⟨ idL ⟩
-                f ∎  where open ≈-Reasoning C
-
-        record IsoL  {c₁ c₂ ℓ : Level} (C : Category c₁ c₂ ℓ)
-                 {a b c : Obj C }
-                 ( f :  Hom C b a )
-                 ( g :  Hom C c a )
-                : Set ( suc  (c₁ ⊔ c₂ ⊔ ℓ ⊔ c₁)) where
-           field
-                 iso-L   : Iso C b c
-                 iso≈L  :  C [ C [ f o Iso.≅← iso-L ] ≈  g ]
-           L≈iso  :  C [ C [ g o Iso.≅→ iso-L ] ≈  f ]
-           L≈iso  = begin  g o Iso.≅→ iso-L ≈↑⟨ car iso≈L ⟩
-                (f o Iso.≅← iso-L ) o Iso.≅→ iso-L ≈↑⟨ assoc ⟩
-                f  o (Iso.≅← iso-L  o Iso.≅→ iso-L ) ≈⟨ cdr (Iso.iso→ iso-L ) ⟩
-                f  o id1 C _ ≈⟨ idR ⟩
-                f ∎  where open ≈-Reasoning C
-
+        ≡-iso : {c₁ c₂ ℓ : Level} (C : Category c₁ c₂ ℓ) (x : Obj C ) → Iso C x x
+        ≡-iso C x = record { ≅→ = id1 C _ ; ≅← = id1 C _ ; iso→  = ≈-Reasoning.idL C ; iso←  =  ≈-Reasoning.idL C }
+        sym-iso : {c₁ c₂ ℓ : Level} (C : Category c₁ c₂ ℓ) {x y : Obj C } → Iso C x y → Iso C y x
+        sym-iso C i = record { ≅→ = Iso.≅← i  ; ≅← = Iso.≅→ i ; iso→  = Iso.iso← i ; iso←  =  Iso.iso→ i }
 
         record IsUniversalMapping  {c₁ c₂ ℓ c₁' c₂' ℓ' : Level} (A : Category c₁ c₂ ℓ) (B : Category c₁' c₂' ℓ')
                          ( U : Functor B A )

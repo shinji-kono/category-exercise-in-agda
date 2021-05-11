@@ -136,8 +136,9 @@ topos {c} lem = record {
       ;  Ker = tker
       ;  char = λ m mono → tchar m mono
       ;  isTopos = record {
-                 char-uniqueness  = λ {a} {b} {h} m mono →  extensionality Sets ( λ x → uniq h m mono x )
-              ;  ker-m = λ m mono → equalizerIso _ _ (tker (tchar m mono)) m (isol m mono) 
+                 char-uniqueness  = λ {a} {b} {h} →  extensionality Sets ( λ x → uniq h x )
+              ;  char-iso  = iso-m
+              ;  ker-m = ker-iso 
          }
     } where
 --
@@ -165,9 +166,9 @@ topos {c} lem = record {
         ... | case2 f = false
         -- imequ   : {a b : Obj Sets} (m : Hom Sets b a) (mono : Mono Sets m) → IsEqualizer Sets m (tchar m mono) (Sets [ (λ _ → true ) o CCC.○ sets a ])
         -- imequ {a} {b} m mono = equalizerIso _ _ (tker (tchar m mono)) m (isol m mono)
-        uniq : {a : Obj (Sets {c})} {b : Obj Sets} (h : Hom Sets a Bool) (m : Hom Sets b a) (mono : Mono Sets m) (y : a) →
+        uniq : {a : Obj (Sets {c})}  (h : Hom Sets a Bool)   (y : a) →
                tchar (Equalizer.equalizer (tker h)) (record { isMono = λ f g → monic (tker h) }) y ≡ h y
-        uniq {a} {b} h m mono y with h y  | inspect h y | lem (image (Equalizer.equalizer (tker h)) y ) | inspect (tchar (Equalizer.equalizer (tker h)) (record { isMono = λ f g → monic (tker h) })) y
+        uniq {a}  h y with h y  | inspect h y | lem (image (Equalizer.equalizer (tker h)) y ) | inspect (tchar (Equalizer.equalizer (tker h)) (record { isMono = λ f g → monic (tker h) })) y
         ... | true  | record { eq = eqhy } | case1 x | record { eq = eq1 } = eq1 
         ... | true  | record { eq = eqhy } | case2 x | record { eq = eq1 } = ⊥-elim (x (isImage (elem y eqhy)))
         ... | false | record { eq = eqhy } | case1 (isImage (elem x eq)) | record { eq = eq1 } = ⊥-elim ( ¬x≡t∧x≡f record {fst = eqhy ; snd = eq })
@@ -200,10 +201,17 @@ topos {c} lem = record {
         s2i  : {a b : Obj (Sets {c}) } (m : Hom Sets b a) → (mono : Mono Sets m ) → (e : sequ a Bool (tchar m mono)  (λ _ → true )) → image m (equ e)
         s2i {a} {b} m mono (elem y eq) with lem (image m y)
         ... | case1 im = im
-        isol : {a b : Obj (Sets {c}) } (m : Hom Sets b a) → (mono : Mono Sets m ) → IsoL Sets m (λ (e : sequ a Bool (tchar m mono)  (λ _ → true )) → equ e )
-        isol {a} {b} m mono  = record { iso-L = record { ≅→ = b→s ; ≅← = b←s ;
-               iso→  =  extensionality Sets ( λ x → iso1 x )
-             ; iso←  =  extensionality Sets ( λ x → iso2 x) } ; iso≈L = extensionality Sets ( λ s → iso3 s ) } where
+        iso-m :  {a a' b : Obj Sets} (p : Hom Sets a b) (q : Hom Sets a' b) (mp : Mono Sets p) (mq : Mono Sets q) →
+            Iso Sets a a' → Sets [ tchar p mp ≈ tchar q mq ]
+        iso-m {a} {a'} {b} p q mp mq i = extensionality Sets (λ y → iso-m1 y ) where
+           iso-m1 : (y : b) → tchar p mp y ≡ tchar q mq y
+           iso-m1 y with lem (image p y) | inspect (tchar p mp) y | lem (image q y) | inspect (tchar q mq) y
+           ... | case1 (isImage x) | t | case1 x₁ | v = {!!}
+           ... | case1 (isImage x) | t | case2 x₁ | v = {!!}
+           ... | case2 x | t | case1 (isImage x₁) | v = {!!}
+           ... | case2 x | t | case2 x₁ | v = {!!}
+        ker-iso :  {a b : Obj Sets} (m : Hom Sets b a) (mono : Mono Sets m) → IsEqualizer Sets m (tchar m mono) (Sets [ (λ _ → true) o CCC.○ sets a ])
+        ker-iso {a} {b} m mono = equalizerIso _ _ (tker (tchar m mono)) m  isol (extensionality Sets ( λ x → iso4 x)) where
           b→s : Hom Sets b (sequ a Bool (tchar m mono) (λ _ → true))
           b→s x = b2s m mono x
           b←s : Hom Sets (sequ a Bool (tchar m mono) (λ _ → true)) b
@@ -219,6 +227,11 @@ topos {c} lem = record {
              i2b m (isImage x)  ≡⟨⟩
              x ∎ where open ≡-Reasoning
           iso1 x | false | record { eq = eq1 } = ⊥-elim ( tchar¬Img m mono (m x) eq1 (isImage x))
+          iso4 : (x : b ) →  (Sets [ Equalizer.equalizer (tker (tchar m mono)) o b→s ]) x ≡ m x
+          iso4 x = begin 
+             equ (b2s m mono x) ≡⟨ sym (iso3 (b2s m mono x)) ⟩
+             m (b←s (b2s m mono x)) ≡⟨ cong (λ k → m k ) (iso1 x) ⟩
+             m x ∎ where open ≡-Reasoning
           iso2 : (x : sequ a Bool (tchar m mono) (λ _ → true) ) →  (Sets [ b→s o b←s ]) x ≡ id1 Sets (sequ a Bool (tchar m mono) (λ _ → true)) x
           iso2 (elem y eq) = begin
              b→s ( b←s (elem y eq)) ≡⟨⟩
@@ -240,6 +253,34 @@ topos {c} lem = record {
                ... | true | record {eq = eq1} = refl
                ... | false | record { eq = eq1 } with tchar¬Img m mono (m x) eq1
                ... | t = ⊥-elim (t (isImage x)) 
+          isol :  Iso Sets b (Equalizer.equalizer-c (tker (tchar m mono)))
+          isol = record { ≅→ = b→s ; ≅← = b←s ;
+                iso→  =  extensionality Sets ( λ x → iso1 x )
+              ; iso←  =  extensionality Sets ( λ x → iso2 x) } -- ; iso≈L = extensionality Sets ( λ s → iso3 s ) } where
+          open import Polynominal (Sets {c} )  (sets {c})
+          A = Sets {c}
+          Ω = Bool
+          １ = One
+          ⊤ = λ _ → true
+          ○ = λ _ → λ _ → !
+          _⊢_  : {a b : Obj A}  (p : Poly a  Ω b ) (q : Poly a  Ω b ) → Set (suc c )
+          _⊢_  {a} {b} p q = {c : Obj A} (h : Hom A c b ) → A [ Poly.f p o  h  ≈   ⊤ o ○  c  ]
+               → A [   Poly.f q ∙ h  ≈  ⊤ o  ○  c  ] 
+          tl01 : {a b : Obj A}  (p : Poly a  Ω b ) (q : Poly a  Ω b )
+             → p ⊢ q → q ⊢ p →  A [ Poly.f p ≈ Poly.f q ]
+          tl01 {a} {b} p q p<q q<p = extensionality Sets t1011 where
+            open ≡-Reasoning
+            t1011 : (s : b ) → Poly.f p s ≡ Poly.f q s 
+            t1011 x with Poly.f p x | inspect ( Poly.f p) x
+            ... | true | record { eq = eq1 } = sym tt1 where
+                 tt1 : Poly.f q _ ≡ true 
+                 tt1 = cong (λ k → k !) (p<q _ ( extensionality Sets (λ x → eq1) ))
+            ... | false |  record { eq = eq1 } with Poly.f q x | inspect (Poly.f q) x
+            ... | true | record { eq = eq2 } = ⊥-elim ( ¬x≡t∧x≡f record { fst  = eq1 ; snd = tt1 } ) where
+                 tt1 : Poly.f p _ ≡ true 
+                 tt1 = cong (λ k → k !) (q<p _ ( extensionality Sets (λ x → eq2) ))
+            ... | false | eq2 = refl
+
 
 open import graph
 module ccc-from-graph {c₁ c₂ : Level }  (G : Graph {c₁} {c₂})  where
