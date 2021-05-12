@@ -55,8 +55,8 @@ module ToposIL   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A
      _,_⊢_  {a} {b} p p1 q = {c : Obj A} (h : Hom A c b ) → A [ Poly.f p ∙  h  ≈  ⊤ ∙  ○  c  ]
          → A [   Poly.f p1 ∙ h  ≈  ⊤ ∙  ○  c  ] 
          → A [   Poly.f q  ∙ h  ≈  ⊤ ∙  ○  c  ] 
-     expr : {a b c  : Obj A}  (p : Hom A １ Ω  )  → ( x : Hom A １ a ) →  Poly a  Ω １ 
-     expr p x = record { x = x ;  f = p ; phi = i }
+     -- expr : {a b c  : Obj A}  (p : Hom A １ Ω  )  → ( x : Hom A １ a ) →  Poly a  Ω １ 
+     -- expr p x = record { x = x ;  f = p ; phi = i ; idx = {!!} }
      ⊨_ :   (p : Hom A １ Ω  ) →  Set  ( c₁  ⊔  c₂ ⊔ ℓ )
      ⊨  p = {c : Obj A} (h : Hom A c １ )  → A [ p  ∙ h  ≈  ⊤ ∙  ○  c ] 
 
@@ -91,7 +91,7 @@ module ToposIL   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A
       ;  _∈_ = λ {a} x α →  A [ ε o < α , x > ]
       -- { x ∈ a | φ x } : P a
       ;  select = λ {a} φ →  Fc.g ( fc t φ )
-      ;  apply = λ {a}  φ x → record { x = x ; f = Functional-completeness.fun (fc0 t φ ) ∙ < x ∙  ○ _ , id1 A _ >  ; phi = i }
+      ;  apply = λ {a}  φ x → record { x = x ; f = Functional-completeness.fun (fc0 t φ ) ∙ < x ∙  ○ _ , id1 A _ >  ; phi = i ; idx = Poly.idx φ }
       ;  isIL = record {
            isSelect = {!!}
          ; uniqueSelect = {!!}
