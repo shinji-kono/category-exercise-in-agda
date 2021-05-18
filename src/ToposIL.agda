@@ -78,6 +78,7 @@ module ToposIL   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A
 
   -- f ≡ λ (x ∈ a) → φ x , ∃ (f : b <= a) →  f ∙ x ≈  φ x  
 
+
   -- functional completeness
   FC0 : Set ( suc c₁  ⊔  suc c₂ ⊔ suc ℓ )
   FC0 = {a b : Obj A}  (t : Topos A c) ( φ : Poly a (Ω t) b) → Functional-completeness φ
@@ -91,7 +92,7 @@ module ToposIL   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A
       ;  _∈_ = λ {a} x α →  A [ ε o < α , x > ]
       -- { x ∈ a | φ x } : P a
       ;  select = λ {a} φ →  Fc.g ( fc t φ )
-      ;  apply = λ {a}  φ x → record { x = x ; f = Functional-completeness.fun (fc0 t φ ) ∙ < x ∙  ○ _ , id1 A _ >  ; phi = i ; idx = Poly.idx φ }
+      ;  apply = λ {a}  φ x → record { x = x ; f = Functional-completeness.fun (fc0 t φ ) ∙ < x ∙  ○ _ , id1 A _ >  ; phi = i _ ; nf = {!!} }
       ;  isIL = record {
            isSelect = {!!}
          ; uniqueSelect = {!!}
@@ -116,7 +117,7 @@ module ToposIL   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A
         → p ⊢ q → q ⊢ p →  A [ Poly.f p ≈ Poly.f q ]
      tl01 {a} {b} p q p<q q<p = begin
           Poly.f p ≈↑⟨ tt p  ⟩
-          char t (equalizer (kp p) ) (eMonic A (kp p)) ≈⟨ IsTopos.char-iso (Topos.isTopos t) (equalizer (kp p) ) (equalizer (kp q) ) (eMonic A (kp p)) (eMonic A (kp q)) pqiso ⟩
+          char t (equalizer (kp p) ) (eMonic A (kp p)) ≈⟨ IsTopos.char-iso (Topos.isTopos t) (equalizer (kp p) ) (equalizer (kp q) ) (eMonic A (kp p)) (eMonic A (kp q)) pqiso ei ⟩
           char t (equalizer (kp q) ) (eMonic A (kp q)) ≈⟨ tt q ⟩
           Poly.f q ∎   where
         open import equalizer using ( monic )
@@ -147,6 +148,8 @@ module ToposIL   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A
            id1 A _ ∎  
         pqiso : Iso A (equalizer-c (kp p)) (equalizer-c (kp q))
         pqiso = record { ≅← = qtop  p q q<p ; ≅→ =  qtop q p p<q ; iso→  = qq=1 p q q<p p<q  ; iso← = qq=1 q p p<q q<p  } 
+        ei :  A [ equalizer (Ker t (Poly.f p)) ≈ A [ equalizer (Ker t (Poly.f q)) o Iso.≅→ pqiso ] ]
+        ei = sym (ek=h (isEqualizer (kp q)) )
         tt :  (q : Poly a  (Topos.Ω t) b ) → A [ char t (equalizer (Ker t (Poly.f q))) (eMonic A (Ker t (Poly.f q)))  ≈  Poly.f q ]
         tt q = IsTopos.char-uniqueness (Topos.isTopos t) {b} {a} 
 

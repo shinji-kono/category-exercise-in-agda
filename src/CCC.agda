@@ -251,11 +251,16 @@ record IsTopos {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A)
          ker-m : {a b : Obj A} → (m : Hom A b a ) → (mono : Mono A m) → IsEqualizer A m (char m mono) (A [ ⊤ o (CCC.○ c a) ])
          char-uniqueness  : {a b : Obj A } {h : Hom A a Ω}  
              → A [ char (equalizer (Ker h)) (record { isMono = λ f g → monic (Ker h)}) ≈ h ]
+         -- char-iso :  {a a' b : Obj A} → (p : Hom A a b ) (q : Hom A a' b ) → (mp : Mono A p) →(mq : Mono A q) →
+         --        Iso A a a'  → A [ char p mp  ≈ char q mq ]
          char-iso :  {a a' b : Obj A} → (p : Hom A a b ) (q : Hom A a' b ) → (mp : Mono A p) →(mq : Mono A q) →
-                Iso A a a'  → A [ char p mp  ≈ char q mq ]
+                (i : Iso A a a' ) → A [ p ≈ A [ q o Iso.≅→ i ] ]  → A [ char p mp  ≈ char q mq ]
      char-cong  : {a b : Obj A } { m m' :  Hom A b a } { mono : Mono A m } { mono' : Mono A m' }
              → A [ m  ≈  m'  ] → A [ char m mono ≈ char m' mono'  ]
-     char-cong {a} {b} {m} {m'} {mo} {mo'} m=m' = char-iso m m' mo mo' (≡-iso A _)
+     char-cong {a} {b} {m} {m'} {mo} {mo'} m=m' = char-iso m m' mo mo' (≡-iso A _) ( begin 
+            m ≈⟨ m=m' ⟩
+            m' ≈↑⟨ idR  ⟩
+            m' o Iso.≅→ (≡-iso A b) ∎ ) where   open ≈-Reasoning A
      ker : {a : Obj A} → ( h : Hom A a Ω )  → Hom A ( equalizer-c (Ker h) ) a
      ker h = equalizer (Ker h)
      char-m=⊤ :  {a b : Obj A} → (m :  Hom A b a) → (mono : Mono A m) → A [ A [ char m mono  o m ] ≈ A [ ⊤ o CCC.○ c b ] ]

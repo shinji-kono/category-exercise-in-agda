@@ -201,15 +201,6 @@ topos {c} lem = record {
         s2i  : {a b : Obj (Sets {c}) } (m : Hom Sets b a) → (mono : Mono Sets m ) → (e : sequ a Bool (tchar m mono)  (λ _ → true )) → image m (equ e)
         s2i {a} {b} m mono (elem y eq) with lem (image m y)
         ... | case1 im = im
-        iso-m :  {a a' b : Obj Sets} (p : Hom Sets a b) (q : Hom Sets a' b) (mp : Mono Sets p) (mq : Mono Sets q) →
-            Iso Sets a a' → Sets [ tchar p mp ≈ tchar q mq ]
-        iso-m {a} {a'} {b} p q mp mq i = extensionality Sets (λ y → iso-m1 y ) where
-           iso-m1 : (y : b) → tchar p mp y ≡ tchar q mq y
-           iso-m1 y with lem (image p y) | inspect (tchar p mp) y | lem (image q y) | inspect (tchar q mq) y
-           ... | case1 (isImage x) | t | case1 x₁ | v = {!!}
-           ... | case1 (isImage x) | t | case2 x₁ | v = {!!}
-           ... | case2 x | t | case1 (isImage x₁) | v = {!!}
-           ... | case2 x | t | case2 x₁ | v = {!!}
         ker-iso :  {a b : Obj Sets} (m : Hom Sets b a) (mono : Mono Sets m) → IsEqualizer Sets m (tchar m mono) (Sets [ (λ _ → true) o CCC.○ sets a ])
         ker-iso {a} {b} m mono = equalizerIso _ _ (tker (tchar m mono)) m  isol (extensionality Sets ( λ x → iso4 x)) where
           b→s : Hom Sets b (sequ a Bool (tchar m mono) (λ _ → true))
@@ -256,19 +247,50 @@ topos {c} lem = record {
           isol :  Iso Sets b (Equalizer.equalizer-c (tker (tchar m mono)))
           isol = record { ≅→ = b→s ; ≅← = b←s ;
                 iso→  =  extensionality Sets ( λ x → iso1 x )
-              ; iso←  =  extensionality Sets ( λ x → iso2 x) } -- ; iso≈L = extensionality Sets ( λ s → iso3 s ) } where
-          open import Polynominal (Sets {c} )  (sets {c})
-          A = Sets {c}
-          Ω = Bool
-          １ = One
-          ⊤ = λ _ → true
-          ○ = λ _ → λ _ → !
-          _⊢_  : {a b : Obj A}  (p : Poly a  Ω b ) (q : Poly a  Ω b ) → Set (suc c )
-          _⊢_  {a} {b} p q = {c : Obj A} (h : Hom A c b ) → A [ Poly.f p o  h  ≈   ⊤ o ○  c  ]
+              ; iso←  =  extensionality Sets ( λ x → iso2 x) } 
+
+        iso-m :  {a a' b : Obj Sets} (p : Hom Sets a b) (q : Hom Sets a' b) (mp : Mono Sets p) (mq : Mono Sets q) →
+            (i : Iso Sets a a' ) → Sets [ p ≈ Sets [ q o Iso.≅→ i ] ] → Sets [ tchar p mp ≈ tchar q mq ]
+        iso-m {a} {a'} {b} p q mp mq i ei = extensionality Sets (λ y → iso-m1 y ) where
+           --
+           --          Iso.≅← i     x      ○ a            mq : q ( f x ) ≡ q ( g x ) → f x ≡ g x 
+           --       a'------------→ a -----------→ 1
+           --       | ⟵------------ |              |
+           --      q|  Iso.≅→ i     |p             | ⊤   char m : a → Ω = {true,false}
+           --       |               ↓    char m    ↓     if y : a ≡ m (∃ x : b) → true  ( data char )
+           --       +-------------→ b -----------→ Ω     else         false
+           --    q ( Iso.≅→ i x ) ≡ y ≡  p x
+           --
+           iso-m1 : (y : b) → tchar p mp y ≡ tchar q mq y
+           iso-m1 y with lem (image p y) | lem (image q y) 
+           ... | case1 (isImage x) |  case1 x₁  = refl
+           ... | case1 (isImage x) |  case2 not = ⊥-elim ( not iso-m2 ) where
+               iso-m4 :  q ( Iso.≅→ i x ) ≡ p x
+               iso-m4 = begin
+                  q ( Iso.≅→ i x )  ≡⟨ sym ( cong ( λ k → k x) ei ) ⟩
+                  p x ∎ where open ≡-Reasoning
+               iso-m2 : image q (p x)   
+               iso-m2 = subst (λ k → image q k) iso-m4 ( isImage ( Iso.≅→ i x ) ) 
+           ... | case2 not |  case1 (isImage x) = ⊥-elim ( not ( subst (λ k → image p k) iso-m3 ( isImage ( Iso.≅← i x ) ) )) where
+               iso-m3 :  p (Iso.≅← i x) ≡ q x
+               iso-m3 = begin
+                  p (Iso.≅← i x)  ≡⟨  cong ( λ k → k (Iso.≅← i x) ) ei ⟩
+                  q (Iso.≅→ i (Iso.≅← i x))  ≡⟨ cong (λ k → q k) (cong (λ k1 → k1 x) (Iso.iso← i)) ⟩
+                  q x ∎ where open ≡-Reasoning
+           ... | case2 x |  case2 not = refl
+
+        open import Polynominal (Sets {c} )  (sets {c})
+        A = Sets {c}
+        Ω = Bool
+        １ = One
+        ⊤ = λ _ → true
+        ○ = λ _ → λ _ → !
+        _⊢_  : {a b : Obj A}  (p : Poly a  Ω b ) (q : Poly a  Ω b ) → Set (suc c )
+        _⊢_  {a} {b} p q = {c : Obj A} (h : Hom A c b ) → A [ Poly.f p o  h  ≈   ⊤ o ○  c  ]
                → A [   Poly.f q ∙ h  ≈  ⊤ o  ○  c  ] 
-          tl01 : {a b : Obj A}  (p : Poly a  Ω b ) (q : Poly a  Ω b )
+        tl01 : {a b : Obj A}  (p : Poly a  Ω b ) (q : Poly a  Ω b )
              → p ⊢ q → q ⊢ p →  A [ Poly.f p ≈ Poly.f q ]
-          tl01 {a} {b} p q p<q q<p = extensionality Sets t1011 where
+        tl01 {a} {b} p q p<q q<p = extensionality Sets t1011 where
             open ≡-Reasoning
             t1011 : (s : b ) → Poly.f p s ≡ Poly.f q s 
             t1011 x with Poly.f p x | inspect ( Poly.f p) x
