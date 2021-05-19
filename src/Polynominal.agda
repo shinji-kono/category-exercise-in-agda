@@ -67,21 +67,19 @@ module Polynominal { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) ( C :
   -- if we use equality on f as in A, Poly is ovioously Hom c b of a Category.
   -- it is better to define A[x] as an extension of A as described before
 
-  open import Data.Unit
-  xnef :  {a b c : Obj A } → ( x∈a : Hom A １ a ) → {z : Hom A b c } → ( y  : φ {a} x∈a z ) → Set c₂
-  xnef {a} {b} {c} x (i f) = ¬ (x ≅ f)
-  xnef {a} {１}  x  ii = Lift _ ⊤
-  xnef {a} {b}  x  (iii phi phi₁) = xnef x phi × xnef x phi₁
-  xnef {a} {b}  x  (iv phi phi₁) = xnef x phi × xnef x phi₁
-  xnef {a} {b}  x  (v phi) = xnef x phi
-
   record Poly (a c b : Obj A )  : Set (c₁ ⊔ c₂ ⊔ ℓ)  where
     field
-       x :  Hom A １ a                                            -- λ x
+       x :  Hom A １ a 
        f :  Hom A b c
-       phi  : φ x {b} {c} f                                      -- construction of f
-       nf : (fp : φ x {b} {c} f) → xnef x fp
+       phi  : φ x {b} {c} f
 
+  -- an assuption needed in k x phi ≈ k x phi'
+  --   k x (i x) ≈ k x ii  
+  postulate 
+       xf :  {a b c : Obj A } → ( x : Hom A １ a ) → {z : Hom A b c } → ( y  : φ {a} x z ) → ( x ∙ π' ) ≈ π 
+  --   
+  --   this is justified equality f ≈ g in A[x] is used in f ∙ < x , id1 A _> ≈  f ∙ < x , id1 A _>
+  --   ( x ∙ π' ) ∙ < x , id1 A _ > ≈ π ∙ < x , id1 A _ >
 
   -- since we have A[x] now, we can proceed the proof on p.64 in some possible future
 
@@ -125,33 +123,33 @@ module Polynominal { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) ( C :
   --   all other cases, arguments are reduced to f ∙ π' .
 
   ki : {a b c : Obj A} → (x : Hom A １ a) → (f : Hom A b c ) → (fp  :  φ x {b} {c} f )
-     → ((fp  :  φ x {b} {c} f ) → xnef x fp ) →  A [ k x (i f) ≈ k x fp ]
-  ki x f (i _) _ = refl-hom
-  ki {a} x .x ii ne  = ⊥-elim ( ne (i x) HE.refl )
-  ki x _ (iii {_} {_} {_} {f₁}{ f₂} fp₁ fp₂ ) ne  = begin
+     →  A [ k x (i f) ≈ k x fp ]
+  ki x f (i _) = refl-hom
+  ki {a} x .x ii = xf x ii -- we may think this is not happen in A or this is the nature of equality in A[x]
+  ki x _ (iii {_} {_} {_} {f₁}{ f₂} fp₁ fp₂ ) = begin
                < f₁ ,  f₂  > ∙ π'  ≈⟨ IsCCC.distr-π isCCC ⟩
-               < f₁ ∙ π'  ,  f₂   ∙ π' >  ≈⟨ π-cong (ki x f₁ fp₁ (λ fp → proj₁ (ne (iii fp fp₂ )))) (ki x f₂ fp₂ (λ fp → proj₂ (ne (iii fp₁ fp )))) ⟩
+               < f₁ ∙ π'  ,  f₂   ∙ π' >  ≈⟨ π-cong (ki x f₁ fp₁  ) (ki x f₂ fp₂  ) ⟩
                 k x (iii  fp₁ fp₂ )  ∎ 
-  ki x _ (iv {_} {_} {_} {f₁} {f₂} fp fp₁) ne = begin
+  ki x _ (iv {_} {_} {_} {f₁} {f₂} fp fp₁) = begin
                (f₁ ∙ f₂  ) ∙ π'  ≈↑⟨ assoc ⟩
                f₁  ∙ ( f₂ ∙ π')  ≈↑⟨ cdr (IsCCC.e3b isCCC) ⟩
                f₁  ∙ ( π'  ∙ < π , (f₂ ∙ π' )  >)  ≈⟨ assoc ⟩
-               (f₁  ∙ π' ) ∙ < π , (f₂ ∙ π' )  >  ≈⟨ resp (π-cong refl-hom (ki x _ fp₁ (λ p → proj₂ (ne (iv fp p ) ) )) ) (ki x _ fp (λ p → proj₁ (ne (iv p fp₁ ) ))) ⟩
+               (f₁  ∙ π' ) ∙ < π , (f₂ ∙ π' )  >  ≈⟨ resp (π-cong refl-hom (ki x _ fp₁  )) (ki x _ fp  ) ⟩
                k x fp ∙ < π , k x fp₁ >  ≈⟨⟩
                k x (iv fp fp₁ )  ∎  
-  ki x _ (v {_} {_} {_} {f} fp) ne = begin
+  ki x _ (v {_} {_} {_} {f} fp) = begin
                (f *) ∙ π' ≈⟨ distr-*  ⟩
                ( f ∙ < π' ∙ π , π'  > ) * ≈↑⟨ *-cong (cdr (IsCCC.e3b isCCC)) ⟩
                ( f ∙ ( π'  ∙  < π ∙ π , < π' ∙  π , π' > > ) ) *  ≈⟨ *-cong assoc  ⟩
-               ( (f ∙ π')  ∙  < π ∙ π , < π' ∙  π , π' > > ) *  ≈⟨ *-cong ( car ( ki x _ fp (λ p → ne (v p )) )) ⟩
+               ( (f ∙ π')  ∙  < π ∙ π , < π' ∙  π , π' > > ) *  ≈⟨ *-cong ( car ( ki x _ fp )) ⟩
                ( k x fp ∙  < π ∙ π , < π' ∙  π , π' > > ) *  ≈⟨⟩
                k x (v fp )  ∎  
   k-cong : {a b c : Obj A}  → (f g :  Poly a c b )
         → A [ Poly.f f ≈ Poly.f g ] → A [ k (Poly.x f) (Poly.phi f)   ≈ k (Poly.x g) (Poly.phi g) ]
   k-cong {a} {b} {c} f g f=f = begin
-          k (Poly.x f) (Poly.phi f) ≈↑⟨ ki  (Poly.x f) (Poly.f f)  (Poly.phi f) (Poly.nf f ) ⟩
+          k (Poly.x f) (Poly.phi f) ≈↑⟨ ki  (Poly.x f) (Poly.f f)  (Poly.phi f)  ⟩
           Poly.f f ∙ π' ≈⟨ car f=f  ⟩
-          Poly.f g ∙ π'  ≈⟨ ki  (Poly.x g) (Poly.f g)  (Poly.phi g) (Poly.nf g ) ⟩
+          Poly.f g ∙ π'  ≈⟨ ki  (Poly.x g) (Poly.f g)  (Poly.phi g) ⟩
           k (Poly.x g) (Poly.phi g) ∎   
 
   -- proof in p.59 Lambek
@@ -164,7 +162,7 @@ module Polynominal { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) ( C :
   functional-completeness {a} {b} {c} p = record {
          fun = k (Poly.x p) (Poly.phi p)
        ; fp = fc0 (Poly.x p) (Poly.f p) (Poly.phi p)
-       ; uniq = λ f eq  → uniq (Poly.x p) (Poly.f p) (Poly.phi p)  f (Poly.nf p ) eq
+       ; uniq = λ f eq  → uniq (Poly.x p) (Poly.f p) (Poly.phi p)  f eq
      } where 
         fc0 : {a b c : Obj A}  → (x :  Hom A １ a) (f :  Hom A b c) (phi  :  φ x {b} {c} f )
            → A [  k x phi ∙ <  x ∙ ○ b  , id1 A b >  ≈ f ]
@@ -221,10 +219,9 @@ module Polynominal { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) ( C :
         --   f ∙ <  x ∙ ○ b  , id1 A b >  ≈ f →  f ≈ k x (phi p)
         -- 
         uniq : {a b c : Obj A}  → (x :  Hom A １ a) (f :  Hom A b c) (phi  :  φ x {b} {c} f ) (f' : Hom A (a ∧ b) c)
-            → ((phi : φ x {b} {c} f) → xnef x phi)
             → A [  f' ∙ <  x ∙ ○ b  , id1 A b >  ≈ f ] → A [ f' ≈ k x phi ]
-        uniq {a} {b} {c} x f phi f' ne fx=p  = sym (begin
-               k x phi ≈↑⟨ ki x f phi ne ⟩
+        uniq {a} {b} {c} x f phi f' fx=p  = sym (begin
+               k x phi ≈↑⟨ ki x f phi ⟩
                k x {f} (i _) ≈↑⟨ car fx=p ⟩
                k x {f' ∙ < x ∙ ○ b , id1 A b >} (i _)  ≈⟨ trans-hom (sym assoc)  (cdr (IsCCC.distr-π isCCC) ) ⟩ -- ( f' ∙ < x ∙ ○ b , id1 A b> ) ∙ π'
                f' ∙ k x {< x ∙ ○ b , id1 A b >} (iii (i _)  (i _)  ) ≈⟨⟩                         -- ( f' ∙ < (x ∙ ○ b) ∙ π'  , id1 A b ∙ π' > ) 
@@ -235,11 +232,9 @@ module Polynominal { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) ( C :
                f' ∙  < π , π' >  ≈⟨ cdr (IsCCC.π-id isCCC) ⟩
                f' ∙  id1 A _ ≈⟨ idR ⟩
                f' ∎  )  where
-                   -- x ∙ ○ b is clearly Polynominal, but our xnef is too strong to prove it
-                   postulate 
-                      xf : {a b : Obj A} → { x : Hom A １ a } →  (fp : φ x (x ∙ ○ b)) → xnef x fp
+                   -- x ∙ ○ b is clearly Polynominal or assumption xf
                    u2 : k x {x ∙ ○ b} (i _) ≈ k x {x} ii ∙ < π , k x {○ b} (i _) >  --  (x ∙ (○ b)) ∙ π' ≈ π ∙ < π , (○ b) ∙ π' >
-                   u2 = ki x (x ∙ ○ b) (iv ii (i _)) xf
+                   u2 = ki x (x ∙ ○ b) (iv ii (i _)) 
 
   -- functional completeness ε form
   --

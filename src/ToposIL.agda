@@ -92,7 +92,7 @@ module ToposIL   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A
       ;  _∈_ = λ {a} x α →  A [ ε o < α , x > ]
       -- { x ∈ a | φ x } : P a
       ;  select = λ {a} φ →  Fc.g ( fc t φ )
-      ;  apply = λ {a}  φ x → record { x = x ; f = Functional-completeness.fun (fc0 t φ ) ∙ < x ∙  ○ _ , id1 A _ >  ; phi = i _ ; nf = {!!} }
+      ;  apply = λ {a}  φ x → record { x = x ; f = Functional-completeness.fun (fc0 t φ ) ∙ < x ∙  ○ _ , id1 A _ >  ; phi = i _ }
       ;  isIL = record {
            isSelect = {!!}
          ; uniqueSelect = {!!}
