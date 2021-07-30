@@ -230,13 +230,18 @@ iso-mono→ A {a} {b} {c} {m} mono i = record { isMono = λ {d} f g → im f g }
 -- Sub Object Classifier as Topos
 -- pull back on
 --
+--  m ∙ f ≈ m ∙ g → f ≈ g
+--
 --     iso          ○ b
---  e ⇐====⇒  b -----------→ 1         m ∙ f ≈ m ∙ g → f ≈ g
+--  e ⇐====⇒  b -----------→ 1 
 --  |         |              |
 --  |       m |              | ⊤
---  |         ↓    char m    ↓    Ker h = Equalizer (char m mono)  (⊤ ∙ ○ a )
---  + ------→ a -----------→ Ω        m = Equalizer (char m mono)  (⊤ ∙ ○ a )
+--  |         ↓    char m    ↓    
+--  + ------→ a -----------→ Ω  
 --     ker h        h
+--
+--     Ker h = Equalizer (char m mono)  (⊤ ∙ ○ a )
+--     m = Equalizer (char m mono)  (⊤ ∙ ○ a )
 --
 --  if m is an equalizer, there is an iso between e and b as k, and if we have the iso, m becomes an equalizer.
 --    equalizer.equalizerIso : {a b c : Obj A} → (f g : Hom A a b ) → (equ : Equalizer A f g )
@@ -251,10 +256,9 @@ record IsTopos {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A)
          ker-m : {a b : Obj A} → (m : Hom A b a ) → (mono : Mono A m) → IsEqualizer A m (char m mono) (A [ ⊤ o (CCC.○ c a) ])
          char-uniqueness  : {a b : Obj A } {h : Hom A a Ω}  
              → A [ char (equalizer (Ker h)) (record { isMono = λ f g → monic (Ker h)}) ≈ h ]
-         -- char-iso :  {a a' b : Obj A} → (p : Hom A a b ) (q : Hom A a' b ) → (mp : Mono A p) →(mq : Mono A q) →
-         --        Iso A a a'  → A [ char p mp  ≈ char q mq ]
          char-iso :  {a a' b : Obj A} → (p : Hom A a b ) (q : Hom A a' b ) → (mp : Mono A p) →(mq : Mono A q) →
                 (i : Iso A a a' ) → A [ p ≈ A [ q o Iso.≅→ i ] ]  → A [ char p mp  ≈ char q mq ]
+         -- this means, char m is unique among all equalizers of h and ○  a
      char-cong  : {a b : Obj A } { m m' :  Hom A b a } { mono : Mono A m } { mono' : Mono A m' }
              → A [ m  ≈  m'  ] → A [ char m mono ≈ char m' mono'  ]
      char-cong {a} {b} {m} {m'} {mo} {mo'} m=m' = char-iso m m' mo mo' (≡-iso A _) ( begin 

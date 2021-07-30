@@ -15,9 +15,7 @@ module yoneda { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) (I : Set c
 open import HomReasoning
 open import Relation.Binary.Core
 open import Relation.Binary
-open import Relation.Binary.PropositionalEquality hiding ( [_] ; sym )
-
-
+open import Relation.Binary.PropositionalEquality hiding ( [_] ; resp ) renaming ( sym to ≡sym )
 
 -- Contravariant Functor : op A → Sets  ( Obj of Sets^{A^op} )
 --   Obj and Hom of Sets^A^op
@@ -386,14 +384,27 @@ Yoneda-epi {b} {x} {y} g h yg=yh = begin
 --- How to prove it? from smallness?
 
 data _~_   {a b : Obj A} (f : Hom A a b)
-     : ∀{x y : Obj A} → Hom A x y → Set (suc (c₁ ⊔ c₂ ⊔ ℓ)) where
-  refl : {g : Hom A a b} → (eqv : A [ f ≈ g ]) →  f ~ g
+      : ∀{x y : Obj A} → Hom A x y → Set (suc (c₁ ⊔ c₂ ⊔ ℓ)) where
+   ~refl : {g : Hom A a b} → (eqv : A [ f ≈ g ]) →  f ~ g
+
+≃→b=b : {a b a' b' : Obj A }
+      → ( f : Hom A a b )
+      → ( g : Hom A a' b' )
+      → f ~ g → b ≡ b'
+≃→b=b f g (~refl eqv) = refl
+
+open import Relation.Binary.HeterogeneousEquality as HE using (_≅_ ) 
 
 postulate  -- ?
-     eqObj1 : {a b a' b' : Obj A } → Hom A a b ≡ Hom A a' b' → b ≡ b'
+     ylem0 : {a b : Obj A } → Hom A a a ≡ Hom A a b → a ≡ b
 
 Yoneda-full-embed : {a b : Obj A } → FObj YonedaFunctor a ≡ FObj YonedaFunctor b → a ≡ b
-Yoneda-full-embed {a} {b} eq = eqObj1 ylem1 where
+Yoneda-full-embed {a} {b} eq = ylem0 ylem1 where
      ylem1 : Hom A a a ≡ Hom A a b
      ylem1 = cong (λ k → FObj k a) eq
-
+     f : Hom A a b
+     f = subst (λ k → k ) ylem1 (id1 A a)
+     -- f1 : id1 A a ≅ f
+     -- f1 = {!!}
+     -- f2 : id1 A a ≅ f → Category.cod A (id1 A a) ≡  Category.cod A f
+     -- f2 = {!!}
