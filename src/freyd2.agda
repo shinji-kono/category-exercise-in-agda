@@ -19,7 +19,7 @@ open import Function
 --    U ⋍ Hom (a,-)
 --
 
-open import Relation.Binary.PropositionalEquality hiding ( [_] ; sym )
+open import Relation.Binary.PropositionalEquality hiding ( [_] ; sym ; resp )
 
 -- A is localy small
 postulate ≡←≈ :  { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ )  {a b : Obj A } { x y : Hom A a b } →  (x≈y : A [ x ≈ y  ]) → x ≡ y

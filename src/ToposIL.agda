@@ -153,7 +153,7 @@ module ToposIL   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A
         tt :  (q : Poly a  (Topos.Ω t) b ) → A [ char t (equalizer (Ker t (Poly.f q))) (eMonic A (Ker t (Poly.f q)))  ≈  Poly.f q ]
         tt q = IsTopos.char-uniqueness (Topos.isTopos t) {b} {a} 
 
-  module IL1 (Ω : Obj A) (⊤ : Hom A １ Ω) (P  : Obj A → Obj A) (il : InternalLanguage  Ω ⊤ P) (t : Topos A c) where
+  module IL1 (Ω : Obj A) (⊤ : Hom A １ Ω) (P  : Obj A → Obj A) (il : InternalLanguage  Ω ⊤ P)  where
      open InternalLanguage il
      il00 : {a : Obj A}  (p : Poly a  Ω １ )  → p  ⊢ p
      il00 {a}  p h eq = eq

@@ -34,7 +34,12 @@ module Polynominal { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) ( C :
   -- from page. 51
   --
 
+  open Functor
   open import Relation.Binary.HeterogeneousEquality as HE using (_≅_ ) 
+  open import Relation.Binary.PropositionalEquality hiding ( [_] ; resp ) renaming ( sym to ≡sym )
+
+  data _H≈_ {a b c d : Obj A } ( x : Hom A a b ) (y : Hom A c d ) : Set ( c₁  ⊔  c₂ ⊔ ℓ) where
+     feq : a ≡ c → b ≡ d → (z : Hom A a b) → z ≅ y → A [ x ≈ z ] → x H≈ y
 
   data  φ  {a ⊤ : Obj A } ( x : Hom A ⊤ a ) : {b c : Obj A } → Hom A b c → Set ( c₁  ⊔  c₂ ⊔ ℓ) where
      i   : {b c : Obj A} (k : Hom A b c ) →  φ x k   
@@ -76,10 +81,32 @@ module Polynominal { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) ( C :
   -- an assuption needed in k x phi ≈ k x phi'
   --   k x (i x) ≈ k x ii  
   postulate 
-       xf :  {a b c : Obj A } → ( x : Hom A １ a ) → {z : Hom A b c } → ( y  : φ {a} x z ) → ( x ∙ π' ) ≈ π 
+       xf :  {a b c : Obj A } → ( x : Hom A １ a ) → {f : Hom A b c } → ( fp  : φ {a} x f ) →  A [ k x (i f) ≈ k x fp ]
+       -- ( x ∙ π' ) ≈ π 
   --   
   --   this is justified equality f ≈ g in A[x] is used in f ∙ < x , id1 A _> ≈  f ∙ < x , id1 A _>
   --   ( x ∙ π' ) ∙ < x , id1 A _ > ≈ π ∙ < x , id1 A _ >
+
+
+  --
+  -- Subcategory of A without x
+  --
+  -- Since A is CCC, ∀ f : Hom A b c ,  φ x {b} {c} (FMap F f) is an arrow of CCC A.
+  --
+
+  --
+  -- If no x in SA (Subcategory of CCC A), we may have xf.
+  --
+  record SA  {a ⊤ : Obj A } ( x : Hom A ⊤ a ) : Set ( suc c₁  ⊔  suc c₂ ⊔ suc ℓ) where
+     field
+       F : Functor A A
+       CF : CCCFunctor A A C C F
+       FObj-iso : (x : Obj A) → FObj F x ≡ x
+       without-x : {b c : Obj A} → (f : Hom A b c) → ¬ ( FMap F f H≈ x  )
+
+  xf-in-SA : {a ⊤ : Obj A } ( x : Hom A ⊤ a ) → (sa : SA x) → 
+       {b c : Obj A } → {f : Hom A b c } → ( fp  : φ {a} x (FMap (SA.F sa) f) ) →  Set ℓ
+  xf-in-SA {a} {⊤} x sa {b} {c} {f} fp = A [ k x (i (FMap (SA.F sa) f)) ≈ k x fp ]
 
   -- since we have A[x] now, we can proceed the proof on p.64 in some possible future
 
@@ -144,6 +171,7 @@ module Polynominal { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) ( C :
                ( (f ∙ π')  ∙  < π ∙ π , < π' ∙  π , π' > > ) *  ≈⟨ *-cong ( car ( ki x _ fp )) ⟩
                ( k x fp ∙  < π ∙ π , < π' ∙  π , π' > > ) *  ≈⟨⟩
                k x (v fp )  ∎  
+
   k-cong : {a b c : Obj A}  → (f g :  Poly a c b )
         → A [ Poly.f f ≈ Poly.f g ] → A [ k (Poly.x f) (Poly.phi f)   ≈ k (Poly.x g) (Poly.phi g) ]
   k-cong {a} {b} {c} f g f=f = begin

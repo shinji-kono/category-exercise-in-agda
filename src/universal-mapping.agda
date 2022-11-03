@@ -533,31 +533,15 @@ Adj2UO A B adj = record {
 
 open UnityOfOppsite
 
---   f                            : a ----------→ U(b)
---   1_F(a)                       :F(a) --------→ F(a)
---   ε(b) = left uo (1_F(a))     :UF(b)--------→ a
---   η(a) = right  uo (1_U(a))     : a ----------→ FU(a)
-
-
-uo-η-map  : {c₁ c₂ ℓ c₁' c₂' ℓ' : Level} (A : Category c₁ c₂ ℓ) (B : Category c₁' c₂' ℓ')
-                 ( U : Functor B A )
-                 ( F : Functor A B ) →
-                 ( uo : UnityOfOppsite A B U F)  →  (a : Obj A )  → Hom A a (FObj U ( FObj F a ))
-uo-η-map A B U F uo a =  right uo ( id1 B (FObj F a) )
-
-uo-ε-map  : {c₁ c₂ ℓ c₁' c₂' ℓ' : Level} (A : Category c₁ c₂ ℓ) (B : Category c₁' c₂' ℓ')
-                 ( U : Functor B A )
-                 ( F : Functor A B ) →
-                 ( uo : UnityOfOppsite A B U F)  →  (b : Obj B )  → Hom B (FObj F ( FObj U ( b ) )) b
-uo-ε-map A B U F uo b =  left uo ( id1 A (FObj U b) )
+--   f                            :    a ----------→ U(b)
+--   1_F(a)                       :  F(a) ---------→ F(a)
+--   ε(b) = left uo (1_F(a))      : UF(b) ---------→ a
+--   η(a) = right  uo (1_U(a))    :    a ----------→ FU(a)
 
 uo-solution  : {c₁ c₂ ℓ c₁' c₂' ℓ' : Level} (A : Category c₁ c₂ ℓ) (B : Category c₁' c₂' ℓ')
-                 ( U : Functor B A )
-                 ( F : Functor A B ) →
-                 ( uo : UnityOfOppsite A B U F)  →  {a : Obj A} {b : Obj B } →
-                       ( f : Hom A a (FObj U b )) → Hom B (FObj F a) b
-uo-solution A B U F uo {a} {b} f =  --  B  [ left uo (id1 A (FObj U b)) o FMap F f ]
-                                     left uo f
+     ( U : Functor B A ) ( F : Functor A B ) → ( uo : UnityOfOppsite A B U F)  →  {a : Obj A} {b : Obj B } 
+     → ( f : Hom A a (FObj U b )) → Hom B (FObj F a) b
+uo-solution A B U F uo {a} {b} f =  left uo f
 
 --     F(ε(b)) o η(F(b))
 --     F( left uo (id1 A (FObj U b))  ) o  right uo (id1 B (FObj F a)) ] == 1
@@ -568,19 +552,17 @@ UO2UM  : {c₁ c₂ ℓ c₁' c₂' ℓ' : Level} (A : Category c₁ c₂ ℓ) (
                  ( uo : UnityOfOppsite A B U F)  → UniversalMapping A B U 
 UO2UM  A B U F uo = record {
          F = FObj F ;
-         η = uo-η-map A B U F uo ;
-         _* = uo-solution A B U F uo  ;
+         η = λ a → right uo ( id1 B (FObj F a) ) ;
+         _* = left uo  ; 
          isUniversalMapping = record {
                     universalMapping  = universalMapping;
                     uniquness = uniqueness
               }
       } where
-         universalMapping :   {a' : Obj A} { b' : Obj B } → { f : Hom A a' (FObj U b') } →
-                     A [ A [ FMap U ( uo-solution A B U F uo f) o ( uo-η-map A B U F uo  ) a' ]  ≈ f ]
+         universalMapping :   {a : Obj A} { b : Obj B } → { f : Hom A a (FObj U b) } →
+                     A [ A [ FMap U ( uo-solution A B U F uo f) o (  right uo ( id1 B (FObj F a)  )) ]  ≈ f ]
          universalMapping {a} {b} {f}  = let open ≈-Reasoning (A) in
                begin
-                    FMap U ( uo-solution A B U F uo f) o ( uo-η-map A B U F uo  ) a
-               ≈⟨⟩
                     FMap U ( left uo  f) o right uo ( id1 B (FObj F a)  )
                ≈↑⟨  right-commute1 uo   ⟩
                     right uo ( B [  left uo  f o  id1 B (FObj F a) ] )
@@ -591,8 +573,8 @@ UO2UM  A B U F uo = record {
                ∎ where
                   lemma-1 :  B [ B [  left uo f o  id1 B (FObj F a) ] ≈ left uo f ]
                   lemma-1 = let open ≈-Reasoning (B) in idR
-         uniqueness :   {a' : Obj A} { b' : Obj B } → { f : Hom A a' (FObj U b') } → { g :  Hom B (FObj F a') b'} →
-                     A [ A [ FMap U g o  ( uo-η-map A B U F uo  ) a' ]  ≈ f ] → B [ uo-solution A B U F uo f  ≈ g ]
+         uniqueness :   {a : Obj A} { b : Obj B } → { f : Hom A a (FObj U b) } → { g :  Hom B (FObj F a) b} →
+                     A [ A [ FMap U g o right uo ( id1 B (FObj F a) ) ]  ≈ f ] → B [ uo-solution A B U F uo f  ≈ g ]
          uniqueness {a} {b} {f} {g} eq = let open ≈-Reasoning (B) in
                begin
                     uo-solution A B U F uo f
@@ -608,64 +590,6 @@ UO2UM  A B U F uo = record {
                     g
                ∎
 
-uo-η  : {c₁ c₂ ℓ c₁' c₂' ℓ' : Level} (A : Category c₁ c₂ ℓ) (B : Category c₁' c₂' ℓ')
-                 ( U : Functor B A )
-                 ( F : Functor A B ) →
-                 ( uo : UnityOfOppsite A B U F)  → NTrans A A identityFunctor ( U ○  F )
-uo-η A B U F uo = record {
-             TMap = uo-η-map A B U F uo  ; isNTrans = myIsNTrans
-       } where
-    η = uo-η-map A B U F uo
-    commute :  {a b : Obj A} {f : Hom A a b}
-      → A [ A [ (FMap U (FMap F f))  o  ( η a ) ]  ≈ A [ (η b ) o f ] ]
-    commute {a} {b} {f} =   let open ≈-Reasoning (A) in
-       begin
-            (FMap U (FMap F f))  o  (right uo ( id1 B (FObj F a) ) )
-       ≈↑⟨ right-commute1 uo  ⟩
-            right uo ( B [ (FMap F f)  o  ( id1 B (FObj F a) ) ] )
-       ≈⟨ l-cong uo (IsCategory.identityR (Category.isCategory B))  ⟩
-            right uo ( FMap F f )
-       ≈↑⟨ l-cong uo (IsCategory.identityL (Category.isCategory B))  ⟩
-            right uo ( B [  ( id1 B (FObj F b ))  o  FMap F f ] )
-       ≈⟨ right-commute2 uo   ⟩
-            (right uo ( id1 B (FObj F b) )  ) o f
-       ≈⟨⟩
-            (η b ) o f
-       ∎ where
-          lemma-1 : B [ B [ (FMap F f)  o  ( id1 B (FObj F a) ) ]  ≈  FMap F f ]
-          lemma-1 = IsCategory.identityR (Category.isCategory B)
-    myIsNTrans : IsNTrans A A identityFunctor ( U ○  F ) η
-    myIsNTrans = record { commute = commute }
-
-uo-ε  : {c₁ c₂ ℓ c₁' c₂' ℓ' : Level} (A : Category c₁ c₂ ℓ) (B : Category c₁' c₂' ℓ')
-                 ( U : Functor B A )
-                 ( F : Functor A B )→
-                 ( uo : UnityOfOppsite A B U F)  → NTrans B B  ( F ○  U ) identityFunctor
-uo-ε A B U F uo = record {
-             TMap = ε ; isNTrans = myIsNTrans
-       } where
-    ε  = uo-ε-map A B U F uo
-    commute : {a b : Obj B} {f : Hom B a b }
-      →  B [ B [ f o (ε a) ] ≈ B [(ε b) o (FMap F (FMap U f)) ] ]
-    commute {a} {b} {f} = let open ≈-Reasoning (B) in
-       sym ( begin
-          ε b o (FMap F (FMap U f))
-       ≈⟨⟩
-         left uo ( id1 A (FObj U b) )  o (FMap F (FMap U f))
-       ≈⟨ left-commute2 uo ⟩
-         left uo ( A [ id1 A (FObj U b)   o FMap U f ] )
-       ≈⟨ r-cong uo (IsCategory.identityL (Category.isCategory A))  ⟩
-         left uo (  FMap U f  )
-       ≈↑⟨ r-cong uo (IsCategory.identityR (Category.isCategory A))  ⟩
-         left uo ( A [ FMap U f  o  id1 A (FObj U a) ] )
-       ≈↑⟨ left-commute1 uo ⟩
-          f o  left uo ( id1 A (FObj U a) )
-       ≈⟨⟩
-          f o  (ε a)
-       ∎  )
-    myIsNTrans : IsNTrans B B ( F ○ U ) identityFunctor　ε
-    myIsNTrans = record { commute = commute }
-
 
 UO2Adj : {c₁ c₂ ℓ c₁' c₂' ℓ' : Level} (A : Category c₁ c₂ ℓ) (B : Category c₁' c₂' ℓ')
                  { U : Functor B A }
@@ -675,34 +599,66 @@ UO2Adj : {c₁ c₂ ℓ c₁' c₂' ℓ' : Level} (A : Category c₁ c₂ ℓ) (
 UO2Adj A B {U} {F} uo = record {
            U =  U ;
            F =  F ;
-           η =  uo-η A B U F uo  ;
-           ε =  uo-ε A B U F uo ;
+           η =  record { TMap  = λ a → right uo ( id1 B (FObj F a) ) ; isNTrans = record { commute = η-commute } } ;
+           ε =  record { TMap  = λ b → left  uo ( id1 A (FObj U b) ) ; isNTrans = record { commute = ε-commute } } ;
            isAdjunction = record {
                adjoint1 = adjoint1 ;
                adjoint2 = adjoint2
            }
        } where
+          η-commute :  {a b : Obj A} {f : Hom A a b}
+              → A [ A [ (FMap U (FMap F f))  o (right uo ( id1 B (FObj F a) ) )  ]  ≈ A [ (right uo ( id1 B (FObj F b) )  ) o f ] ]
+          η-commute {a} {b} {f} =   let open ≈-Reasoning (A) in
+               begin
+                    (FMap U (FMap F f))  o  (right uo ( id1 B (FObj F a) ) )
+               ≈↑⟨ right-commute1 uo  ⟩
+                    right uo ( B [ (FMap F f)  o  ( id1 B (FObj F a) ) ] )
+               ≈⟨ l-cong uo (IsCategory.identityR (Category.isCategory B))  ⟩
+                    right uo ( FMap F f )
+               ≈↑⟨ l-cong uo (IsCategory.identityL (Category.isCategory B))  ⟩
+                    right uo ( B [  ( id1 B (FObj F b ))  o  FMap F f ] )
+               ≈⟨ right-commute2 uo   ⟩
+                    (right uo ( id1 B (FObj F b) )  ) o f
+               ∎ where
+                  lemma-1 : B [ B [ (FMap F f)  o  ( id1 B (FObj F a) ) ]  ≈  FMap F f ]
+                  lemma-1 = IsCategory.identityR (Category.isCategory B)
+          ε :  (b : Obj B )  → Hom B (FObj F ( FObj U ( b ) )) b
+          ε b = left uo ( id1 A (FObj U b) ) 
+          ε-commute : {a b : Obj B} {f : Hom B a b }
+              →  B [ B [ f o (ε a) ] ≈ B [(ε b) o (FMap F (FMap U f)) ] ]
+          ε-commute {a} {b} {f} = let open ≈-Reasoning (B) in
+               sym ( begin
+                  ε b o (FMap F (FMap U f))
+               ≈⟨⟩
+                 left uo ( id1 A (FObj U b) )  o (FMap F (FMap U f))
+               ≈⟨ left-commute2 uo ⟩
+                 left uo ( A [ id1 A (FObj U b)   o FMap U f ] )
+               ≈⟨ r-cong uo (IsCategory.identityL (Category.isCategory A))  ⟩
+                 left uo (  FMap U f  )
+               ≈↑⟨ r-cong uo (IsCategory.identityR (Category.isCategory A))  ⟩
+                 left uo ( A [ FMap U f  o  id1 A (FObj U a) ] )
+               ≈↑⟨ left-commute1 uo ⟩
+                  f o  left uo ( id1 A (FObj U a) )
+               ≈⟨⟩
+                  f o  (ε a)
+               ∎  )
           um = UO2UM A B U F uo
           adjoint1 :   { b : Obj B } →
-                     A [ A [ ( FMap U ( TMap (uo-ε A B U F uo) b ))  o ( TMap (uo-η A B U F uo) ( FObj U b )) ]  ≈ id1 A (FObj U b) ]
+                     A [ A [ ( FMap U (left uo (id1 A (FObj U b))) )  o (right uo (id1 B (FObj F (FObj U b)))) ]  ≈ id1 A (FObj U b) ]
           adjoint1 {b} = let open ≈-Reasoning (A) in
                begin
-                  ( FMap U ( TMap (uo-ε A B U F uo) b ))  o ( TMap (uo-η A B U F uo) ( FObj U b )) 
-               ≈⟨⟩
                     FMap U (left uo (id1 A (FObj U b))) o (right uo (id1 B (FObj F (FObj U b))))
                ≈↑⟨ right-commute1 uo ⟩
                     right uo ( B [ left uo (id1 A (FObj U b))  o id1 B (FObj F (FObj U b)) ] )
                ≈⟨ l-cong uo ((IsCategory.identityR (Category.isCategory B))) ⟩
                     right uo ( left uo (id1 A (FObj U b))  )
                ≈⟨ left-injective uo ⟩
-                  id1 A (FObj U b)
+                    id1 A (FObj U b)
                ∎
           adjoint2 :   {a : Obj A} →
-                     B [ B [ ( TMap (uo-ε A B U F uo) ( FObj F a ))  o ( FMap F ( TMap (uo-η A B U F uo) a )) ]  ≈ id1 B (FObj F a) ]
+                     B [ B [ left uo (Category.Category.Id A) o FMap F (right uo (id1 B (FObj F a))) ]  ≈ id1 B (FObj F a) ]
           adjoint2 {a} = let open ≈-Reasoning (B) in
                begin
-                   ( TMap (uo-ε A B U F uo) ( FObj F a ))  o ( FMap F ( TMap (uo-η A B U F uo) a ))
-               ≈⟨⟩
                    left uo (Category.Category.Id A) o FMap F (right uo (id1 B (FObj F a)))
                ≈⟨ left-commute2  uo ⟩
                    left uo ( A [ (Category.Category.Id A)   o (right uo (id1 B (FObj F a))) ] )

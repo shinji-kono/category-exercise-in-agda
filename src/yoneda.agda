@@ -349,9 +349,7 @@ CatEpi F s g h  eq = begin
      Sets [ g o  FMap F (sur s (id1 Sets _)) ]  ≈⟨ eq ⟩
      Sets [ h o  FMap F (sur s (id1 Sets _)) ]  ≈⟨ cdr (surjective s (id1 Sets _) ) ⟩
      Sets [ h o id1  Sets _ ]  ≈⟨ idR ⟩
-     h ∎ 
-  where
-     open ≈-Reasoning Sets
+     h ∎ where open ≈-Reasoning Sets
      -- sj : B [ FMap F ( CatSurjective.sur s (FMap F (f g h))) ≈ FMap F (f g h) ]
      -- sj  = CatSurjective.surjective s (FMap F (f g h)) 
 
@@ -376,10 +374,7 @@ Yoneda-epi {b} {x} {y} g h yg=yh = begin
          Sets [ TMap h _  o (λ z → A [ sur Yoneda-surjective (id1 SetsAop _) o z ] ) ] ≈⟨  cdr (surjective Yoneda-surjective (id1 SetsAop _)) ⟩
          Sets [ TMap h _  o id1  Sets _ ] ≈⟨ idR ⟩
          TMap h _
-         ∎ where
-             open ≈-Reasoning Sets
-             s : CatSurjective A SetsAop YonedaFunctor 
-             s = Yoneda-surjective 
+         ∎ where open ≈-Reasoning Sets
 
 --- How to prove it? from smallness?
 
@@ -395,16 +390,18 @@ data _~_   {a b : Obj A} (f : Hom A a b)
 
 open import Relation.Binary.HeterogeneousEquality as HE using (_≅_ ) 
 
+--
+-- if Hom A a a ≡ Hom A a b, b must be a cod of id1 A a, so a ≡ b
+--
 postulate  -- ?
      ylem0 : {a b : Obj A } → Hom A a a ≡ Hom A a b → a ≡ b
+
+-- Obj : Set c₂
+-- Hom : Obj → Obj → Set c₂
+-- cod : {A B : Obj} → Hom A B → Obj
+-- cod {a} {b} _ = b
 
 Yoneda-full-embed : {a b : Obj A } → FObj YonedaFunctor a ≡ FObj YonedaFunctor b → a ≡ b
 Yoneda-full-embed {a} {b} eq = ylem0 ylem1 where
      ylem1 : Hom A a a ≡ Hom A a b
      ylem1 = cong (λ k → FObj k a) eq
-     f : Hom A a b
-     f = subst (λ k → k ) ylem1 (id1 A a)
-     -- f1 : id1 A a ≅ f
-     -- f1 = {!!}
-     -- f2 : id1 A a ≅ f → Category.cod A (id1 A a) ≡  Category.cod A f
-     -- f2 = {!!}
