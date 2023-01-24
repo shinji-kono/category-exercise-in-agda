@@ -53,23 +53,23 @@ module cat-utility where
                          ( F : Functor A B )
                          ( U : Obj B → Obj A )
                          ( ε : (b : Obj B) → Hom B ( FObj F (U b) ) b )
-                         ( _*' : { b : Obj B}{ a : Obj A} → ( Hom B (FObj F a) b ) →  Hom A a (U b ) )
+                         ( _* : { b : Obj B}{ a : Obj A} → ( Hom B (FObj F a) b ) →  Hom A a (U b ) )
                          : Set (suc (c₁ ⊔ c₂ ⊔ ℓ ⊔ c₁' ⊔ c₂' ⊔ ℓ' )) where
            field
                couniversalMapping :   {b : Obj B} { a : Obj A } → { f : Hom B (FObj F a) b } →
-                             B [ B [ ε b o FMap F ( f *' )  ]  ≈ f ]
-               couniquness :   {b : Obj B} { a : Obj A } → { f : Hom B (FObj F a) b } → { g :  Hom A a (U b) } →
-                             B [ B [ ε b o FMap F g ]  ≈ f ] → A [ f *' ≈ g ]
+                             B [ B [ ε b o FMap F ( f * )  ]  ≈ f ]
+               uniquness :   {b : Obj B} { a : Obj A } → { f : Hom B (FObj F a) b } → { g :  Hom A a (U b) } →
+                             B [ B [ ε b o FMap F g ]  ≈ f ] → A [ f * ≈ g ]
 
         record coUniversalMapping  {c₁ c₂ ℓ c₁' c₂' ℓ' : Level} (A : Category c₁ c₂ ℓ) (B : Category c₁' c₂' ℓ')
                          ( F : Functor A B )
                          : Set (suc (c₁ ⊔ c₂ ⊔ ℓ ⊔ c₁' ⊔ c₂' ⊔ ℓ' )) where
-            infixr 11 _*'
+            infixr 11 _*
             field
                U : Obj B → Obj A 
                ε : (b : Obj B) → Hom B ( FObj F (U b) ) b 
-               _*' :  { b : Obj B}{ a : Obj A} → ( Hom B (FObj F a) b ) →  Hom A a (U b )
-               iscoUniversalMapping : coIsUniversalMapping A B F U ε _*'
+               _* :  { b : Obj B}{ a : Obj A} → ( Hom B (FObj F a) b ) →  Hom A a (U b )
+               iscoUniversalMapping : coIsUniversalMapping A B F U ε _*
 
         open NTrans
         open import Category.Cat

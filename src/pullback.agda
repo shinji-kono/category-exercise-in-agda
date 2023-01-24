@@ -239,9 +239,9 @@ limit2couniv :
 limit2couniv lim  = record {  
        U = λ b → a0 ( lim b) ;
        ε = λ b → t0 (lim b) ;
-       _*' = λ {b} {a} k → limit (isLimit (lim b )) a k ; 
+       _* = λ {b} {a} k → limit (isLimit (lim b )) a k ; 
        iscoUniversalMapping = record { couniversalMapping = λ{ b a f} → couniversalMapping1 {b} {a} {f} ;
-           couniquness = couniquness2
+           uniquness = uniquness2
        }
   } where
    couniversalMapping1 :  {b : Obj (A ^ I)} {a : Obj A} {f : Hom (A ^ I) (FObj (KI I) a) b} →
@@ -253,10 +253,10 @@ limit2couniv lim  = record {
         ≈⟨ t0f=t (isLimit (lim b)) ⟩
             TMap f i  -- i comes from   ∀{i} → B [ TMap f i  ≈  TMap g i  ]
         ∎
-   couniquness2 : {b : Obj (A ^ I)} {a : Obj A} {f : Hom (A ^ I) (FObj (KI I) a) b} {g : Hom A a (a0 (lim b ))} →
+   uniquness2 : {b : Obj (A ^ I)} {a : Obj A} {f : Hom (A ^ I) (FObj (KI I) a) b} {g : Hom A a (a0 (lim b ))} →
         ( ∀ { i : Obj I } → A [ A [ TMap (t0 (lim b )) i  o TMap ( FMap (KI I) g) i  ] ≈ TMap f i ] )
          → A [ limit (isLimit (lim b )) a f ≈ g ]
-   couniquness2 {b} {a} {f} {g} lim-g=f  =  let  open ≈-Reasoning (A) in begin
+   uniquness2 {b} {a} {f} {g} lim-g=f  =  let  open ≈-Reasoning (A) in begin
             limit (isLimit (lim b )) a f
         ≈⟨ limit-uniqueness (isLimit ( lim b )) lim-g=f ⟩
             g
@@ -279,21 +279,21 @@ univ2limit univ Γ = record {
      ε : ( b : Obj (A ^ I ) ) → NTrans I A (FObj (KI I) (U b)) b 
      ε b = coUniversalMapping.ε univ b
      limit1 :  (a : Obj A) → NTrans I A (FObj (KI I) a) Γ → Hom A a (U Γ)
-     limit1 a t = coUniversalMapping._*' univ {_} {a} t
+     limit1 a t = coUniversalMapping._* univ {_} {a} t
      t0f=t1 :   {a : Obj A} {t : NTrans I A (K I A a) Γ}  {i : Obj I} →
                 A [ A [ TMap (ε Γ) i o limit1 a t ] ≈ TMap t i ]
      t0f=t1 {a} {t} {i} =  let  open ≈-Reasoning (A) in begin
             TMap (ε Γ) i o limit1 a t
         ≈⟨⟩
-            TMap (ε Γ) i o coUniversalMapping._*' univ t
+            TMap (ε Γ) i o coUniversalMapping._* univ t
         ≈⟨ coIsUniversalMapping.couniversalMapping ( coUniversalMapping.iscoUniversalMapping univ) {Γ} {a} {t} ⟩
             TMap t i
         ∎
      limit-uniqueness1 : { a : Obj A } →  { t : NTrans I A ( K I A a ) Γ } → { f : Hom A a (U Γ)}
          → ( ∀ { i : Obj I } → A [ A [ TMap  (ε Γ) i o  f ]  ≈ TMap t i ] ) → A [ limit1 a t ≈ f ]
      limit-uniqueness1 {a} {t} {f} εf=t = let  open ≈-Reasoning (A) in begin
-            coUniversalMapping._*' univ t
-        ≈⟨  ( coIsUniversalMapping.couniquness ( coUniversalMapping.iscoUniversalMapping univ) ) εf=t  ⟩
+            coUniversalMapping._* univ t
+        ≈⟨  ( coIsUniversalMapping.uniquness ( coUniversalMapping.iscoUniversalMapping univ) ) εf=t  ⟩
             f
         ∎
 

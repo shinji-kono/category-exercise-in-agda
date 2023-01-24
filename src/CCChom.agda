@@ -246,10 +246,10 @@ CCCtoAdj : {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (  ccc : CCC A )
 CCCtoAdj  A ccc b = record {
         U  = λ a → a <= b 
    ;    ε  = ε'
-   ;    _*'  = solution
+   ;    _*  = solution
    ;    iscoUniversalMapping = record {
            couniversalMapping = couniversalMapping
-         ; couniquness = couniquness
+         ; uniquness = uniquness
      }
   } where
    open CCC.CCC ccc
@@ -263,10 +263,10 @@ CCCtoAdj  A ccc b = record {
             {f : Hom A (FObj (F_b A ccc b) a) b₁} →
             A [ A [ ε' b₁ o FMap (F_b A ccc b) (solution f) ] ≈ f ]
    couniversalMapping {c} {a} {f} = IsCCC.e4a isc
-   couniquness :  {b = b₁ : Obj A} {a : Obj A}
+   uniquness :  {b = b₁ : Obj A} {a : Obj A}
             {f : Hom A (FObj (F_b A ccc b) a) b₁} {g : Hom A a (b₁ <= b)} →
             A [ A [ ε' b₁ o FMap (F_b A ccc b) g ] ≈ f ] → A [ solution f ≈ g ]
-   couniquness {c} {a} {f} {g} eq = begin
+   uniquness {c} {a} {f} {g} eq = begin
                  f *
              ≈↑⟨ *-cong eq ⟩
                   ( ε o FMap (F_b A ccc b) g ) *
