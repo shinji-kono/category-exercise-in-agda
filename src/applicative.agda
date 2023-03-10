@@ -26,7 +26,6 @@ open import Relation.Binary.PropositionalEquality  hiding ( [_] )
 -- they say it is not possible to prove FreeTheorem in Agda nor Coq
 --    https://stackoverflow.com/questions/24718567/is-it-possible-to-get-hold-of-free-theorems-as-propositional-equalities
 -- so we postulate this
---    and we cannot indent a postulate ...
 
 open Functor
 
@@ -58,7 +57,6 @@ UniquenessOfFunctor C D F {a} {b} {f} fmap eq = begin
 
 open import Category.Sets
 import Relation.Binary.PropositionalEquality
-
 
 _・_ : {c₁ : Level} { a b c : Obj (Sets {c₁} ) } → (b → c) → (a → b) → a → c
 _・_ f g = λ x → f ( g x ) 

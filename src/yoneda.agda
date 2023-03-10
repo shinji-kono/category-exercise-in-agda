@@ -77,7 +77,7 @@ SetsAop  = record { Obj = YObj
 -- A is Locally small
 postulate ≈-≡ :  { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ )  {a b : Obj A } { x y : Hom A a b } →  (x≈y : A [ x ≈ y  ]) → x ≡ y
 
-----
+---
 --
 --  Object mapping in Yoneda Functor
 --
@@ -86,27 +86,7 @@ postulate ≈-≡ :  { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ )  {a
 open import Function
 
 y-obj :  (a : Obj A) → Functor (Category.op A) (Sets {c₂})
-y-obj a = record {
-        FObj = λ b → Hom (Category.op A) a b  ;
-        FMap =   λ {b c : Obj A } → λ ( f : Hom  A c b ) → λ (g : Hom  A b a ) →  (Category.op A) [ f o g ] ;
-        isFunctor = record {
-             identity =  λ {b} → extensionality A ( λ x → lemma-y-obj1 {b} x ) ;
-             distr = λ {a} {b} {c} {f} {g} → extensionality A ( λ x → lemma-y-obj2 a b c f g x ) ;
-             ≈-cong = λ eq → extensionality A ( λ x →  lemma-y-obj3 x eq ) 
-        } 
-    }  where
-        lemma-y-obj1 : {b : Obj A } → (x : Hom A b a) →  (Category.op A) [ id1 A b o x ] ≡ x
-        lemma-y-obj1 {b} x = let open ≈-Reasoning (Category.op A) in ≈-≡ A idL
-        lemma-y-obj2 :  (a₁ b c : Obj A) (f : Hom A b a₁) (g : Hom A c b ) → (x : Hom A a₁ a )→ 
-               Category.op A [ Category.op A [ g o f ] o x ] ≡ (Sets [ _[_o_] (Category.op A) g o _[_o_] (Category.op A) f ]) x
-        lemma-y-obj2 a₁ b c f g x = let open ≈-Reasoning (Category.op A) in ≈-≡ A ( begin
-               Category.op A [ Category.op A [ g o f ] o x ] ≈↑⟨ assoc ⟩
-               Category.op A [ g o Category.op A [ f o x ] ] ≈⟨⟩
-               ( λ x →  Category.op A [ g o x  ]  ) ( ( λ x → Category.op A [ f o x ] ) x ) ∎ )
-        lemma-y-obj3 :  {b c : Obj A} {f g : Hom A c b } → (x : Hom A b a ) → A [ f ≈ g ] →  Category.op A [ f o x ] ≡ Category.op A [ g o x ]
-        lemma-y-obj3 {_} {_} {f} {g} x eq =  let open ≈-Reasoning (Category.op A) in ≈-≡ A  ( begin
-                Category.op A [ f o x ] ≈⟨ resp refl-hom eq ⟩
-                Category.op A [ g o x ] ∎ )
+y-obj a = Yoneda A (≈-≡ A) a
 
 ----
 --
@@ -405,3 +385,4 @@ Yoneda-full-embed : {a b : Obj A } → FObj YonedaFunctor a ≡ FObj YonedaFunct
 Yoneda-full-embed {a} {b} eq = ylem0 ylem1 where
      ylem1 : Hom A a a ≡ Hom A a b
      ylem1 = cong (λ k → FObj k a) eq
+

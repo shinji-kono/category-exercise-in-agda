@@ -36,17 +36,6 @@ OneCat = record {
          lemma {a} {b} {f} with f
          ... | OneObj = refl
 
-record IsoS {c₁ c₂ ℓ c₁' c₂' ℓ' : Level} (A : Category c₁ c₂ ℓ) (B : Category c₁' c₂' ℓ') (a b : Obj A) ( a' b' : Obj B )
-          :  Set ( c₁  ⊔  c₂ ⊔ ℓ ⊔  c₁'  ⊔  c₂' ⊔ ℓ' ) where
-      field
-           ≅→ :  Hom A a b   → Hom B a' b'
-           ≅← :  Hom B a' b' → Hom A a b
-           iso→  : {f : Hom B a' b' }  → B [ ≅→ ( ≅← f) ≈ f ]
-           iso←  : {f : Hom A a b }    → A [ ≅← ( ≅→ f) ≈ f ]
-           cong→ : {f g : Hom A a b }  → A [ f ≈ g ] →  B [ ≅→ f ≈ ≅→ g ]
-           cong← : {f g : Hom B a' b'} → B [ f ≈ g ] →  A [ ≅← f ≈ ≅← g ]
-
-
 record IsCCChom {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (１ : Obj A) 
           ( _*_ : Obj A → Obj A → Obj A  ) ( _^_ : Obj A → Obj A → Obj A  ) :  Set ( c₁  ⊔  c₂ ⊔ ℓ ) where
      field

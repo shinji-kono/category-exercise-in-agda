@@ -13,6 +13,9 @@ module cat-utility where
         id1 A a =  (Id {_} {_} {_} {A} a)
         -- We cannot make A implicit
 
+        --
+        -- one to one (without naturality)
+        -- 
         record Iso  {c₁ c₂ ℓ : Level} (C : Category c₁ c₂ ℓ)
                  (x y : Obj C )
                 : Set ( suc  (c₁ ⊔ c₂ ⊔ ℓ ⊔ c₁)) where
@@ -26,6 +29,18 @@ module cat-utility where
         ≡-iso C x = record { ≅→ = id1 C _ ; ≅← = id1 C _ ; iso→  = ≈-Reasoning.idL C ; iso←  =  ≈-Reasoning.idL C }
         sym-iso : {c₁ c₂ ℓ : Level} (C : Category c₁ c₂ ℓ) {x y : Obj C } → Iso C x y → Iso C y x
         sym-iso C i = record { ≅→ = Iso.≅← i  ; ≅← = Iso.≅→ i ; iso→  = Iso.iso← i ; iso←  =  Iso.iso→ i }
+
+        -- Iso with cong
+        --
+        record IsoS {c₁ c₂ ℓ c₁' c₂' ℓ' : Level} (A : Category c₁ c₂ ℓ) (B : Category c₁' c₂' ℓ') (a b : Obj A) ( a' b' : Obj B )
+                  :  Set ( c₁  ⊔  c₂ ⊔ ℓ ⊔  c₁'  ⊔  c₂' ⊔ ℓ' ) where
+              field
+                   ≅→ :  Hom A a b   → Hom B a' b'
+                   ≅← :  Hom B a' b' → Hom A a b
+                   iso→  : {f : Hom B a' b' }  → B [ ≅→ ( ≅← f) ≈ f ]
+                   iso←  : {f : Hom A a b }    → A [ ≅← ( ≅→ f) ≈ f ]
+                   cong→ : {f g : Hom A a b }  → A [ f ≈ g ] →  B [ ≅→ f ≈ ≅→ g ]
+                   cong← : {f g : Hom B a' b'} → B [ f ≈ g ] →  A [ ≅← f ≈ ≅← g ]
 
         record IsUniversalMapping  {c₁ c₂ ℓ c₁' c₂' ℓ' : Level} (A : Category c₁ c₂ ℓ) (B : Category c₁' c₂' ℓ')
                          ( U : Functor B A )

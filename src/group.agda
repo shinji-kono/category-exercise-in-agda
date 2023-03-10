@@ -17,71 +17,215 @@ open import  Relation.Binary.PropositionalEquality hiding ( [_] )
 
 -- from https://github.com/danr/Agda-projects/blob/master/Category-Theory/FreeGroup.agda
 
+-- fundamental homomorphism theorem
+--
+
 open import Algebra
-open import Algebra.Definitions -- using (Op₁; Op₂)
-open import Algebra.Core
 open import Algebra.Structures
+open import Algebra.Definitions
+open import Algebra.Core
+open import Algebra.Bundles
+
 open import Data.Product
+import Function.Definitions as FunctionDefinitions
 
-record ≡-Group : Set (suc c) where
-  infixr 9 _∙_
-  field
-    Carrier  : Set c
-    _∙_      : Op₂ Carrier
-    ε        : Carrier
-    _⁻¹      : Carrier → Carrier
-    isGroup : IsGroup _≡_ _∙_ ε _⁻¹
+import Algebra.Morphism.Definitions as MorphismDefinitions
+open import Algebra.Morphism.Structures 
 
-_<_∙_> :  (m : ≡-Group)  →    ≡-Group.Carrier m →  ≡-Group.Carrier m →  ≡-Group.Carrier m
-m < x ∙ y > =  ≡-Group._∙_ m x y
+open import Tactic.MonoidSolver using (solve; solve-macro)
+
+--
+-- Given two groups G and H and a group homomorphism f : G → H,
+-- let K be a normal subgroup in G and φ the natural surjective homomorphism G → G/K
+-- (where G/K is the quotient group of G by K).
+-- If K is a subset of ker(f) then there exists a unique homomorphism h: G/K → H such that f = h∘φ.
+--     https://en.wikipedia.org/wiki/Fundamental_theorem_on_homomorphisms
+--
+--       f
+--    G --→ H
+--    |   /
+--  φ |  / h
+--    ↓ /
+--    G/K
+--
+
+import Relation.Binary.Reasoning.Setoid as EqReasoning
+
+_<_∙_> :  (m : Group c c )  →    Group.Carrier m →  Group.Carrier m →  Group.Carrier m
+m < x ∙ y > =  Group._∙_ m x y
 
 infixr 9 _<_∙_>
 
-record Homomorph ( a b : ≡-Group )  : Set c where
-  field
-      morph :  ≡-Group.Carrier a →  ≡-Group.Carrier b  
-      identity     :  morph (≡-Group.ε a)   ≡  ≡-Group.ε b
-      inverse      :  ∀{x} → morph ( ≡-Group._⁻¹ a x)  ≡   ≡-Group._⁻¹ b (morph  x) 
-      homo :  ∀{x y} → morph ( a < x ∙ y > ) ≡ b < morph  x  ∙ morph  y >
+--
+--  Coset : N : NormalSubGroup →  { a ∙ n | G ∋ a , N ∋ n }
+--
 
-open Homomorph
 
-_*_ : { a b c : ≡-Group } → Homomorph b c → Homomorph a b → Homomorph a c
-_*_ {a} {b} {c} f g =  record {
-      morph = λ x →  morph  f ( morph g x ) ;
-      identity  = identity1 ;
-      inverse  = inverse1 ;
-      homo  = homo1 
+open GroupMorphisms
+
+import Axiom.Extensionality.Propositional
+postulate f-extensionality : { n m : Level}  → Axiom.Extensionality.Propositional.Extensionality n m
+
+GR : {c l : Level } → Group c l → RawGroup c l
+GR G = record {
+     Carrier        = Carrier G
+     ; _≈_          = _≈_ G
+     ; _∙_          = _∙_ G
+     ; ε            = ε G
+     ; _⁻¹          = _⁻¹ G
+  } where open Group
+
+grefl : {c l : Level } → (G : Group c l ) → {x : Group.Carrier G} → Group._≈_ G x x
+grefl G = IsGroup.refl ( Group.isGroup G )
+
+gsym : {c l : Level } → (G : Group c l ) → {x y : Group.Carrier G} → Group._≈_ G x y → Group._≈_ G y x
+gsym G = IsGroup.sym ( Group.isGroup G )
+
+gtrans : {c l : Level } → (G : Group c l ) → {x y z : Group.Carrier G} → Group._≈_ G x y → Group._≈_ G y z → Group._≈_ G x z
+gtrans G = IsGroup.trans ( Group.isGroup G )
+
+record NormalSubGroup (A : Group c c )  : Set c  where
+   open Group A
+   field  
+       ⟦_⟧ : Group.Carrier A → Group.Carrier A 
+       normal :  IsGroupHomomorphism (GR A) (GR A)  ⟦_⟧
+       comm : {a b :  Carrier } → b ∙ ⟦ a ⟧  ≈ ⟦ a ⟧  ∙ b 
+
+-- Set of a ∙ ∃ n ∈ N
+--
+record aN {A : Group c c }  (N : NormalSubGroup A ) (x : Group.Carrier A  ) : Set c where 
+    open Group A
+    open NormalSubGroup N
+    field 
+        a n : Group.Carrier A 
+        aN=x :  a ∙ ⟦ n ⟧ ≈ x
+
+open import Tactic.MonoidSolver using (solve; solve-macro)
+
+
+_/_ : (A : Group c c ) (N  : NormalSubGroup A ) → Group c c
+_/_ A N  = record {
+    Carrier  = (x : Group.Carrier A  ) → aN N x
+    ; _≈_      = _=n=_
+    ; _∙_      = qadd 
+    ; ε        = qid
+    ; _⁻¹      = λ f x → record { a = x ∙ ⟦ n (f x) ⟧  ⁻¹  ; n = n (f x)  ; aN=x = ?  }
+    ; isGroup = record { isMonoid  = record { isSemigroup = record { isMagma = record {
+       isEquivalence = record {refl = grefl A  ; trans = ? ; sym = ? }
+       ; ∙-cong = ? }
+       ; assoc = ? }
+       ; identity =  idL , (λ q → ? )  }
+       ; inverse   = ( (λ x → ? ) , (λ x → ? ))  
+       ; ⁻¹-cong   = λ i=j → ?
+      }
    } where
-      open  ≡-Group 
-      identity1 : morph f ( morph g (ε a) )  ≡  ε c
-      identity1 = let open ≡-Reasoning in begin
-         morph f (morph g (ε a)) ≡⟨  cong (morph f ) ( identity g )  ⟩
-         morph f (ε b) ≡⟨  identity f  ⟩
-         ε c ∎ 
-      homo1 :  ∀{x y} → morph f ( morph g ( a < x ∙  y > )) ≡ ( c <   (morph f (morph  g x )) ∙(morph f (morph  g y) ) > )
-      homo1 {x} {y} = let open ≡-Reasoning in begin
-         morph f (morph g (a < x ∙ y >)) ≡⟨  cong (morph f ) ( homo g) ⟩
-         morph f (b < morph g x ∙ morph g y >) ≡⟨  homo f ⟩
-         c < morph f (morph g x) ∙ morph f (morph g y) > ∎ 
-      inverse1 : {x : Carrier a} → morph f (morph g ((a ⁻¹) x)) ≡ (c ⁻¹) (morph f (morph g x))
-      inverse1 {x} = begin 
-         morph f (morph g (_⁻¹ a x))  ≡⟨  cong (morph f) (inverse g) ⟩
-         morph f (_⁻¹ b (morph g x))   ≡⟨ inverse f ⟩
-         _⁻¹ c (morph f (morph g x)) ∎ where  open ≡-Reasoning 
+       open Group A
+       open aN
+       open NormalSubGroup N
+       open IsGroupHomomorphism normal 
+       open EqReasoning (Algebra.Group.setoid A)
+       _=n=_ : (f g : (x : Group.Carrier A  )  → aN N x ) →  Set c
+       f =n= g = {x : Group.Carrier A  } → ⟦ n (f x) ⟧  ≈ ⟦ n (g x) ⟧  
+       qadd : (f g : (x : Group.Carrier A  )  → aN N x ) → (x : Group.Carrier A  )  → aN N x
+       qadd f g x = record { a = x ⁻¹ ∙ a (f x) ∙ a (g x) ; n = n (f x) ∙ n (g x) ; aN=x = q00 } where
+           q00 : ( x ⁻¹ ∙  a (f x) ∙ a (g x)  ) ∙ ⟦ n (f x) ∙ n (g x) ⟧  ≈ x
+           q00 = begin 
+              ( x ⁻¹ ∙ a (f x) ∙ a (g x) ) ∙ ⟦ n (f x) ∙ n (g x) ⟧  ≈⟨ ∙-cong (assoc _ _ _) (homo _ _ ) ⟩
+              x ⁻¹ ∙ (a (f x) ∙ a (g x) ) ∙ ( ⟦ n (f x) ⟧  ∙ ⟦ n (g x) ⟧ ) ≈⟨ solve monoid ⟩
+              x ⁻¹ ∙ (a (f x) ∙ ((a (g x)  ∙ ⟦ n (f x) ⟧ ) ∙ ⟦ n (g x) ⟧ )) ≈⟨ ∙-cong (grefl A) (∙-cong (grefl A) (∙-cong comm (grefl A) ))  ⟩
+              x ⁻¹ ∙ (a (f x) ∙ ((⟦ n (f x) ⟧  ∙ a (g x)) ∙ ⟦ n (g x) ⟧ ))  ≈⟨ solve monoid ⟩
+              x ⁻¹ ∙ (a (f x) ∙ ⟦ n (f x) ⟧ ) ∙ (a (g x) ∙ ⟦ n (g x) ⟧ )  ≈⟨ ∙-cong (grefl A) (aN=x (g x)  ) ⟩
+              x ⁻¹ ∙ (a (f x) ∙ ⟦ n (f x) ⟧ ) ∙ x   ≈⟨ ∙-cong (∙-cong (grefl A) (aN=x (f x))) (grefl A)  ⟩
+              (x ⁻¹ ∙ x ) ∙ x   ≈⟨ ∙-cong (proj₁ inverse _ ) (grefl A)  ⟩
+              ε ∙ x  ≈⟨ solve monoid  ⟩
+              x ∎ 
+       qid : ( x : Carrier ) → aN N x
+       qid x = record { a = x  ; n = ε  ; aN=x = qid1 } where
+           qid1 : x ∙ ⟦ ε ⟧ ≈ x
+           qid1 = begin
+              x ∙ ⟦ ε ⟧ ≈⟨ ∙-cong (grefl A) ε-homo ⟩
+              x ∙ ε  ≈⟨ solve monoid ⟩
+              x ∎ 
+       qinv : (( x : Carrier ) → aN N x) → ( x : Carrier ) → aN N x
+       qinv f x = record { a = x ∙ ⟦ n (f x) ⟧  ⁻¹  ; n = n (f x)  ; aN=x = qinv1  } where
+             qinv1 : x ∙ ⟦ n (f x) ⟧ ⁻¹ ∙ ⟦ n (f x) ⟧ ≈ x
+             qinv1 = begin
+              x ∙ ⟦ n (f x) ⟧ ⁻¹ ∙ ⟦ n (f x) ⟧ ≈⟨ ? ⟩
+              x ∙ ⟦ (n (f x)) ⁻¹ ⟧  ∙ ⟦ n (f x) ⟧ ≈⟨ ? ⟩
+              x ∙ ⟦ ((n (f x)) ⁻¹ )  ∙ n (f x) ⟧ ≈⟨ ? ⟩
+              x ∙ ⟦ ε ⟧ ≈⟨ ∙-cong (grefl A) ε-homo ⟩
+              x ∙ ε  ≈⟨ solve monoid ⟩
+              x ∎ 
+       idL : (f : (x  : Carrier )→  aN N x) → (qadd qid f ) =n= f 
+       idL f = ?
 
+-- K ⊂ ker(f)
+K⊆ker : (G H : Group c c)  (K : NormalSubGroup G) (f : Group.Carrier G → Group.Carrier H ) → Set c
+K⊆ker G H K f = (x : Group.Carrier G ) → f ( ⟦ x ⟧ ) ≈ ε   where
+  open Group H
+  open NormalSubGroup K
 
-M-id : { a : ≡-Group } → Homomorph a a 
-M-id = record { morph = λ x → x  ; identity = refl ; homo = refl ; inverse = refl }
+open import Function.Surjection
+open import Function.Equality
 
-_==_ : { a b : ≡-Group } → Homomorph a b → Homomorph a b → Set c 
-_==_  f g =  morph f ≡ morph g
+module _ (G : Group c c) (K : NormalSubGroup G) where
+    open Group G
+    open aN
+    open NormalSubGroup K
+    open IsGroupHomomorphism normal 
 
--- Functional Extensionality Axiom (We cannot prove this in Agda / Coq, just assumming )
--- postulate extensionality : { a b : Obj A } {f g : Hom A a b } → (∀ {x} → (f x ≡ g x))  → ( f ≡ g ) 
--- postulate extensionality : Relation.Binary.PropositionalEquality.Extensionality c c 
+    φ : Group.Carrier G → Group.Carrier (G / K )
+    φ g x = record { a = x ; n = ε ; aN=x = gtrans G ( ∙-cong (grefl G) ε-homo) (solve monoid) } where
 
-isGroups : IsCategory ≡-Group Homomorph _==_  _*_  (M-id)
+    φ-homo : IsGroupHomomorphism (GR G) (GR (G / K)) φ 
+    φ-homo = ?
+
+    φe : (Algebra.Group.setoid G)  Function.Equality.⟶ (Algebra.Group.setoid (G / K))
+    φe = record { _⟨$⟩_ = φ ; cong = φ-cong  }  where
+           φ-cong : {f g : Carrier } → f ≈ g  → {x : Carrier } →  ⟦ n (φ f x ) ⟧ ≈ ⟦ n (φ g x ) ⟧ 
+           φ-cong = ?
+
+    inv-φ : Group.Carrier (G / K ) → Group.Carrier G
+    inv-φ f = ⟦ n (f ε) ⟧ 
+
+    φ-surjective : Surjective φe 
+    φ-surjective = record { from = record { _⟨$⟩_ = inv-φ ; cong = λ {f} {g} → cong-i {f} {g} }  ; right-inverse-of = is-inverse } where
+           cong-i : {f g : Group.Carrier (G / K ) } → ({x : Carrier } →  ⟦ n (f x) ⟧ ≈ ⟦ n (g x) ⟧ ) → inv-φ f ≈ inv-φ g
+           cong-i = ?
+           is-inverse : (f : (x : Carrier) → aN K x ) →  {y : Carrier} → ⟦ n (φ (inv-φ f) y) ⟧ ≈ ⟦ n (f y) ⟧
+           is-inverse = ?
+ 
+record FundamentalHomomorphism (G H : Group c c )
+    (f : Group.Carrier G → Group.Carrier H ) 
+    (homo : IsGroupHomomorphism (GR G) (GR H) f ) 
+    (K : NormalSubGroup G ) (kf : K⊆ker G H K f) :  Set c where
+  open Group H
+  field
+    h : Group.Carrier (G / K ) → Group.Carrier H
+    h-homo :  IsGroupHomomorphism (GR (G / K) ) (GR H) h
+    is-solution : (x : Group.Carrier G)  →  f x ≈ h ( φ G K x )
+    unique : (h1 : Group.Carrier (G / K ) → Group.Carrier H)  → 
+       ( (x : Group.Carrier G)  →  f x ≈ h1 ( φ G K x ) ) → ( ( x : Group.Carrier (G / K)) → h x ≈ h1 x )
+
+postulate 
+  FundamentalHomomorphismTheorm : (G H : Group c c)
+    (f : Group.Carrier G → Group.Carrier H )
+    (homo : IsGroupHomomorphism (GR G) (GR H) f )
+    (K : NormalSubGroup G ) → (kf : K⊆ker G H K f)   → FundamentalHomomorphism G H f homo K kf
+
+Homomorph : ?
+Homomorph = ?
+
+_==_ : ?
+_==_ = ?
+
+_*_ : ?
+_*_ = ?
+
+morph : ?
+morph = ?
+
+isGroups : IsCategory (Group c c) ? ? ? ?
 isGroups  = record  { isEquivalence =  isEquivalence1 
                     ; identityL =  refl
                     ; identityR =  refl
@@ -89,116 +233,68 @@ isGroups  = record  { isEquivalence =  isEquivalence1
                     ; o-resp-≈ =    λ {a} {b} {c} {f} {g} {h} {i} → o-resp-≈ {a} {b} {c} {f} {g} {h} {i}
                     }
      where
-        isEquivalence1 : { a b : ≡-Group } → IsEquivalence {_} {_} {Homomorph a b}  _==_ 
+        isEquivalence1 : { a b : (Group c c) } → ?
         isEquivalence1  =      -- this is the same function as A's equivalence but has different types
            record { refl  = refl
              ; sym   = sym
              ; trans = trans
              } 
-        o-resp-≈ :  {a b c :  ≡-Group } {f g : Homomorph a b } → {h i : Homomorph b c }  → 
+        o-resp-≈ :  {a b c' :  Group c c } {f g : ? } → {h i : ? }  → 
                           f ==  g → h ==  i → (h * f) ==  (i * g)
-        o-resp-≈ {a} {b} {c} {f} {g} {h} {i} f==g h==i =  let open ≡-Reasoning in begin
+        o-resp-≈ {a} {b} {c} {f} {g} {h} {i} f==g h==i =  let open EqReasoning (Algebra.Group.setoid ?) in begin
              morph ( h * f )
-         ≡⟨ cong ( λ  g → ( ( λ (x : ≡-Group.Carrier a ) →  g x ) )) (extensionality (Sets ) {≡-Group.Carrier a} lemma11) ⟩
+         ≈⟨ ? ⟩
              morph ( i * g )
          ∎  where
-            lemma11 : (x : ≡-Group.Carrier a) → morph (h * f) x ≡ morph (i * g) x
-            lemma11 x =   let open ≡-Reasoning in begin
-                  morph ( h * f ) x ≡⟨⟩
-                  morph h ( ( morph f ) x ) ≡⟨   cong ( λ y -> morph h ( y x ) )  f==g ⟩
-                  morph h ( morph g x ) ≡⟨   cong ( λ y -> y ( morph g  x ) )  h==i ⟩
-                  morph i ( morph g x ) ≡⟨⟩
+            open Group c
+            lemma11 : (x : Group.Carrier a) → morph (h * f) x ≈ morph (i * g) x
+            lemma11 x =   let open EqReasoning (Algebra.Group.setoid c) in begin
+                  morph ( h * f ) x ≈⟨ grefl c   ⟩
+                  morph h ( ( morph f ) x ) ≈⟨ ?  ⟩
+                  morph h ( morph g x ) ≈⟨ ?  ⟩
+                  morph i ( morph g x ) ≈⟨ grefl c ⟩
                   morph ( i * g ) x ∎
 
 Groups : Category _ _ _
 Groups  =
-  record { Obj =  ≡-Group 
-         ; Hom = Homomorph
+  record { Obj =  Group c c
+         ; Hom = ?
          ; _o_ = _*_  
          ; _≈_ = _==_
-         ; Id  =  M-id
+         ; Id  =  ?
          ; isCategory = isGroups 
            }
 
-record NormalGroup (A : Obj Groups )  : Set (suc c) where
-   field 
-       normal :  Hom Groups A A 
-       comm : {a b :  ≡-Group.Carrier A} → A < b ∙ morph normal a > ≡ A < morph normal a ∙ b >
-
--- Set of a ∙ ∃ n ∈ N
---
-record aN {A : Obj Groups }  (N : NormalGroup A ) (x : ≡-Group.Carrier A  ) : Set c where 
-    field 
-        a n : ≡-Group.Carrier A 
-        x=aN : A < a ∙ morph (NormalGroup.normal N) n > ≡ x
-
-open import Tactic.MonoidSolver using (solve; solve-macro)
-
-qadd : (A : Obj Groups ) (N  : NormalGroup A ) → (f g : (x : ≡-Group.Carrier A  )  → aN N x ) → (x : ≡-Group.Carrier A  )  → aN N x
-qadd A N f g x = qadd1 where
-       open ≡-Group A
-       open aN
-       open NormalGroup 
-       qadd1 : aN N x
-       qadd1 = record { a = x ⁻¹ ∙ a (f x) ∙ a (g x) ; n = n (f x) ∙ n (g x) ; x=aN = q00 } where
-          m = morph (normal N)
-          q00 : ( x ⁻¹ ∙  a (f x) ∙ a (g x)  ) ∙ m (n (f x) ∙ n (g x))  ≡ x
-          q00 = begin
-             (x ⁻¹ ∙ (a (f x) ∙ a (g x))) ∙ m (n (f x) ∙ n (g x))  ≡⟨ ? ⟩ 
-             (a (f x) ∙ a (g x) ) ∙ m (n (f x) ∙ n (g x)) ∙ x ⁻¹ ≡⟨ cong ? (homo (normal N))  ⟩
-             (a (f x) ∙ a (g x) ) ∙ (m (n (f x)) ∙ m (n (g x))) ∙ x ⁻¹  ≡⟨ solve mono  ⟩
-             (a (f x) ∙ ((a (g x)  ∙ m (n (f x))) ∙ m (n (g x)))) ∙ x ⁻¹ ≡⟨ cong (λ k → ? ) (comm N) ⟩
-             (a (f x) ∙ ((m (n (f x))  ∙ a (g x)) ∙ m (n (g x)))) ∙ x ⁻¹ ≡⟨ solve mono ⟩
-             (a (f x) ∙ m (n (f x)) ) ∙ ((a (g x) ∙ m (n (g x))) ∙ x ⁻¹)  ≡⟨ cong (λ k → ? ) ?   ⟩
-             (a (f x) ∙ m (n (f x)) ) ∙ (x ∙ x ⁻¹)  ≡⟨ ?  ⟩
-             (a (f x) ∙ m (n (f x)) ) ∙ ε  ≡⟨ ?  ⟩
-             (a (f x) ∙ m (n (f x)) )  ≡⟨ x=aN (f x)  ⟩
-             x ∎ where 
-                open ≡-Reasoning
-                open IsGroup isGroup
-                mono : Monoid _ _
-                mono = record {isMonoid = isMonoid }
-
-_/_ : (A : Obj Groups ) (N  : NormalGroup A ) → ≡-Group 
-_/_ A N  = record {
-    Carrier  = (x : ≡-Group.Carrier A  ) → aN N x
-    ; _∙_      = qadd A N 
-    ; ε        = λ x → record { a = x  ; n = ε  ; x=aN = ?  }
-    ; _⁻¹      = λ f x → record { a = x ∙ (morph (normal N) (n (f x))) ⁻¹  ; n = n (f x)  ; x=aN = ?  }
-    ; isGroup = record { isMonoid  = record { isSemigroup = record { isMagma = record {
-       isEquivalence = record {refl = refl ; trans = trans ; sym = sym }
-       ; ∙-cong = ? }
-       ; assoc = ? }
-       ; identity = ( (λ q → ? ) , (λ q → ? ))  }
-       ; inverse   = ( (λ x → ? ) , (λ x → ? ))  
-       ; ⁻¹-cong   = λ i=j → ?
-      }
-   } where
-       open ≡-Group A
-       open aN
-       open NormalGroup 
-
-φ : (G : Obj Groups ) (K  : NormalGroup G ) → Homomorph G (G / K )
-φ = ?
+open import Data.Unit
 
 GC : (G : Obj Groups ) → Category c c (suc c)
-GC G = ?
+GC G = record { Obj = Lift c ⊤ ; Hom = λ _ _ → Group.Carrier G ; _o_ = Group._∙_ G }
 
-U : (G H : Obj Groups ) → (f : Homomorph G H ) →  Functor (GC G) (GC H)
-U = ?
+F : (G H : Obj Groups ) → (f : Homomorph G H ) → (K : NormalSubGroup G)  →  Functor (GC H) (GC (G / K))
+F G H f K = record { FObj = λ _ → lift  tt ; FMap = λ x y → record { a = ? ; n = ? ; x=aN = ?  } ; isFunctor = ?  }
 
+--       f                f   ε
+--    G --→ H          G --→  H (a)
+--    |   /            |    /
+--  φ |  / h         φ |   /h ↑
+--    ↓ /              ↓  /
+--    G/K              G/K
 
-fundamentalTheorem : (G H : Obj Groups ) → (K : NormalGroup G) → (f : Homomorph G H ) → UniversalMapping (GC G) (GC (G / K)) (U G H f )
-fundamentalTheorem G H K f = record { F = morph (φ G K)  ; η = eta ; _* = ? ; isUniversalMapping 
-       = record { universalMapping = λ {a} {b} {g} → is-solution a b g ; uniquness = ? }}  where
-     eta :  (a : Obj (GC G)) → Hom (GC G) a (Functor.FObj (U G H f) ( (morph (φ G K) a)) )
-     eta = ?
-     solution : {a : Obj (GC G)} {b : Obj (GC (G / K))} → Hom (GC G) a (Functor.FObj (U G H f) b) → Hom (GC (G / K)) (morph (φ G K) a) b
+fundamentalTheorem : (G H : Obj Groups ) → (K : NormalSubGroup G) → (f : Homomorph G H ) 
+     → ( kerf⊆K : (x : Group.Carrier G) → aN K x  → morph f x ≡ Group.ε H  )
+     → coUniversalMapping (GC H) (GC (G / K)) (F G H f K )
+fundamentalTheorem G H K f kerf⊆K = record { U = λ _ → lift tt ; ε = λ _ g → record { a = ? ; n = ? ; x=aN = ? }  
+   ; _* = λ {b} {a} g → solution {b} {a} g ; iscoUniversalMapping 
+       = record { couniversalMapping = ?  ; uniquness = ? }}  where
+     m : Homomorph G G
+     m = NormalSubGroup.normal K 
+     φ⁻¹ : Group.Carrier (G / K) → Group.Carrier G
+     φ⁻¹ = ?
+     solution : {b : Obj (GC (G / K))} {a : Obj (GC H)} { f0 : Hom (GC (G / K)) (lift tt) b} →
+            GC (G / K) [ GC (G / K) [ (λ g → record { a = ? ; n = ? ; x=aN = ? }) o
+                (λ y → record { a = ? ; n = ? ; x=aN = ? }) ] ≈ f0 ]
      solution = ?
-     is-solution :  (a : Obj (GC G)) (b : Obj (GC (G / K)))
-            (g : Hom (GC G) a (Functor.FObj (U G H f) b)) →
-            (GC G) [ (GC G) [ Functor.FMap (U G H f) (solution {a} {b} g) o eta a ] ≈ g ]
-     is-solution = ?
+     is-solution :  ?
+     is-solution a b g = ?
    
-
 
