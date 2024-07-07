@@ -1,11 +1,12 @@
+{-# OPTIONS --cubical-compatible --safe #-}
 module list-nat0 where
                                                                         
 open import Level
 
-
-postulate a : Set
-postulate b : Set
-postulate c : Set
+data i3 : Set where
+ a : i3
+ b : i3
+ c : i3
 
 
 infixr 40 _::_
@@ -59,8 +60,8 @@ cong1 : ∀{a} {A : Set a } {b} { B : Set b } →
    ( f : A → B ) → {x : A } → {y : A} → x ≡ y → f x ≡ f y
 cong1 f refl = refl
 
-lemma11 :  ∀{n} →  ( Set n ) IsRelatedTo ( Set n )
-lemma11  = relTo refl
+-- lemma11 :  ∀{n} →  ( Set n ) IsRelatedTo ( Set n )
+-- lemma11  = relTo refl
 
 lemma12 : {L : Set}  ( x : List L ) → x ++ x ≡ x ++ x
 lemma12 x =  begin  x ++ x  ∎

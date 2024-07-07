@@ -1,15 +1,10 @@
--- Monad
--- Category A
--- A = Category
--- Functor T : A → A
---T(a) = t(a)
---T(f) = tf(f)
+{-# OPTIONS --cubical-compatible --safe #-}
 
 open import Category -- https://github.com/konn/category-agda
 open import Level
 --open import Category.HomReasoning
 open import HomReasoning
-open import cat-utility
+open import Definitions
 open import Category.Cat
 
 module adj-monad where
@@ -19,6 +14,13 @@ module adj-monad where
 -- Adjunction to Monad
 --
 ----
+
+-- Monad
+-- Category A
+-- A = Category
+-- Functor T : A → A
+--T(a) = t(a)
+--T(f) = tf(f)
 
 open NTrans
 open Functor

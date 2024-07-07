@@ -1,3 +1,4 @@
+
 --I'd like to write the Limit in Sets Category using Agda. Assuming local smallness, a functor is a pair of map on Set OC and I, like this.
 --
 --     sobj :  OC →  Set  c₂
@@ -8,12 +9,13 @@
 --
 --In the following agda code, I'd like to prove snat-cong lemma.
 
+    -- {-# OPTIONS --cubical-compatible --safe #-}
     open import Level
     module S where
 
     open import Relation.Binary.Core
     open import Function
-    import Relation.Binary.PropositionalEquality
+    open import Relation.Binary.PropositionalEquality
     open import Relation.Binary.HeterogeneousEquality using (_≅_;refl)
 
     record snat   { c₂ }  { I OC :  Set  c₂ } ( sobj :  OC →  Set  c₂ )

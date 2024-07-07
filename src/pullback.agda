@@ -4,12 +4,13 @@
 --                        Shinji KONO <kono@ie.u-ryukyu.ac.jp>
 ----
 
+{-# OPTIONS --cubical-compatible --safe #-}
 open import Category -- https://github.com/konn/category-agda
 open import Level
 module pullback { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) { c₁' c₂' ℓ' : Level} ( I : Category c₁' c₂' ℓ') ( Γ : Functor I A ) where
 
 open import HomReasoning
-open import cat-utility
+open import Definitions
 
 --
 -- Pullback from equalizer and product

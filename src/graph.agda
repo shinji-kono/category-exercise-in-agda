@@ -1,3 +1,5 @@
+{-# OPTIONS --cubical-compatible --safe #-}
+
 open import Category -- https://github.com/konn/category-agda
 open import Level
 
@@ -197,7 +199,7 @@ DiscreteCat   {c₁}  S = record {
         identityR   {a} {b} {f} = refl
         o-resp-≈ :   {A B C : S } {f g :  ( DiscreteHom {c₁}   A B)} {h i : ( DiscreteHom B C)} →
             dom f  ≡ dom g → dom h  ≡ dom i → dom ( h * f )  ≡ dom ( i * g )
-        o-resp-≈  {a} {b} {c} {f} {g} {h} {i}  refl refl = refl
+        o-resp-≈  {a} {b} {c} {f} {g} {h} {i}  eq _  = refl
 
 
 

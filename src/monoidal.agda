@@ -1,11 +1,15 @@
+-- {-# OPTIONS --cubical-compatible  --allow-unsolved-metas #-}
+{-# OPTIONS --cubical-compatible --safe #-}
+
 open import Level
 open import Category
 module monoidal where
 
+
 open import Data.Product renaming (_×_ to _*_)
 open import Category.Constructions.Product
 open import HomReasoning
-open import cat-utility
+open import Definitions
 open import Relation.Binary.Core
 open import Relation.Binary
 
@@ -288,13 +292,13 @@ SetsTensorProduct =   record {
      ; FMap = λ {x : Obj ( Sets × Sets ) } {y} f → map (proj₁ f)  (proj₂ f)
      ; isFunctor = record {
              ≈-cong   = ≈-cong 
-             ; identity = refl
-             ; distr    = refl
+             ; identity = λ {a} x → refl
+             ; distr    = λ {a b c} {f} {g} x → refl
      }
     } where
         ≈-cong : {a b : Obj (Sets × Sets)} {f g : Hom (Sets × Sets) a b} →
                 (Sets × Sets) [ f ≈ g ] → Sets [ map (proj₁ f) (proj₂ f) ≈ map (proj₁ g) (proj₂ g) ]
-        ≈-cong (refl , refl) =  refl
+        ≈-cong eq (x , y) = cong₂ _,_ (proj₁ eq x) (proj₂ eq y)
 
 -----
 --
@@ -313,16 +317,16 @@ MonoidalSets {c} = record {
       m-i = One {c} ;
       m-bi = SetsTensorProduct  ;
       isMonoidal = record {
-              mα-iso  =  record { ≅→  =  mα→ ; ≅← =  mα← ; iso→  = refl ; iso← = refl } ;
-              mλ-iso  =  record { ≅→  =  mλ→ ; ≅← =  mλ← ; iso→  = extensionality Sets ( λ x → mλiso x ) ; iso← = refl } ;
-              mρ-iso  =  record { ≅→  =  mρ→ ; ≅← =  mρ← ; iso→  = extensionality Sets ( λ x → mρiso x ) ; iso← = refl } ;
-              mα→nat1  = λ f → refl  ;
-              mα→nat2  =  λ f → refl  ;
-              mα→nat3  =  λ f → refl  ;
-              mλ→nat  =  λ f → refl  ;
-              mρ→nat  =  λ f → refl  ;
-              comm-penta  = refl ;
-              comm-unit  = refl
+              mα-iso  =  record { ≅→  =  mα→ ; ≅← =  mα← ; iso→  = λ _ → refl ; iso← = λ _ → refl } ;
+              mλ-iso  =  record { ≅→  =  mλ→ ; ≅← =  mλ← ; iso→  = λ x → mλiso x ; iso← = λ x → refl } ;
+              mρ-iso  =  record { ≅→  =  mρ→ ; ≅← =  mρ← ; iso→  = λ x → mρiso x ; iso← = λ x → refl } ;
+              mα→nat1  = λ f x → refl  ;
+              mα→nat2  =  λ f x → refl  ;
+              mα→nat3  =  λ f x → refl  ;
+              mλ→nat  =  λ f x → refl  ;
+              mρ→nat  =  λ f x → refl  ;
+              comm-penta  = λ x → refl ;
+              comm-unit  = λ x → refl
       }
    } where
        _⊗_ : ( a b : Obj Sets ) → Obj Sets
@@ -439,7 +443,7 @@ HaskellMonoidalFunctor→MonoidalFunctor {c} F mf = record {
                   open Relation.Binary.PropositionalEquality.≡-Reasoning
       comm0 : {a b : Obj (Sets × Sets)} { f : Hom (Sets × Sets) a b} → Sets [ Sets [ FMap (Functor⊗ Sets Sets MonoidalSets F) f o φ  ]
         ≈ Sets [ φ  o FMap (Functor● Sets Sets MonoidalSets F) f ] ]
-      comm0 {a} {b} {f} =  extensionality Sets ( λ (x : ( FObj F (proj₁ a) * FObj F (proj₂ a)) ) → comm00 x )
+      comm0 {a} {b} {f} x = comm00 x 
       comm10 :  {a b c : Obj Sets} → (x : ((FObj F a ⊗ FObj F b) ⊗ FObj F c) ) → (Sets [ φ  o Sets [ id1 Sets (FObj F a) □ φ  o Iso.≅→ (mα-iso isM) ] ]) x ≡
                 (Sets [ FMap F (Iso.≅→ (mα-iso isM)) o Sets [ φ  o φ  □ id1 Sets (FObj F c) ] ]) x
       comm10 {x} {y} {f} ((a , b) , c ) = begin
@@ -456,7 +460,7 @@ HaskellMonoidalFunctor→MonoidalFunctor {c} F mf = record {
       comm1 : {a b c : Obj Sets} → Sets [ Sets [ φ 
            o Sets [  (id1 Sets (FObj F a) □ φ ) o Iso.≅→ (mα-iso isM) ] ]
         ≈ Sets [ FMap F (Iso.≅→ (mα-iso isM)) o Sets [ φ  o  (φ  □ id1 Sets (FObj F c)) ] ] ]
-      comm1 {a} {b} {c} =  extensionality Sets ( λ x  → comm10 x )
+      comm1 {a} {b} {c} x = comm10 x 
       comm20 : {a b : Obj Sets} ( x : FObj F a * One )  → (  Sets [
          FMap F (Iso.≅→ (mρ-iso isM)) o Sets [ φ  o
              FMap (m-bi MonoidalSets) (id1 Sets (FObj F a) , (λ _ → unit )) ] ] ) x  ≡ Iso.≅→ (mρ-iso isM) x
@@ -472,7 +476,7 @@ HaskellMonoidalFunctor→MonoidalFunctor {c} F mf = record {
       comm2 : {a b : Obj Sets} → Sets [ Sets [
          FMap F (Iso.≅→ (mρ-iso isM)) o Sets [ φ  o
              FMap (m-bi MonoidalSets) (id1 Sets (FObj F a) , (λ _ → unit )) ] ] ≈ Iso.≅→ (mρ-iso isM) ]
-      comm2 {a} {b} =  extensionality Sets ( λ x  → comm20 {a} {b} x )
+      comm2 {a} {b} x = comm20 {a} {b} x 
       comm30 : {a b : Obj Sets} ( x : One * FObj F b )  → (  Sets [
          FMap F (Iso.≅→ (mλ-iso isM)) o Sets [ φ  o
              FMap (m-bi MonoidalSets) ((λ _ → unit ) , id1 Sets (FObj F b) ) ] ] ) x  ≡ Iso.≅→ (mλ-iso isM) x
@@ -487,6 +491,6 @@ HaskellMonoidalFunctor→MonoidalFunctor {c} F mf = record {
                   open Relation.Binary.PropositionalEquality.≡-Reasoning
       comm3 : {a b : Obj Sets} → Sets [ Sets [ FMap F (Iso.≅→ (mλ-iso isM)) o
         Sets [ φ  o FMap (m-bi MonoidalSets) ((λ _ → unit ) , id1 Sets (FObj F b)) ] ] ≈ Iso.≅→ (mλ-iso isM) ]
-      comm3 {a} {b} =  extensionality Sets ( λ x  → comm30 {a} {b} x )
+      comm3 {a} {b} x = comm30 {a} {b} x 
 
 -- end

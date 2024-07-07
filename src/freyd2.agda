@@ -1,13 +1,17 @@
+{-# OPTIONS --cubical-compatible --safe #-}
+
 open import Category -- https://github.com/konn/category-agda                                                                                     
 open import Level
-open import Category.Sets renaming ( _o_ to _*_ )
+open import Category.Sets -- renaming ( _o_ to _*_ )
+open import Relation.Binary.Core
+open import Relation.Binary.PropositionalEquality hiding ( [_] ; sym ; resp )
 
-module freyd2 
+module freyd2 (
+    ≡←≈ :  { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ )  {a b : Obj A } { x y : Hom A a b } →  (x≈y : A [ x ≈ y  ]) → x ≡ y )
    where
 
 open import HomReasoning
-open import cat-utility 
-open import Relation.Binary.Core
+open import Definitions
 open import Function
 
 ----------
@@ -19,10 +23,8 @@ open import Function
 --    U ⋍ Hom (a,-)
 --
 
-open import Relation.Binary.PropositionalEquality hiding ( [_] ; sym ; resp )
 
 -- A is localy small
-postulate ≡←≈ :  { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ )  {a b : Obj A } { x y : Hom A a b } →  (x≈y : A [ x ≈ y  ]) → x ≡ y
 
 import Axiom.Extensionality.Propositional
 -- Extensionality a b = {A : Set a} {B : A → Set b} {f g : (x : A) → B x} → (∀ x → f x ≡ g x) → f ≡ g → ( λ x → f x ≡ λ x → g x )
@@ -73,31 +75,23 @@ YonedaFpreserveLimit0 {c₁} {c₂} {ℓ} A I b Γ lim = record {
       hat0 = LimitNat I opA Sets Γ (a0 lim) (t0 lim) (Yoneda A (≡←≈ A) b)
       haa0 : Obj Sets
       haa0 = FObj (Yoneda A (≡←≈ A) b) (a0 lim)
+      _*_ : {a b c : Obj (Sets {c₁} ) } → (b → c) → (a → b) → a → c
+      _*_ f g = λ x → f (g x)
       ta : (a : Obj Sets) ( x : a ) ( t : NTrans I Sets (K I Sets a) (Yoneda A (≡←≈ A) b ○ Γ)) → NTrans I opA (K I opA b ) Γ
       ta a x t = record { TMap = λ i → (TMap t i ) x ; isNTrans = record { commute = commute1 } } where
          commute1 :  {a₁ b₁ : Obj I} {f : Hom I a₁ b₁} →
                 opA [ opA [ FMap Γ f o TMap t a₁ x ] ≈ opA [ TMap t b₁ x o FMap (K I opA b) f ]  ]
          commute1  {a₁} {b₁} {f} = let open ≈-Reasoning opA in begin
-                 FMap Γ f o TMap t a₁ x
-             ≈⟨⟩
-                 ( ( FMap (Yoneda A (≡←≈ A) b  ○ Γ ) f )  *  TMap t a₁ ) x
-             ≈⟨ ≈←≡ ( cong (λ k → k x ) (IsNTrans.commute (isNTrans t)) ) ⟩
-                 ( TMap t b₁ * ( FMap (K I Sets a) f ) ) x
-             ≈⟨⟩
-                 ( TMap t b₁ * id1 Sets a ) x
-             ≈⟨⟩
-                 TMap t b₁ x 
-             ≈↑⟨ idR ⟩
-                 TMap t b₁ x o id1 A b
-             ≈⟨⟩
-                 TMap t b₁ x o FMap (K I opA b) f 
-             ∎ 
+             opA [ FMap Γ f o TMap t a₁ x ]  ≈⟨  ≈←≡ (IsNTrans.commute (isNTrans t) x )  ⟩
+             (Sets [ TMap t b₁ o id1 Sets a ]) x   ≈⟨⟩
+             TMap t b₁ x   ≈⟨ sym idR ⟩
+             opA [ TMap t b₁ x o id1 opA b ] ∎ 
       ψ  :  (X : Obj Sets)  ( t : NTrans I Sets (K I Sets X) (Yoneda A (≡←≈ A) b ○ Γ))
           →  Hom Sets X (FObj (Yoneda A (≡←≈ A) b) (a0 lim))
       ψ X t x = FMap (Yoneda A (≡←≈ A) b) (limit (isLimit lim) b (ta X x t )) (id1 A b )
       t0f=t0 : (a : Obj Sets ) ( t : NTrans I Sets (K I Sets a) (Yoneda A (≡←≈ A) b ○ Γ)) (i : Obj I)
            → Sets [ Sets [ TMap (LimitNat I opA Sets Γ (a0 lim) (t0 lim) (Yoneda A (≡←≈ A) b)) i o ψ a t ] ≈ TMap t i ]
-      t0f=t0 a t i = let open ≈-Reasoning opA in extensionality opA ( λ x →  (≡←≈ A) ( begin 
+      t0f=t0 a t i = let open ≈-Reasoning opA in ( λ x →  (≡←≈ A) ( begin 
                  ( Sets [ TMap (LimitNat I opA Sets Γ (a0 lim) (t0 lim) (Yoneda A (≡←≈ A) b)) i o ψ a t  ] ) x
              ≈⟨⟩
                 FMap (Yoneda A (≡←≈ A) b) ( TMap (t0 lim) i) (FMap (Yoneda A (≡←≈ A) b) (limit (isLimit lim) b (ta a x t )) (id1 A b ))
@@ -113,7 +107,7 @@ YonedaFpreserveLimit0 {c₁} {c₂} {ℓ} A I b Γ lim = record {
       limit-uniqueness0 :  {a : Obj Sets} {t : NTrans I Sets (K I Sets a) (Yoneda A (≡←≈ A) b ○ Γ)} {f : Hom Sets a (FObj (Yoneda A (≡←≈ A) b) (a0 lim))} →
         ({i : Obj I} → Sets [ Sets [ TMap (LimitNat I opA Sets Γ (a0 lim) (t0 lim) (Yoneda A (≡←≈ A) b)) i o f ] ≈ TMap t i ]) →
         Sets [ ψ a t ≈ f ]
-      limit-uniqueness0 {a} {t} {f} t0f=t = let open ≈-Reasoning opA in extensionality A ( λ x →  (≡←≈ A) ( begin 
+      limit-uniqueness0 {a} {t} {f} t0f=t = let open ≈-Reasoning opA in ( λ x →  (≡←≈ A) ( begin 
                   ψ a t x
              ≈⟨⟩
                  FMap (Yoneda A (≡←≈ A) b) (limit (isLimit lim) b (ta a x t )) (id1 A b )
@@ -121,7 +115,7 @@ YonedaFpreserveLimit0 {c₁} {c₂} {ℓ} A I b Γ lim = record {
                  limit (isLimit lim) b (ta a x t ) o id1 A b 
              ≈⟨ idR ⟩
                  limit (isLimit lim) b (ta a x t ) 
-             ≈⟨ limit-uniqueness (isLimit lim) ( λ {i} → ≈←≡ ( cong ( λ g → g x )( t0f=t {i} ))) ⟩
+             ≈⟨ limit-uniqueness (isLimit lim) ( λ {i} → ≈←≡ ( t0f=t {i} x )) ⟩
                   f x
              ∎  ))
 
@@ -166,7 +160,7 @@ KUhasInitialObj {c₁} {c₂} {ℓ} A a = record {
          comm1 : (b : Obj commaCat) → Sets [ Sets [ FMap (Yoneda A (≡←≈ A) a) (hom b OneObj) o hom initObj ] ≈ Sets [ hom b o FMap (K opA Sets *) (hom b OneObj) ] ]
          comm1 b = let open ≈-Reasoning Sets in begin
                 FMap (Yoneda A (≡←≈ A) a) (hom b OneObj) o ( λ x → id1 A a )
-             ≈⟨ extensionality A ( λ x → comm2 b x ) ⟩
+             ≈⟨ ( λ x → comm2 b x ) ⟩
                 hom b 
              ≈⟨⟩
                 hom b o FMap (K opA Sets *) (hom b OneObj) 
@@ -191,7 +185,7 @@ KUhasInitialObj {c₁} {c₂} {ℓ} A a = record {
                 ( Sets [ FMap  (Yoneda A (≡←≈ A) a) (arrow f) o id1 Sets (FObj (Yoneda A (≡←≈ A) a) a)  ] ) (id1 A a)
              ≈⟨⟩
                ( Sets [ FMap  (Yoneda A (≡←≈ A) a) (arrow f) o ( λ x → id1 A a ) ] ) OneObj
-             ≈⟨ ≈←≡ ( cong (λ k → k OneObj ) (comm f )) ⟩
+             ≈⟨ ≈←≡ ( comm f OneObj ) ⟩
                ( Sets [ hom b  o  FMap  (K opA Sets *) (arrow f) ]  ) OneObj
              ≈⟨⟩
                 hom b OneObj
@@ -220,7 +214,7 @@ fArrow A U {a} {b} f x = record { arrow = f ; comm = fArrowComm a b f x }
         fArrowComm1 a b f x OneObj = refl
         fArrowComm : (a b : Obj A) (f : Hom A a b) (x : FObj U a ) → 
          Sets [ Sets [ FMap U f o hom (ob A U a x) ] ≈ Sets [ hom (ob A U b (FMap U f x)) o FMap (K A Sets *) f ] ]
-        fArrowComm a b f x = extensionality Sets ( λ y → begin 
+        fArrowComm a b f x = ( λ y → begin 
                 ( Sets [ FMap U f o hom (ob A U a x) ] ) y 
              ≡⟨⟩
                 FMap U f ( hom (ob A U a x) y )
@@ -272,7 +266,7 @@ UisRepresentable A U i In = record {
                 FMap (Yoneda A (≡←≈ A) (obj i)) f o tmap1 a 
              ≈⟨⟩
                 FMap (Yoneda A (≡←≈ A) (obj i)) f o ( λ x → arrow (initial In ( ob opA U a x )))  
-             ≈⟨ extensionality Sets ( λ y → comm11 a b f y ) ⟩
+             ≈⟨ ( λ y → comm11 a b f y ) ⟩
                 ( λ x → arrow (initial In (ob opA U b x))) o FMap U f 
              ≈⟨⟩
                 tmap1 b o FMap U f 
@@ -282,7 +276,7 @@ UisRepresentable A U i In = record {
                 (Sets [ ( λ x → (FMap U x ) (hom i OneObj)) o (λ x → opA [ f o x ] ) ] )  y
       comm21 a b f y = begin
                 FMap U f ( FMap U y (hom i OneObj))
-             ≡⟨ ≡-cong ( λ k → k (hom i OneObj)) ( sym ( IsFunctor.distr (isFunctor U ) ) ) ⟩
+             ≡⟨  sym ( IsFunctor.distr (isFunctor U ) (hom i OneObj) )   ⟩
                 (FMap U (opA [ f o y ] ) ) (hom i OneObj) 
              ∎  where
                   open  import  Relation.Binary.PropositionalEquality
@@ -295,7 +289,7 @@ UisRepresentable A U i In = record {
                 FMap U f o tmap2 a 
              ≈⟨⟩
                 FMap U f o ( λ x → ( FMap U x ) ( hom i OneObj ) )
-             ≈⟨ extensionality Sets ( λ y → comm21 a b f y ) ⟩
+             ≈⟨ ( λ y → comm21 a b f y ) ⟩
                 ( λ x → ( FMap U x ) ( hom i OneObj ) ) o ( λ x → opA [ f o x  ]  )
              ≈⟨⟩
                 ( λ x → ( FMap U x ) ( hom i OneObj ) ) o FMap (Yoneda A (≡←≈ A) (obj i)) f 
@@ -306,19 +300,19 @@ UisRepresentable A U i In = record {
          → ( Sets [ FMap U y o hom i ] ) z ≡ ( Sets [ ub opA U x (FMap U y (hom i OneObj)) o FMap (K opA Sets *) y ] ) z 
       iso0 x y  OneObj = refl
       iso→  : {x : Obj opA} → Sets [ Sets [ tmap1 x o tmap2 x ] ≈ id1 Sets (FObj (Yoneda A (≡←≈ A) (obj i)) x) ]
-      iso→ {x} = let open ≈-Reasoning opA in extensionality Sets ( λ ( y : Hom opA (obj i ) x ) → (≡←≈ A) ( begin
+      iso→ {x} = let open ≈-Reasoning opA in ( λ ( y : Hom opA (obj i ) x ) → (≡←≈ A) ( begin
                ( Sets [ tmap1 x o tmap2 x ] ) y
              ≈⟨⟩
                 arrow ( initial In (ob opA U x (( FMap U y ) ( hom i OneObj ) ))) 
-             ≈↑⟨  uniqueness In (record { arrow = y ; comm = extensionality Sets ( λ (z : * ) → iso0 x y z ) }  ) ⟩
+             ≈↑⟨  uniqueness In (record { arrow = y ; comm = ( λ (z : * ) → iso0 x y z ) }  ) ⟩
                y
              ∎  ))
       iso←  : {x : Obj A} → Sets [ Sets [ tmap2 x o tmap1 x ] ≈ id1 Sets (FObj U x) ]
-      iso← {x} = extensionality Sets ( λ (y : FObj U x ) → ( begin 
+      iso← {x} = ( λ (y : FObj U x ) → ( begin 
                ( Sets [ tmap2 x o tmap1 x ] ) y
              ≡⟨⟩
                ( FMap U ( arrow ( initial In (ob opA U x y ) ))  ) ( hom i OneObj )
-             ≡⟨ ≡-cong (λ k → k OneObj) ( comm ( initial In (ob opA U x y ) )) ⟩
+             ≡⟨ comm ( initial In (ob opA U x y ) ) OneObj ⟩
                  hom (ob opA U x y) OneObj
              ≡⟨⟩
                y
@@ -330,7 +324,7 @@ UisRepresentable A U i In = record {
 -- Adjoint Functor Theorem
 --
 
-module Adjoint-Functor {c₁ c₂ ℓ : Level} (A B : Category c₁ c₂ ℓ) (I : Category c₁ c₂ ℓ) ( comp : Complete A I )
+module Adjoint-Functor {c₁ c₂ ℓ : Level} (A B : Category c₁ c₂ ℓ) (I : Category c₁ c₂ ℓ) ( comp : Complete {c₁} {c₂} {ℓ} A  )
      (U : Functor A B )
      (i :  (b : Obj B) → Obj ( K A B b ↓ U) )
      (In :  (b : Obj B) → HasInitialObject ( K A B b ↓ U) (i b) ) 
@@ -406,8 +400,8 @@ module pro-ex {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) ( _*_ : Obj A
 
     open IsoS
 
-    import Axiom.Extensionality.Propositional
-    postulate f-extensionality : { n m : Level}  → Axiom.Extensionality.Propositional.Extensionality n m
+    -- import Axiom.Extensionality.Propositional
+    -- postulate f-extensionality : { n m : Level}  → Axiom.Extensionality.Propositional.Extensionality n m
 
     open import Category.Cat
 
@@ -419,19 +413,22 @@ module pro-ex {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) ( _*_ : Obj A
     prodFunctor = record {
            FObj = λ x → x , x
          ; FMap = λ {x} {y} (f : Hom opA x y ) → f , f
-         ; isFunctor = record { identity = ? ; distr = ? ; ≈-cong = ? }
-      } 
+         ; isFunctor = record { identity = refl-hom , refl-hom ; distr = refl-hom , refl-hom  ; ≈-cong = λ eq → eq , eq  }
+      }  where open ≈-Reasoning A
     t00 : (a c d e : Obj opA) (f : Hom opA a c ) → Hom (A × A) (c , c) (d , e )
     t00 a c d e f = ≅→ (*-iso d e a  c) f  
-    nat-* : {a b c : Obj A} → NTrans (Category.op A) (Sets {c₂}) (Yoneda A (≡←≈ A) c ) (Yoneda (A × A) *eq (a , b) ○ prodFunctor )   
-    nat-* {a} {b} {c} = record { TMap = λ z f → ≅→ (*-iso a b c z) f  ; isNTrans = record { commute = nat-comm } } where
-       nat-comm : {x y : Obj opA} {f : Hom opA x y} → 
-            Sets [ Sets [ (λ g → opA [ f o proj₁ g ] , opA [ f o proj₂ g ]) o (λ f₁ → ≅→ (*-iso a b c x) f₁) ]
-               ≈  Sets [ (λ f₁ → ≅→ (*-iso a b c y) f₁) o (λ g → opA [ f o g ])  ]  ]
-       nat-comm {x} {y} {f} = f-extensionality (λ g → ( begin
-          opA [ f o proj₁ (≅→ (*-iso a b c x) g) ] , opA [ f o proj₂ (≅→ (*-iso a b c x) g) ] ≡⟨ ? ⟩
-          proj₁ (≅→ (*-iso a b c y) ( opA [ f o g ] )) , proj₂ (≅→ (*-iso a b c y) ( opA [ f o g ] ) ) ≡⟨ refl ⟩
-          ≅→ (*-iso a b c y) ( opA [ f o g ] ) ∎ )  ) where open ≡-Reasoning
+--    nat-* : {a b c : Obj A} → NTrans (Category.op A) (Sets {c₂}) (Yoneda A (≡←≈ A) c ) (Yoneda (A × A) *eq (a , b) ○ prodFunctor )   
+--    nat-* {a} {b} {c} = record { TMap = λ z f → ≅→ (*-iso a b c z) f  ; isNTrans = record { commute = nat-comm } } where
+--       nat-comm : {x y : Obj opA} {f : Hom opA x y} → 
+--            Sets [ Sets [ (λ g → opA [ f o proj₁ g ] , opA [ f o proj₂ g ]) o (λ f₁ → ≅→ (*-iso a b c x) f₁) ]
+--               ≈  Sets [ (λ f₁ → ≅→ (*-iso a b c y) f₁) o (λ g → opA [ f o g ])  ]  ]
+--       nat-comm {x} {y} {f} g =  cong₂ _,_ (  ≡←≈  A ( begin
+--          proj₁ (≅→ (*-iso a b c x) g) o f ≈⟨ ? ⟩
+--          proj₁ (≅→ (*-iso a b c y) (A [ g o f ]))  ∎ )) (  ≡←≈ A  ( begin
+--          ? ≈⟨ ? ⟩
+--          ? ∎ )) where
+--            open ≈-Reasoning A
+-- 
 
 
 -- end

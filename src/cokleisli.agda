@@ -1,7 +1,9 @@
+{-# OPTIONS --cubical-compatible --safe #-}
+
 open import Category
 open import Level
 open import HomReasoning 
-open import cat-utility
+open import Definitions
 
 
 module coKleisli { c₁ c₂ ℓ : Level} { A : Category c₁ c₂ ℓ } { S : Functor A A } (SM : coMonad A S)  where

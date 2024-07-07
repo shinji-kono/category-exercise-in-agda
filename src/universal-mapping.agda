@@ -1,3 +1,4 @@
+{-# OPTIONS --cubical-compatible --safe #-}
 module universal-mapping where
 
 -- Shinji KONO <kono@ie.u-ryukyu.ac.jp>
@@ -5,7 +6,7 @@ module universal-mapping where
 open import Category -- https://github.com/konn/category-agda
 open import Level
 open import HomReasoning
-open import cat-utility
+open import Definitions
 open import Category.Cat
 
 open Functor

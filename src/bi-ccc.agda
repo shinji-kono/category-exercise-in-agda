@@ -1,10 +1,12 @@
+{-# OPTIONS --cubical-compatible --safe #-}
+
 module bi-ccc where
 
 open import Category
 open import CCC
 open import Level
 open import HomReasoning
-open import cat-utility
+open import Definitions
 
 record IsBICCC {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) 
       ( ⊥ : Obj A)  -- ０

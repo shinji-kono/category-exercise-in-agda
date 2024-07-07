@@ -1,19 +1,16 @@
-module list-level where
-                                                                        
+{-# OPTIONS --cubical-compatible --safe #-}
+
 open import Level
-
-
-postulate A : Set
-postulate B : Set
-postulate C : Set
-
-postulate a : A
-postulate b : A
-postulate c : A
+module list-level (A B C : Set) where
+                                                                        
+data A3 : Set where
+ a0 : A3
+ b0 : A3
+ c0 : A3
 
 
 infixr 40 _::_
-data  List {a} (A : Set a) : Set a where
+data  List {l : Level} (A : Set l) : Set l where
    [] : List A
    _::_ : A → List A → List A
 
@@ -23,8 +20,8 @@ _++_ : ∀ {a} {A : Set a} → List A → List A → List A
 []        ++ ys = ys
 (x :: xs) ++ ys = x :: (xs ++ ys)
 
-l1 = a :: []
-l2 = a :: b :: a :: c ::  []
+l1 = a0 :: []
+l2 = a0 :: b0 :: a0 :: c0 ::  []
 
 l3 = l1 ++ l2
 
@@ -41,7 +38,7 @@ flatten : ∀{n} { A : Set n } → Node A → List A
 flatten ( leaf a )   = a :: []
 flatten ( node a b ) = flatten a ++ flatten b
 
-n1 = node ( leaf a ) ( node ( leaf b ) ( leaf c ))
+n1 = node ( leaf a0 ) ( node ( leaf b0 ) ( leaf c0 ))
 
 open  import  Relation.Binary.PropositionalEquality
 
@@ -79,7 +76,7 @@ list-assoc  (x :: xs)  ys zs = eq-cons x ( list-assoc xs ys zs )
 
 module ==-Reasoning {n} (A : Set n ) where
 
-  infixr  2 _∎
+  infixr  3 _∎
   infixr 2 _==⟨_⟩_ _==⟨⟩_
   infix  1 begin_
 

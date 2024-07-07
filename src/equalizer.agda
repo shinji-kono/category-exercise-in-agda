@@ -1,3 +1,5 @@
+{-# OPTIONS --cubical-compatible --safe #-}
+
 ---
 --
 --  Equalizer
@@ -18,7 +20,7 @@ open import Level
 module equalizer { c₁ c₂ ℓ : Level} { A : Category c₁ c₂ ℓ } where
 
 open import HomReasoning
-open import cat-utility
+open import Definitions
 
 --
 -- Some obvious conditions for k  (fe = ge) → ( fh = gh )
@@ -415,49 +417,49 @@ lemma-equ1  eqa  = record {
 -- Bourroni equations gives an Equalizer
 --
 
-lemma-equ2 : {a b : Obj A} (f g : Hom A a b) → ( bur : Burroni ) → IsEqualizer A {equ bur f g} {a} {b} (α bur f g ) f g 
-lemma-equ2 {a} {b} f g bur = record {
-      fe=ge = fe=ge1 ;  
-      k = k1 ;
-      ek=h = λ {d} {h} {eq} → ek=h1 {d} {h} {eq} ;
-      uniqueness  = λ {d} {h} {eq} {k'} ek=h → uniqueness1  {d} {h} {eq} {k'} ek=h
-   } where
-      c : Obj A
-      c = equ bur f g
-      e : Hom A c a
-      e = α bur f g
-      k1 :  {d : Obj A} (h : Hom A d a) → A [ A [ f o h ] ≈ A [ g o h ] ] → Hom A d c
-      k1 {d} h fh=gh = β bur {d} {a} {b} f g h fh=gh
-      fe=ge1 : A [ A [ f o (α bur f g ) ] ≈ A [ g o (α bur f g ) ] ]
-      fe=ge1 = b1 bur f g
-      ek=h1 : {d : Obj A}  → ∀ {h : Hom A d a} →  {eq : A [ A [ f  o  h ] ≈ A [ g  o h ] ] } →  A [ A [ (α bur f g )  o k1 {d} h eq ] ≈ h ]
-      ek=h1 {d} {h} {eq} =  let open ≈-Reasoning (A) in
-             begin
-                 α bur f g  o k1 h eq 
-             ≈⟨ assoc ⟩
-                 (α bur f g o γ bur f g h) o δ bur (f o h) (g o h) eq
-             ≈⟨ car (b2 bur f g) ⟩
-                 ( h o α bur ( f o h ) ( g o h ) ) o δ bur (f o h) (g o h) eq
-             ≈↑⟨ assoc ⟩
-                   h o α bur (f o h) (g o h) o δ bur (f o h) (g o h) eq
-             ≈⟨ cdr ( b3 bur (f o h) (g o h) eq ) ⟩
-                   h o id d
-             ≈⟨ idR ⟩
-                 h 
-             ∎
-
---         e             f
---    c  -------→ a ---------→ b
---    ^        .     ---------→
---    |      .            g
---    |k   .
---    |  . h
---    d
-
-      postulate 
-              uniqueness1 : {d : Obj A} →  ∀ {h : Hom A d a} →  {eq : A [ A [ f  o  h ] ≈ A [ g  o h ] ] } →  {k' : Hom A d c } →
-                      A [ A [ (α bur f g ) o k' ] ≈ h ] → A [ k1 {d} h eq  ≈ k' ]
---       uniqueness1 {d} {h} {eq} {k'} ek=h =  
+-- emma-equ2 : {a b : Obj A} (f g : Hom A a b) → ( bur : Burroni ) → IsEqualizer A {equ bur f g} {a} {b} (α bur f g ) f g 
+-- emma-equ2 {a} {b} f g bur = record {
+--      fe=ge = fe=ge1 ;  
+--      k = k1 ;
+--      ek=h = λ {d} {h} {eq} → ek=h1 {d} {h} {eq} ;
+--      uniqueness  = λ {d} {h} {eq} {k'} ek=h → uniqueness1  {d} {h} {eq} {k'} ek=h
+--   } where
+--      c : Obj A
+--      c = equ bur f g
+--      e : Hom A c a
+--      e = α bur f g
+--      k1 :  {d : Obj A} (h : Hom A d a) → A [ A [ f o h ] ≈ A [ g o h ] ] → Hom A d c
+--      k1 {d} h fh=gh = β bur {d} {a} {b} f g h fh=gh
+--      fe=ge1 : A [ A [ f o (α bur f g ) ] ≈ A [ g o (α bur f g ) ] ]
+--      fe=ge1 = b1 bur f g
+--      ek=h1 : {d : Obj A}  → ∀ {h : Hom A d a} →  {eq : A [ A [ f  o  h ] ≈ A [ g  o h ] ] } →  A [ A [ (α bur f g )  o k1 {d} h eq ] ≈ h ]
+--      ek=h1 {d} {h} {eq} =  let open ≈-Reasoning (A) in
+--             begin
+--                 α bur f g  o k1 h eq 
+--             ≈⟨ assoc ⟩
+--                 (α bur f g o γ bur f g h) o δ bur (f o h) (g o h) eq
+--             ≈⟨ car (b2 bur f g) ⟩
+--                 ( h o α bur ( f o h ) ( g o h ) ) o δ bur (f o h) (g o h) eq
+--             ≈↑⟨ assoc ⟩
+--                   h o α bur (f o h) (g o h) o δ bur (f o h) (g o h) eq
+--             ≈⟨ cdr ( b3 bur (f o h) (g o h) eq ) ⟩
+--                   h o id d
+--             ≈⟨ idR ⟩
+--                 h 
+--             ∎
+-- 
+-- -         e             f
+-- -    c  -------→ a ---------→ b
+-- -    ^        .     ---------→
+-- -    |      .            g
+-- -    |k   .
+-- -    |  . h
+-- -    d
+-- 
+--      
+--      uniqueness1 : {d : Obj A} →  ∀ {h : Hom A d a} →  {eq : A [ A [ f  o  h ] ≈ A [ g  o h ] ] } →  {k' : Hom A d c } →
+--                      A [ A [ (α bur f g ) o k' ] ≈ h ] → A [ k1 {d} h eq  ≈ k' ]
+--      uniqueness1 {d} {h} {eq} {k'} ek=h =  
 --              begin
 --                 k1 {d} h eq
 --              ≈⟨⟩
@@ -466,8 +468,8 @@ lemma-equ2 {a} {b} f g bur = record {
 --                 γ bur f g (α bur f g o k' ) o (δ bur ( f o ( α bur f g o k' )) ( g o ( α bur f g o k' )) (f1=gh (b1 bur f g )))
 --              ≈⟨ b4 bur f g ⟩
 --                 k'
---              ∎ 
-
+--              ∎  where open ≈-Reasoning A
+-- 
 -- end
 
 

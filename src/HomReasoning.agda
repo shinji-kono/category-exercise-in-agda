@@ -1,37 +1,14 @@
+{-# OPTIONS --cubical-compatible --safe #-}
 module HomReasoning  where 
 
 -- Shinji KONO <kono@ie.u-ryukyu.ac.jp>
 
-open import Category -- https://github.com/konn/category-agda
 open import Level
-open Functor
-
---        F(f)
---   F(a) ---→ F(b)
---    |          |
---    |t(a)      |t(b)    G(f)t(a) = t(b)F(f)
---    |          |
---    v          v
---   G(a) ---→ G(b)
---        G(f)
-
-record IsNTrans {c₁ c₂ ℓ c₁′ c₂′ ℓ′ : Level} (D : Category c₁ c₂ ℓ) (C : Category c₁′ c₂′ ℓ′)
-                 ( F G : Functor D C )
-                 (TMap : (A : Obj D) → Hom C (FObj F A) (FObj G A))
-                 : Set (suc (c₁ ⊔ c₂ ⊔ ℓ ⊔ c₁′ ⊔ c₂′ ⊔ ℓ′)) where
-  field
-    commute : {a b : Obj D} {f : Hom D a b} 
-      → C [ C [ (  FMap G f ) o  ( TMap a ) ]  ≈ C [ (TMap b ) o  (FMap F f)  ] ]
-
-record NTrans {c₁ c₂ ℓ c₁′ c₂′ ℓ′ : Level} (domain : Category c₁ c₂ ℓ) (codomain : Category c₁′ c₂′ ℓ′) 
-     (F G : Functor domain codomain )
-       : Set (suc (c₁ ⊔ c₂ ⊔ ℓ ⊔ c₁′ ⊔ c₂′ ⊔ ℓ′)) where
-  field
-    TMap :  (A : Obj domain) → Hom codomain (FObj F A) (FObj G A)
-    isNTrans : IsNTrans domain codomain F G TMap
+open import Category
 
 module ≈-Reasoning {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) where
   open import Relation.Binary
+  open Functor
 
   _o_ :  {a b c : Obj A } ( x : Hom A a b ) ( y : Hom A c a ) → Hom A c b
   x o y = A [ x o y ]
@@ -124,19 +101,6 @@ module ≈-Reasoning {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) where
   fcong :  { c₁ c₂ ℓ : Level}  {C : Category c₁ c₂ ℓ}
          { c₁′ c₂′ ℓ′ : Level}  {D : Category c₁′ c₂′ ℓ′} {a b : Obj C} {f g : Hom C a b} → (T : Functor C D) → C [ f ≈ g ] → D [ FMap T f ≈ FMap T g ]
   fcong T = IsFunctor.≈-cong (isFunctor T) 
-
-  open NTrans 
-  nat : { c₁ c₂ ℓ : Level}  {A : Category c₁ c₂ ℓ}  { c₁′ c₂′ ℓ′ : Level}  {D : Category c₁′ c₂′ ℓ′} 
-         {a b : Obj D} {f : Hom D a b}  {F G : Functor D A }
-      →  (η : NTrans D A F G )
-      →   A [ A [ FMap G f  o  TMap η a ]  ≈ A [ TMap η b  o  FMap F f ] ]
-  nat η  =  IsNTrans.commute ( isNTrans η  )
-
-  nat1 : { c₁ c₂ ℓ : Level}  {A : Category c₁ c₂ ℓ}  { c₁′ c₂′ ℓ′ : Level}  {D : Category c₁′ c₂′ ℓ′} 
-         {a b : Obj D}   {F G : Functor D A }
-      →  (η : NTrans D A F G ) → (f : Hom D a b)
-      →   A [ A [ FMap G f  o  TMap η a ]  ≈ A [ TMap η b  o  FMap F f ] ]
-  nat1 η f =  IsNTrans.commute ( isNTrans η  )
 
   infix  3 _∎
   infixr 2 _≈⟨_⟩_ _≈⟨⟩_ 

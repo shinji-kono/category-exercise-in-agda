@@ -1,10 +1,12 @@
+{-# OPTIONS --cubical-compatible --safe #-}
+
 open import Level
 open import Category 
 module Comma {c₁ c₂ ℓ c₁' c₂' ℓ' c₁'' c₂'' ℓ'' : Level} {A : Category c₁ c₂ ℓ} {B : Category c₁'' c₂'' ℓ''} {C : Category c₁' c₂' ℓ'} 
     ( F : Functor A C ) ( G : Functor B C ) where
 
 open import HomReasoning
-open import cat-utility
+open import Definitions
 
 --
 --      F     G

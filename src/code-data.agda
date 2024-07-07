@@ -1,8 +1,10 @@
+{-# OPTIONS --cubical-compatible --safe #-}
+
 open import Category -- https://github.com/konn/category-agda
 open import Level
 --open import Category.HomReasoning
 open import HomReasoning
-open import cat-utility
+open import Definitions
 open import Category.Cat
 
 module code-data { c₁ c₂ ℓ : Level} { A : Category c₁ c₂ ℓ } where
@@ -45,7 +47,7 @@ _≗_ {a} {b} f g = A [  continuation f ≈  continuation g ]
 open import Relation.Binary.Core
 
 isDataCategory : IsCategory DataObj DataHom _≗_ _∙_  DataId 
-isDataCategory  = record  { isEquivalence =  isEquivalence 
+isDataCategory  = record  { isEquivalence =  record { refl  = refl-hom ; sym   = sym ; trans = trans-hom } 
                     ; identityL =   \{a} {b} {f} -> identityL a b f
                     ; identityR =   \{a} {b} {f} -> identityR a b f
                     ; o-resp-≈ =    \{a} {b} {c} {f} {g} {h} {i} -> o-resp {a} {b} {c} {f} {g} {h} {i}
@@ -99,13 +101,6 @@ isDataCategory  = record  { isEquivalence =  isEquivalence
            ≈⟨ idR ⟩
                continuation f
            ∎
-         isEquivalence : {a : DataObj } {b : DataObj } →
-               IsEquivalence {_} {_} {DataHom a b } _≗_
-         isEquivalence {C} {D} =      -- this is the same function as A's equivalence but has different types
-           record { refl  = refl-hom
-             ; sym   = sym
-             ; trans = trans-hom
-           } 
 DataCategory : Category (c₁ ⊔ c₂ ⊔ ℓ) (c₁ ⊔ c₂ ⊔ ℓ) ℓ
 DataCategory =
   record { Obj = DataObj

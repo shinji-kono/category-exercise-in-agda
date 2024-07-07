@@ -1,10 +1,12 @@
-{-# OPTIONS --allow-unsolved-metas #-}
+{-# OPTIONS --cubical-compatible --allow-unsolved-metas  #-}
+-- {-# OPTIONS --cubical-compatible --safe #-}
+
 
 open import Category
 open import CCC
 open import Level
-open import HomReasoning 
-open import cat-utility
+open import HomReasoning
+open import Definitions
 open import Relation.Nullary
 open import Data.Empty
 open import Data.Product renaming ( <_,_> to ⟪_,_⟫ )
@@ -12,7 +14,7 @@ open import Data.Product renaming ( <_,_> to ⟪_,_⟫ )
 module Polynominal { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) ( C : CCC A )   where
 
   open CCC.CCC C
-  open ≈-Reasoning A hiding (_∙_)
+  open ≈-Reasoning A -- hiding (_∙_)
 
   _∙_ = _[_o_] A
 
@@ -35,25 +37,25 @@ module Polynominal { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) ( C :
   --
 
   open Functor
-  open import Relation.Binary.HeterogeneousEquality as HE using (_≅_ ) 
+  -- open import Relation.Binary.HeterogeneousEquality as HE using (_≅_ )
   open import Relation.Binary.PropositionalEquality hiding ( [_] ; resp ) renaming ( sym to ≡sym )
 
-  data _H≈_ {a b c d : Obj A } ( x : Hom A a b ) (y : Hom A c d ) : Set ( c₁  ⊔  c₂ ⊔ ℓ) where
-     feq : a ≡ c → b ≡ d → (z : Hom A a b) → z ≅ y → A [ x ≈ z ] → x H≈ y
+  -- data _H≈_ {a b c d : Obj A } ( x : Hom A a b ) (y : Hom A c d ) : Set ( c₁  ⊔  c₂ ⊔ ℓ) where
+  --   feq : a ≡ c → b ≡ d → (z : Hom A a b) → z ≅ y → A [ x ≈ z ] → x H≈ y
 
   data  φ  {a ⊤ : Obj A } ( x : Hom A ⊤ a ) : {b c : Obj A } → Hom A b c → Set ( c₁  ⊔  c₂ ⊔ ℓ) where
-     i   : {b c : Obj A} (k : Hom A b c ) →  φ x k   
+     i   : {b c : Obj A} (k : Hom A b c ) →  φ x k
      ii  : φ x {⊤} {a} x
-     iii : {b c' c'' : Obj A } { f : Hom A b c' } { g : Hom A b c'' } (ψ : φ x f ) (χ : φ x g ) → φ x {b} {c'  ∧ c''} < f , g > 
+     iii : {b c' c'' : Obj A } { f : Hom A b c' } { g : Hom A b c'' } (ψ : φ x f ) (χ : φ x g ) → φ x {b} {c'  ∧ c''} < f , g >
      iv  : {b c d : Obj A } { f : Hom A d c } { g : Hom A b d } (ψ : φ x f ) (χ : φ x g ) → φ x ( f ∙ g )
      v   : {b c' c'' : Obj A } { f : Hom A (b ∧ c') c'' }  (ψ : φ x f )  → φ x {b} {c'' <= c'} ( f * )
-  
+
   α : {a b c : Obj A } → Hom A (( a ∧ b ) ∧ c ) ( a ∧ ( b ∧ c ) )
   α = < π  ∙ π   , < π'  ∙ π  , π'  > >
-  
+
   -- genetate (a ∧ b) → c proof from  proof b →  c with assumption a
   -- from page. 51
-  
+
   k : {a ⊤ b c : Obj A } → ( x∈a : Hom A ⊤ a ) → {z : Hom A b c } → ( y  : φ {a} x∈a z ) → Hom A (a ∧ b) c
   k x∈a {k} (i _) = k ∙ π'
   k x∈a ii = π
@@ -61,7 +63,7 @@ module Polynominal { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) ( C :
   k x∈a (iv ψ χ ) = k x∈a ψ  ∙ < π , k x∈a χ  >
   k x∈a (v ψ ) = ( k x∈a ψ  ∙ α ) *
 
-  toφ : {a ⊤ b c : Obj A } → ( x∈a : Hom A ⊤ a ) → (z : Hom A b c ) → φ {a} x∈a z  
+  toφ : {a ⊤ b c : Obj A } → ( x∈a : Hom A ⊤ a ) → (z : Hom A b c ) → φ {a} x∈a z
   toφ {a} {⊤} {b} {c} x∈a z = i z
 
   -- The Polynominal arrow  -- λ term in A
@@ -74,39 +76,92 @@ module Polynominal { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) ( C :
 
   record Poly (a c b : Obj A )  : Set (c₁ ⊔ c₂ ⊔ ℓ)  where
     field
-       x :  Hom A １ a 
+       x :  Hom A １ a
        f :  Hom A b c
        phi  : φ x {b} {c} f
 
+  record Polym {a : Obj A} (x : Hom A １ a) (b c : Obj A )  : Set (c₁ ⊔ c₂ ⊔ ℓ)  where
+    field
+       f :  Hom A b c
+       phi  : φ x {b} {c} f
+
+  pid : {a : Obj A} (x : Hom A １ a) → (c : Obj A)  → Polym x c c
+  pid {a} x c = record { f = id1 A c ; phi = i (id1 A c) }
+
+  pf : {a : Obj A} (x : Hom A １ a) → {b c : Obj A}  → (f : Hom A b c)  → Polym x b c
+  pf {a} x f = record { f = f ; phi = i f }
+
+  pcomp : {a : Obj A} (x : Hom A １ a) { b c d : Obj A } ( f : Polym x c d ) → (g : Polym x b c) → Polym x b d
+  pcomp {a} x {b} {c} {d} f g = record { f = Polym.f f ∙ Polym.f g  ; phi = iv (i (Polym.f f)) (i (Polym.f g)) } 
+
+  data P≈ {a : Obj A} (x : Hom A １ a) : { b c : Obj A } ( f g : Polym x b c ) → Set ( c₁  ⊔  c₂ ⊔ ℓ) where
+     p-refl : { b c  : Obj A}  {f g : Polym x b c } → A [ Polym.f f ≈ Polym.f g ]  → P≈ x f g
+     p-sym : { b c  : Obj A}  {f g : Polym x b c } → P≈ x f g → P≈ x g f
+     p-trans : { b c : Obj A} {χ ψ φ  : Polym x b c} → P≈ x χ ψ → P≈ x ψ φ → P≈ x χ φ 
+     p-comp : { b c d : Obj A} {g : Polym x c d } {f : Polym x b c } {h : Polym x b d} 
+        → A [ Polym.f g ∙ Polym.f f ≈ Polym.f h ] → P≈ x (pcomp x g f) h 
+     p-resp : { b c d : Obj A} {ψ  ψ' : Polym x c d } {χ χ' : Polym x b c} 
+        → P≈ x χ χ' → P≈ x ψ ψ' 
+        → P≈ x (pcomp x ψ χ) (pcomp x ψ' χ')
+     p-idr : { c d : Obj A} {ψ  : Polym x c d } → P≈ x  (pcomp x ψ (pid x _)) ψ
+     p-idl : { c d : Obj A} {ψ  : Polym x c d } → P≈ x  (pcomp x (pid x _) ψ) ψ
+     p-assoc : { b c d e : Obj A} (χ  : Polym x d e) (ψ  : Polym x c d ) (φ  : Polym x b c )
+         → P≈ x (pcomp x χ (pcomp x ψ φ ) ) (pcomp x (pcomp x χ ψ) φ ) 
+     -- p-<> : { b c d e : Obj A} {g : Polym x c d } {f : Polym x c e} {h : Polym x c (e ∧ d)} → 
+     --    A [ < Polym.f f , Polym.f g > ≈ Polym.f h ] → P≈ x ? h
+
+
+  PolyC : {a : Obj A} (x : Hom A １ a) → Category c₁ (c₁ ⊔ c₂ ⊔ ℓ) (c₁ ⊔ c₂ ⊔ ℓ) 
+  PolyC {a} x = record {
+     Obj  = Obj A ;
+     Hom = λ b c →  Polym x b c ;
+     _o_ =  λ {b} {c} {d} f g → pcomp x f g ;
+     _≈_ =  λ f g → P≈ x f g ;
+     Id  =  λ{b} → pid x b ;
+     isCategory  = record {
+        isEquivalence =  record {refl = p-refl refl-hom  ; trans = p-trans ; sym = p-sym  } ;
+        identityL  = p-idl ;
+        identityR  = p-idr ;
+        o-resp-≈  = p-resp  ;
+        associative  = λ {b c d e f g h} → p-assoc f g h 
+     }
+   } 
+
+  PolyCCC : {a : Obj A} (x : Hom A １ a) → CCC (PolyC x)
+  PolyCCC {a} x = record {
+     １ = １ ;
+     ○ = λ b → pf x (○ b)  ; 
+     _∧_ = _∧_ ; 
+     <_,_> = λ f g → pf x ( < Polym.f f , Polym.f g > ) ;
+     π = pf x π ; 
+     π' = pf x π' ; 
+     _<=_ = _<=_ ; 
+     _* = λ f → pf x ( (Polym.f f) *  ) ; 
+     ε = pf x ε ; 
+     isCCC  = record {
+       e2 = p-refl (IsCCC.e2 isCCC ) ;
+       e3a = ? ;
+       e3b = ? ;
+       e3c = ? ;
+       π-cong = ? ;
+       -- closed
+       e4a = ? ;
+       e4b = ? ;
+       *-cong = ? 
+      }
+    }
+
+
+
   -- an assuption needed in k x phi ≈ k x phi'
-  --   k x (i x) ≈ k x ii  
-  postulate 
-       xf :  {a b c : Obj A } → ( x : Hom A １ a ) → {f : Hom A b c } → ( fp  : φ {a} x f ) →  A [ k x (i f) ≈ k x fp ]
-       -- ( x ∙ π' ) ≈ π 
-  --   
+  --   k x (i x) ≈ k x ii
+  xf :  {a b c : Obj A } → ( x : Hom A １ a ) → {f : Hom A b c } → ( fp  : φ {a} x f ) →  A [ k x (i f) ≈ k x fp ]
+  xf = ?
+       -- ( x ∙ π' ) ≈ π
+  --
   --   this is justified equality f ≈ g in A[x] is used in f ∙ < x , id1 A _> ≈  f ∙ < x , id1 A _>
   --   ( x ∙ π' ) ∙ < x , id1 A _ > ≈ π ∙ < x , id1 A _ >
 
-
-  --
-  -- Subcategory of A without x
-  --
-  -- Since A is CCC, ∀ f : Hom A b c ,  φ x {b} {c} (FMap F f) is an arrow of CCC A.
-  --
-
-  --
-  -- If no x in SA (Subcategory of CCC A), we may have xf.
-  --
-  record SA  {a ⊤ : Obj A } ( x : Hom A ⊤ a ) : Set ( suc c₁  ⊔  suc c₂ ⊔ suc ℓ) where
-     field
-       F : Functor A A
-       CF : CCCFunctor A A C C F
-       FObj-iso : (x : Obj A) → FObj F x ≡ x
-       without-x : {b c : Obj A} → (f : Hom A b c) → ¬ ( FMap F f H≈ x  )
-
-  xf-in-SA : {a ⊤ : Obj A } ( x : Hom A ⊤ a ) → (sa : SA x) → 
-       {b c : Obj A } → {f : Hom A b c } → ( fp  : φ {a} x (FMap (SA.F sa) f) ) →  Set ℓ
-  xf-in-SA {a} {⊤} x sa {b} {c} {f} fp = A [ k x (i (FMap (SA.F sa) f)) ≈ k x fp ]
 
   -- since we have A[x] now, we can proceed the proof on p.64 in some possible future
 
@@ -118,19 +173,26 @@ module Polynominal { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) ( C :
 
   record Functional-completeness {a b c : Obj A} ( p : Poly a c b ) : Set  (c₁ ⊔ c₂ ⊔ ℓ) where
     x = Poly.x p
-    field 
+    field
       fun  : Hom A (a ∧ b) c
       fp   : A [  fun ∙ <  x ∙ ○ b   , id1 A b  >  ≈ Poly.f p  ]
-      uniq : ( f : Hom A (a ∧ b) c) → A [ f ∙ < x ∙ ○ b , id1 A b > ≈ Poly.f p ] 
+      uniq : ( f : Hom A (a ∧ b) c) → A [ f ∙ < x ∙ ○ b , id1 A b > ≈ Poly.f p ]
+         → A [ f ≈ fun  ]
+
+  record P-Functional-completeness {a : Obj A} (x : Hom A １ a) {b c : Obj A} ( p : Polym x b c ) : Set  (c₁ ⊔ c₂ ⊔ ℓ) where
+    field
+      fun  : Hom A (a ∧ b) c
+      fp   : P≈ x (pf x ( fun ∙ <  x ∙ ○ b   , id1 A b  >))  p
+      uniq : ( f : Hom A (a ∧ b) c) → P≈ x (pf x ( f ∙ < x ∙ ○ b , id1 A b >)) p 
          → A [ f ≈ fun  ]
 
   -- ε form
-  -- f ≡ λ (x ∈ a) → φ x , ∃ (f : b <= a) →  f ∙ x ≈  φ x  
-  record Fc {a b : Obj A } ( φ :  Poly a b １ ) 
+  -- f ≡ λ (x ∈ a) → φ x , ∃ (f : b <= a) →  f ∙ x ≈  φ x
+  record Fc {a b : Obj A } ( φ :  Poly a b １ )
          :  Set ( suc c₁  ⊔  suc c₂ ⊔ suc ℓ ) where
     field
-      sl :  Hom A a b 
-    g :  Hom A １ (b <= a) 
+      sl :  Hom A a b
+    g :  Hom A １ (b <= a)
     g  = ( sl ∙ π'  ) *
     field
       isSelect : A [   ε ∙ < g  , Poly.x φ  >   ≈  Poly.f φ  ]
@@ -156,21 +218,21 @@ module Polynominal { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) ( C :
   ki x _ (iii {_} {_} {_} {f₁}{ f₂} fp₁ fp₂ ) = begin
                < f₁ ,  f₂  > ∙ π'  ≈⟨ IsCCC.distr-π isCCC ⟩
                < f₁ ∙ π'  ,  f₂   ∙ π' >  ≈⟨ π-cong (ki x f₁ fp₁  ) (ki x f₂ fp₂  ) ⟩
-                k x (iii  fp₁ fp₂ )  ∎ 
+                k x (iii  fp₁ fp₂ )  ∎
   ki x _ (iv {_} {_} {_} {f₁} {f₂} fp fp₁) = begin
                (f₁ ∙ f₂  ) ∙ π'  ≈↑⟨ assoc ⟩
                f₁  ∙ ( f₂ ∙ π')  ≈↑⟨ cdr (IsCCC.e3b isCCC) ⟩
                f₁  ∙ ( π'  ∙ < π , (f₂ ∙ π' )  >)  ≈⟨ assoc ⟩
                (f₁  ∙ π' ) ∙ < π , (f₂ ∙ π' )  >  ≈⟨ resp (π-cong refl-hom (ki x _ fp₁  )) (ki x _ fp  ) ⟩
                k x fp ∙ < π , k x fp₁ >  ≈⟨⟩
-               k x (iv fp fp₁ )  ∎  
+               k x (iv fp fp₁ )  ∎
   ki x _ (v {_} {_} {_} {f} fp) = begin
                (f *) ∙ π' ≈⟨ distr-*  ⟩
                ( f ∙ < π' ∙ π , π'  > ) * ≈↑⟨ *-cong (cdr (IsCCC.e3b isCCC)) ⟩
                ( f ∙ ( π'  ∙  < π ∙ π , < π' ∙  π , π' > > ) ) *  ≈⟨ *-cong assoc  ⟩
                ( (f ∙ π')  ∙  < π ∙ π , < π' ∙  π , π' > > ) *  ≈⟨ *-cong ( car ( ki x _ fp )) ⟩
                ( k x fp ∙  < π ∙ π , < π' ∙  π , π' > > ) *  ≈⟨⟩
-               k x (v fp )  ∎  
+               k x (v fp )  ∎
 
   k-cong : {a b c : Obj A}  → (f g :  Poly a c b )
         → A [ Poly.f f ≈ Poly.f g ] → A [ k (Poly.x f) (Poly.phi f)   ≈ k (Poly.x g) (Poly.phi g) ]
@@ -178,20 +240,28 @@ module Polynominal { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) ( C :
           k (Poly.x f) (Poly.phi f) ≈↑⟨ ki  (Poly.x f) (Poly.f f)  (Poly.phi f)  ⟩
           Poly.f f ∙ π' ≈⟨ car f=f  ⟩
           Poly.f g ∙ π'  ≈⟨ ki  (Poly.x g) (Poly.f g)  (Poly.phi g) ⟩
-          k (Poly.x g) (Poly.phi g) ∎   
+          k (Poly.x g) (Poly.phi g) ∎
 
   -- proof in p.59 Lambek
   --
   --  (ψ : Poly a c b) is basically λ x.ψ(x). To use x from outside as a ψ(x), apply x ψ will work.
   --  Instead of replacing x in Poly.phi ψ, we can use simple application with this fuctional completeness
   --  in the internal language of Topos.
-  --  
-  functional-completeness : {a b c : Obj A} ( p : Poly a c b ) → Functional-completeness p 
+  --
+
+  p-functional-completeness : {a : Obj A} (x : Hom A １ a) { b c : Obj A} ( p : Polym x b c ) → P-Functional-completeness x p
+  p-functional-completeness {a} x {b} {c} p = record {
+         fun = k x (Polym.phi p)
+       ; fp = ? -- fc0 x (Polym.f p) (Polym.phi p)
+       ; uniq = ? -- λ f eq  → uniq x (Polym.f p) (Polym.phi p)  f eq
+     } 
+
+  functional-completeness : {a b c : Obj A} ( p : Poly a c b ) → Functional-completeness p
   functional-completeness {a} {b} {c} p = record {
          fun = k (Poly.x p) (Poly.phi p)
        ; fp = fc0 (Poly.x p) (Poly.f p) (Poly.phi p)
        ; uniq = λ f eq  → uniq (Poly.x p) (Poly.f p) (Poly.phi p)  f eq
-     } where 
+     } where
         fc0 : {a b c : Obj A}  → (x :  Hom A １ a) (f :  Hom A b c) (phi  :  φ x {b} {c} f )
            → A [  k x phi ∙ <  x ∙ ○ b  , id1 A b >  ≈ f ]
         fc0 {a} {b} {c} x f' phi with phi
@@ -199,18 +269,18 @@ module Polynominal { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) ( C :
              (s ∙ π') ∙ < ( x ∙ ○ b ) , id1 A b > ≈↑⟨ assoc ⟩
              s ∙ (π' ∙ < ( x ∙ ○ b ) , id1 A b >) ≈⟨ cdr (IsCCC.e3b isCCC ) ⟩
              s ∙ id1 A b ≈⟨ idR ⟩
-             s ∎ 
+             s ∎
         ... | ii = begin
              π ∙ < ( x ∙ ○ b ) , id1 A b > ≈⟨ IsCCC.e3a isCCC ⟩
              x ∙ ○ b  ≈↑⟨ cdr (e2 ) ⟩
              x ∙ id1 A b  ≈⟨ idR ⟩
-             x ∎  
+             x ∎
         ... | iii {_} {_} {_} {f} {g} y z  = begin
              < k x y , k x z > ∙ < (x ∙ ○ b ) , id1 A b > ≈⟨ IsCCC.distr-π isCCC  ⟩
              < k x y ∙ < (x ∙ ○ b ) , id1 A b > , k x z ∙ < (x ∙ ○ b ) , id1 A b > >
                  ≈⟨ π-cong (fc0 x  f y ) (fc0 x g z ) ⟩
              < f , g > ≈⟨⟩
-             f'  ∎  
+             f'  ∎
         ... | iv {_} {_} {d} {f} {g} y z  = begin
              (k x y ∙ < π , k x z >) ∙ < ( x ∙ ○ b ) , id1 A b > ≈↑⟨ assoc ⟩
              k x y ∙ ( < π , k x z > ∙ < ( x ∙ ○ b ) , id1 A b > ) ≈⟨ cdr (IsCCC.distr-π isCCC) ⟩
@@ -221,7 +291,7 @@ module Polynominal { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) ( C :
              k x y ∙ ( < (x ∙ ○ d) ∙ g  , id1 A d ∙ g > ) ≈↑⟨ cdr (IsCCC.distr-π isCCC) ⟩
              k x y ∙ ( < x ∙ ○ d ,  id1 A d > ∙ g ) ≈⟨ assoc ⟩
              (k x y ∙  < x ∙ ○ d ,  id1 A d > ) ∙ g  ≈⟨ car (fc0 x f y ) ⟩
-             f ∙ g  ∎   
+             f ∙ g  ∎
         ... | v {_} {_} {_} {f} y = begin
             ( (k x y ∙ < π ∙ π , <  π' ∙  π , π' > >) *) ∙ < x ∙ (○ b) , id1 A b > ≈⟨ IsCCC.distr-* isCCC ⟩
             ( (k x y ∙ < π ∙ π , <  π' ∙  π , π' > >) ∙ < < x ∙ ○ b , id1 A _ > ∙ π , π' > ) * ≈⟨  IsCCC.*-cong isCCC ( begin
@@ -242,42 +312,42 @@ module Polynominal { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) ( C :
               k x y ∙ <  x ∙ (○ b  ∙ π )  , <    π  , π' > >    ≈⟨   cdr (π-cong (cdr (e2)) (IsCCC.π-id isCCC) ) ⟩
               k x y ∙  < x ∙ ○ _ , id1 A _  >    ≈⟨ fc0 x f y  ⟩
              f  ∎ )  ⟩
-             f * ∎  
+             f * ∎
         --
         --   f ∙ <  x ∙ ○ b  , id1 A b >  ≈ f →  f ≈ k x (phi p)
-        -- 
+        --
         uniq : {a b c : Obj A}  → (x :  Hom A １ a) (f :  Hom A b c) (phi  :  φ x {b} {c} f ) (f' : Hom A (a ∧ b) c)
             → A [  f' ∙ <  x ∙ ○ b  , id1 A b >  ≈ f ] → A [ f' ≈ k x phi ]
         uniq {a} {b} {c} x f phi f' fx=p  = sym (begin
                k x phi ≈↑⟨ ki x f phi ⟩
                k x {f} (i _) ≈↑⟨ car fx=p ⟩
                k x {f' ∙ < x ∙ ○ b , id1 A b >} (i _)  ≈⟨ trans-hom (sym assoc)  (cdr (IsCCC.distr-π isCCC) ) ⟩ -- ( f' ∙ < x ∙ ○ b , id1 A b> ) ∙ π'
-               f' ∙ k x {< x ∙ ○ b , id1 A b >} (iii (i _)  (i _)  ) ≈⟨⟩                         -- ( f' ∙ < (x ∙ ○ b) ∙ π'  , id1 A b ∙ π' > ) 
-               f' ∙ <  k x (i (x ∙ ○ b)) ,  k x {id1 A b} (i _) >  ≈⟨ cdr (π-cong u2 refl-hom) ⟩ -- ( f' ∙ < (x ∙ ○ b) ∙ π' , id1 A b ∙ π' > ) 
-               f' ∙ < k x {x} ii ∙ < π , k x {○ b} (i _)  >  , k x {id1 A b} (i _)  >   -- ( f' ∙ < π ∙ < π , (x ∙ ○ b) ∙ π' >  , id1 A b ∙ π' > ) 
-                   ≈⟨ cdr (π-cong (cdr (π-cong refl-hom (car e2))) idL ) ⟩ 
+               f' ∙ k x {< x ∙ ○ b , id1 A b >} (iii (i _)  (i _)  ) ≈⟨⟩                         -- ( f' ∙ < (x ∙ ○ b) ∙ π'  , id1 A b ∙ π' > )
+               f' ∙ <  k x (i (x ∙ ○ b)) ,  k x {id1 A b} (i _) >  ≈⟨ cdr (π-cong u2 refl-hom) ⟩ -- ( f' ∙ < (x ∙ ○ b) ∙ π' , id1 A b ∙ π' > )
+               f' ∙ < k x {x} ii ∙ < π , k x {○ b} (i _)  >  , k x {id1 A b} (i _)  >   -- ( f' ∙ < π ∙ < π , (x ∙ ○ b) ∙ π' >  , id1 A b ∙ π' > )
+                   ≈⟨ cdr (π-cong (cdr (π-cong refl-hom (car e2))) idL ) ⟩
                f' ∙  <  π ∙ < π , (○ b ∙ π' ) >  , π' >   ≈⟨ cdr (π-cong (IsCCC.e3a isCCC)  refl-hom) ⟩
                f' ∙  < π , π' >  ≈⟨ cdr (IsCCC.π-id isCCC) ⟩
                f' ∙  id1 A _ ≈⟨ idR ⟩
                f' ∎  )  where
                    -- x ∙ ○ b is clearly Polynominal or assumption xf
                    u2 : k x {x ∙ ○ b} (i _) ≈ k x {x} ii ∙ < π , k x {○ b} (i _) >  --  (x ∙ (○ b)) ∙ π' ≈ π ∙ < π , (○ b) ∙ π' >
-                   u2 = ki x (x ∙ ○ b) (iv ii (i _)) 
+                   u2 = ki x (x ∙ ○ b) (iv ii (i _))
 
   -- functional completeness ε form
   --
   --  g : Hom A １ (b <= a)       fun : Hom A (a ∧ １) c
   --       fun *                       ε ∙ < g ∙ π , π' >
   --  a -> d <= b  <-> (a ∧ b ) -> d
-  --            
+  --
   --   fun ∙ <  x ∙ ○ b   , id1 A b  >  ≈ Poly.f p
   --   (ε ∙ < g ∙ π , π' >) ∙ <  x ∙ ○ b   , id1 A b  >  ≈ Poly.f p
   --      could be simpler
-  FC : {a b : Obj A}  → (φ  : Poly a b １ )  → Fc {a} {b} φ 
+  FC : {a b : Obj A}  → (φ  : Poly a b １ )  → Fc {a} {b} φ
   FC {a} {b} φ = record {
-     sl =  k (Poly.x φ ) (Poly.phi φ) ∙ < id1 A _ ,  ○ a  > 
+     sl =  k (Poly.x φ ) (Poly.phi φ) ∙ < id1 A _ ,  ○ a  >
      ; isSelect = isSelect
-     ; isUnique = uniq 
+     ; isUnique = uniq
     }  where
         π-exchg = IsCCC.π-exchg isCCC
         fc0 :  {b c : Obj A} (p : Poly b c １) → A [  k (Poly.x p ) (Poly.phi p) ∙ <  Poly.x p  ∙  ○ １  , id1 A １ >  ≈ Poly.f p ]
@@ -339,7 +409,7 @@ module Polynominal { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) ( C :
               (ε ∙ < f ∙ π , π' > ) ∙ id1 A  (１ ∧ a) ≈⟨ idR ⟩
               ε ∙ < f ∙ π , π' > ∎ ) ⟩
            ( ε ∙ < A [ f o π ] , π' > ) *   ≈⟨ IsCCC.e4b isCCC  ⟩
-           f ∎ 
+           f ∎
 
 
 

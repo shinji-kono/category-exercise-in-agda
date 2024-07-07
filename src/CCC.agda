@@ -1,11 +1,12 @@
-{-# OPTIONS --allow-unsolved-metas #-}
+{-# OPTIONS --cubical-compatible --safe #-}
+
 open import Level
 open import Category
 module CCC where
 
 
 open import HomReasoning
-open import cat-utility
+open import Definitions
 open  import  Relation.Binary.PropositionalEquality
 
 
@@ -283,6 +284,14 @@ record Topos {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ)  (c : CCC A)  
          isTopos : IsTopos A c Ω ⊤ Ker char
      Monik : {a : Obj A} (h : Hom A a Ω)  → Mono A (equalizer (Ker h))
      Monik h = record { isMono = λ f g → monic (Ker h ) } 
+
+--  Nat as iniitla object (1→ ℕ → ℕ)
+--
+--     0     s
+--  1 -→  ℕ --→ ℕ 
+--  |     |h    |h
+--  + --→ A --→ A  
+--     a     f
 
 record NatD {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ)  ( １ : Obj A) : Set ( suc c₁  ⊔  suc c₂ ⊔ suc ℓ ) where
      field

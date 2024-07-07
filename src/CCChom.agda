@@ -1,9 +1,10 @@
+{-# OPTIONS --cubical-compatible --safe #-}
 open import Level
 open import Category 
 module CCChom where
 
 open import HomReasoning
-open import cat-utility
+open import Definitions
 open import Data.Product renaming (_×_ to _/\_  ) hiding ( <_,_> )
 open import Category.Constructions.Product
 open  import  Relation.Binary.PropositionalEquality hiding ( [_] )

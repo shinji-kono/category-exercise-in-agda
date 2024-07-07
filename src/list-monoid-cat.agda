@@ -1,7 +1,11 @@
+{-# OPTIONS --cubical-compatible --safe #-}
+
 open import Category -- https://github.com/konn/category-agda
 open import Level
 open import HomReasoning
-open import cat-utility
+open import Definitions
+open import Relation.Binary
+
 
 module list-monoid-cat (c : Level ) where
 
@@ -62,7 +66,7 @@ ListCategory A =
           }
 
 open import Algebra.Structures
-open import Algebra.FunctionProperties using (Op₁; Op₂)
+-- open import Algebra.FunctionProperties using (Op₁; Op₂)
 
 data MonoidObj : Set c where
   ! : MonoidObj
@@ -71,7 +75,7 @@ record ≡-Monoid c : Set (suc c) where
   infixl 7 _∙_
   field
     Carrier  : Set c
-    _∙_      : Op₂ Carrier
+    _∙_      : Carrier → Carrier → Carrier
     ε        : Carrier
     isMonoid : IsMonoid _≡_ _∙_ ε
 

@@ -1,3 +1,4 @@
+{-# OPTIONS --cubical-compatible --safe #-}
 open import Category -- https://github.com/konn/category-agda
 open import Level
 
@@ -138,31 +139,31 @@ FourCat    = record {
 
 epi :  {a b c : FourObject } (f₁ f₂ : Hom FourCat  a b ) ( h : Hom FourCat b c )
    →    h ・ f₁   ≡ h ・  f₂   → f₁  ≡  f₂
-epi id-ta id-ta _ refl = refl
-epi id-tb id-tb _ refl = refl
-epi id-tc id-tc _ refl = refl
-epi id-td id-td _ refl = refl
-epi arrow-ca arrow-ca _ refl = refl
-epi arrow-ab arrow-ab _ refl = refl
-epi arrow-bd arrow-bd _ refl = refl
-epi arrow-cb arrow-cb _ refl = refl
-epi arrow-ad arrow-ad _ refl = refl
-epi arrow-cd arrow-cd _ refl = refl
+epi id-ta id-ta _ eq = refl
+epi id-tb id-tb _ eq = refl
+epi id-tc id-tc _ eq = refl
+epi id-td id-td _ eq = refl
+epi arrow-ca arrow-ca _ eq = refl
+epi arrow-ab arrow-ab _ eq = refl
+epi arrow-bd arrow-bd _ eq = refl
+epi arrow-cb arrow-cb _ eq = refl
+epi arrow-ad arrow-ad _ eq = refl
+epi arrow-cd arrow-cd _ eq = refl
 
 monic :  {a b c : FourObject } (g₁ g₂ : Hom FourCat  b c ) ( h : Hom FourCat  a b )
    →   g₁ ・ h  ≡ g₂ ・ h   → g₁  ≡  g₂
-monic id-ta id-ta _ refl = refl
-monic id-tb id-tb _ refl = refl
-monic id-tc id-tc _ refl = refl
-monic id-td id-td _ refl = refl
-monic arrow-ca arrow-ca _ refl = refl
-monic arrow-ab arrow-ab _ refl = refl
-monic arrow-bd arrow-bd _ refl = refl
-monic arrow-cb arrow-cb _ refl = refl
-monic arrow-ad arrow-ad _ refl = refl
-monic arrow-cd arrow-cd _ refl = refl
+monic id-ta id-ta _ eq = refl
+monic id-tb id-tb _ eq = refl
+monic id-tc id-tc _ eq = refl
+monic id-td id-td _ eq = refl
+monic arrow-ca arrow-ca _ eq = refl
+monic arrow-ab arrow-ab _ eq = refl
+monic arrow-bd arrow-bd _ eq = refl
+monic arrow-cb arrow-cb _ eq = refl
+monic arrow-ad arrow-ad _ eq = refl
+monic arrow-cd arrow-cd _ eq = refl
 
-open import cat-utility
+open import Definitions
 open import Relation.Nullary
 open import Data.Empty
 

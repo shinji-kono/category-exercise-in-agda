@@ -1,11 +1,25 @@
+{-# OPTIONS --cubical-compatible --safe #-}
+
 open import Level
 open import Category
-module applicative where
+open import Definitions 
+open Functor
 
-open import Data.Product renaming (_×_ to _*_)
+--
+-- To show Applicative functor is monoidal functor, uniquness of Functor is necessary, which is derived from the free theorem.
+--
+-- they say it is not possible to prove FreeTheorem in Agda nor Coq
+--    https://stackoverflow.com/questions/24718567/is-it-possible-to-get-hold-of-free-theorems-as-propositional-equalities
+-- so we postulate this
+
+module applicative  (
+    FT : {c₁ c₂ ℓ c₁' c₂' ℓ' : Level} (C : Category c₁ c₂ ℓ) (D : Category c₁' c₂' ℓ') {a b c : Obj C } → FreeTheorem C D  {a} {b} {c} )
+       where
+
+
+open import Data.Product renaming (_×_ to _*_) hiding (_<*>_)
 open import Category.Constructions.Product
 open import HomReasoning
-open import cat-utility
 open import Relation.Binary.Core
 open import Relation.Binary
 open import monoidal
@@ -20,22 +34,6 @@ open import Relation.Binary.PropositionalEquality  hiding ( [_] )
 ----
 
 -----
---
--- To show Applicative functor is monoidal functor, uniquness of Functor is necessary, which is derived from the free theorem.
---
--- they say it is not possible to prove FreeTheorem in Agda nor Coq
---    https://stackoverflow.com/questions/24718567/is-it-possible-to-get-hold-of-free-theorems-as-propositional-equalities
--- so we postulate this
-
-open Functor
-
-postulate
-    FreeTheorem : {c₁ c₂ ℓ c₁' c₂' ℓ' : Level} (C : Category c₁ c₂ ℓ) (D : Category c₁' c₂' ℓ') {a b c : Obj C }
-       → (F : Functor C D )
-       → (fmap : {a : Obj C } {b : Obj C } → Hom C a b → Hom D (FObj F a) ( FObj F b) )
-       → {h f : Hom C a b } →  {g k : Hom C b c }
-       → C [  C  [ g o h ]  ≈  C [ k o f ]  ] →  D [ D [ FMap F g o fmap h ]  ≈  D [ fmap k o FMap F f ] ]
-
 UniquenessOfFunctor :  {c₁ c₂ ℓ c₁' c₂' ℓ' : Level} (C : Category c₁ c₂ ℓ) (D : Category c₁' c₂' ℓ')  (F : Functor C D)
   {a b : Obj C } { f : Hom C a b } → ( fmap : {a : Obj C } {b : Obj C } → Hom C a b → Hom D (FObj F a) ( FObj F b) )
       → ( {b : Obj C } → D [ fmap  (id1 C b) ≈  id1 D (FObj F b) ] )
@@ -46,7 +44,7 @@ UniquenessOfFunctor C D F {a} {b} {f} fmap eq = begin
         id1 D (FObj F b)  o  fmap f 
      ≈↑⟨ car ( IsFunctor.identity (isFunctor F )) ⟩
         FMap F (id1 C b)  o  fmap f 
-     ≈⟨ FreeTheorem C D F  fmap (IsEquivalence.refl (IsCategory.isEquivalence  ( Category.isCategory C ))) ⟩ 
+     ≈⟨ FT C D F  fmap (IsEquivalence.refl (IsCategory.isEquivalence  ( Category.isCategory C ))) ⟩ 
         fmap  (id1 C b)  o  FMap F f  
      ≈⟨ car eq ⟩
         id1 D (FObj F b)  o  FMap F f  
@@ -60,7 +58,6 @@ import Relation.Binary.PropositionalEquality
 
 _・_ : {c₁ : Level} { a b c : Obj (Sets {c₁} ) } → (b → c) → (a → b) → a → c
 _・_ f g = λ x → f ( g x ) 
-
 record IsApplicative {c₁ : Level} ( F : Functor (Sets {c₁}) (Sets {c₁}) )
     ( pure  : {a : Obj Sets} → Hom Sets a ( FObj F a ) )
     ( _<*>_ : {a b : Obj Sets} → FObj F ( a → b ) → FObj F a → FObj F b )
@@ -125,7 +122,8 @@ Applicative→Monoidal {l} F mf ismf = record {
                  pure id <*> x
              ≡⟨ IsApplicative.identity ismf  ⟩
                  x
-             ≡⟨ ≡-cong ( λ k → k x ) (sym ( IsFunctor.identity (isFunctor F ) )) ⟩ FMap F id x
+             ≡⟨ sym ( IsFunctor.identity (isFunctor F ) x ) ⟩ 
+                 FMap F id x
              ∎ )
            where
                   open Relation.Binary.PropositionalEquality
@@ -133,7 +131,7 @@ Applicative→Monoidal {l} F mf ismf = record {
       F→pure : {a b : Obj Sets } → { f : a → b } → {x : FObj F a } →  FMap F f x ≡ pure f <*> x
       F→pure {a} {b} {f} {x} = sym ( begin
                  pure f <*> x
-             ≡⟨ ≡-cong ( λ k → k x ) (UniquenessOfFunctor Sets Sets F ( λ f x → pure f <*> x ) ( extensionality Sets ( λ x →  IsApplicative.identity ismf  ))) ⟩
+             ≡⟨ (UniquenessOfFunctor Sets Sets F ( λ f x → pure f <*> x ) (λ x →  IsApplicative.identity ismf  )) x ⟩
                  FMap F f x
              ∎ )
            where
@@ -183,7 +181,7 @@ Applicative→Monoidal {l} F mf ismf = record {
                  (pure (λ j k → f j , k) <*> x) <*> (pure g <*> y)
              ≡⟨ sym ( trans (left F→pure ) ( right F→pure ) ) ⟩
                  (FMap F (λ j k → f j , k)  x) <*> (FMap F g y)
-             ≡⟨  ≡-cong ( λ k → k  x <*> (FMap F g y)) ( IsFunctor.distr (isFunctor F ))  ⟩
+             ≡⟨    ≡-cong ( λ k → k   <*> (FMap F g y)) ( IsFunctor.distr (isFunctor F ) x ) ⟩
                  (FMap F (λ j k → j , k) (FMap F f x)) <*> (FMap F g y)
              ≡⟨⟩
                  φ ( ( FMap (Functor● Sets Sets MonoidalSets F) (f , g) ) ( x , y ) )
@@ -193,7 +191,7 @@ Applicative→Monoidal {l} F mf ismf = record {
                   open Relation.Binary.PropositionalEquality.≡-Reasoning
       φab-comm : {a b : Obj (Sets × Sets)} { f : Hom (Sets × Sets) a b} → Sets [ Sets [ FMap (Functor⊗ Sets Sets MonoidalSets F) f o φ  ]
         ≈ Sets [ φ  o FMap (Functor● Sets Sets MonoidalSets F) f ] ]
-      φab-comm {a} {b} {f} =  extensionality Sets ( λ (x : ( FObj F (proj₁ a) * FObj F (proj₂ a)) ) → φab-comm0 x )
+      φab-comm {a} {b} {f} =   λ (x : ( FObj F (proj₁ a) * FObj F (proj₂ a)) ) → φab-comm0 x 
       associativity0 :  {a b c : Obj Sets} → (x : ((FObj F a ⊗ FObj F b) ⊗ FObj F c) ) → (Sets [ φ  o Sets [ id1 Sets (FObj F a) □ φ  o Iso.≅→ (mα-iso isM) ] ]) x ≡
                 (Sets [ FMap F (Iso.≅→ (mα-iso isM)) o Sets [ φ  o φ  □ id1 Sets (FObj F c) ] ]) x
       associativity0 {x} {y} {f} ((a , b) , c ) = begin
@@ -253,7 +251,7 @@ Applicative→Monoidal {l} F mf ismf = record {
       associativity : {a b c : Obj Sets} → Sets [ Sets [ φ 
            o Sets [  (id1 Sets (FObj F a) □ φ ) o Iso.≅→ (mα-iso isM) ] ]
         ≈ Sets [ FMap F (Iso.≅→ (mα-iso isM)) o Sets [ φ  o  (φ  □ id1 Sets (FObj F c)) ] ] ]
-      associativity {a} {b} {c} =  extensionality Sets ( λ x  → associativity0 x )
+      associativity {a} {b} {c} x =  associativity0 x 
       unitarity-idr0 : {a b : Obj Sets} ( x : FObj F a * One )  → (  Sets [
          FMap F (Iso.≅→ (mρ-iso isM)) o Sets [ φ  o
              FMap (m-bi MonoidalSets) (id1 Sets (FObj F a) , (λ _ → unit )) ] ] ) x  ≡ Iso.≅→ (mρ-iso isM) x
@@ -284,7 +282,7 @@ Applicative→Monoidal {l} F mf ismf = record {
       unitarity-idr : {a b : Obj Sets} → Sets [ Sets [
          FMap F (Iso.≅→ (mρ-iso isM)) o Sets [ φ  o
              FMap (m-bi MonoidalSets) (id1 Sets (FObj F a) , (λ _ → unit )) ] ] ≈ Iso.≅→ (mρ-iso isM) ]
-      unitarity-idr {a} {b} =  extensionality Sets ( λ x  → unitarity-idr0 {a} {b} x )
+      unitarity-idr {a} {b} x =  unitarity-idr0 {a} {b} x 
       unitarity-idl0 : {a b : Obj Sets} ( x : One * FObj F b )  → (  Sets [
          FMap F (Iso.≅→ (mλ-iso isM)) o Sets [ φ  o
              FMap (m-bi MonoidalSets) ((λ _ → unit ) , id1 Sets (FObj F b) ) ] ] ) x  ≡ Iso.≅→ (mλ-iso isM) x
@@ -310,7 +308,7 @@ Applicative→Monoidal {l} F mf ismf = record {
                   open Relation.Binary.PropositionalEquality.≡-Reasoning
       unitarity-idl : {a b : Obj Sets} → Sets [ Sets [ FMap F (Iso.≅→ (mλ-iso isM)) o
         Sets [ φ  o FMap (m-bi MonoidalSets) ((λ _ → unit ) , id1 Sets (FObj F b)) ] ] ≈ Iso.≅→ (mλ-iso isM) ]
-      unitarity-idl {a} {b} =  extensionality Sets ( λ x  → unitarity-idl0 {a} {b} x )
+      unitarity-idl {a} {b} x =  unitarity-idl0 {a} {b} x 
 
 ----
 --
@@ -354,10 +352,10 @@ HaskellMonoidal→Applicative {c₁} F Mono = record {
           FφF→F : { a b c d e : Obj Sets } { g : Hom Sets a c } { h : Hom Sets b d }
               { f : Hom Sets (c * d) e }
                    { x :  FObj F a } { y :  FObj F b }
-              →  FMap F f ( φ ( FMap F g x , FMap F h y ) )  ≡  FMap F (  f o map g h ) ( φ ( x , y ) ) 
+              →  FMap F f ( φ ( FMap F g x , FMap F h y ) )  ≡  FMap F ( Sets [ f o map g h ] ) ( φ ( x , y ) ) 
           FφF→F {a} {b} {c} {d} {e} {g} {h} {f} {x} {y} = sym ( begin
-                  FMap F (  f o map g h ) ( φ ( x , y ) ) 
-               ≡⟨  ≡-cong ( λ k → k ( φ ( x , y ))) ( IsFunctor.distr (isFunctor F) ) ⟩
+                  FMap F ( Sets [ f o map g h ] ) ( φ ( x , y ) ) 
+               ≡⟨   IsFunctor.distr (isFunctor F) ( φ ( x , y )) ⟩
                   FMap F  f (( FMap F ( map g h ) ) ( φ ( x , y )))
                ≡⟨  ≡-cong ( λ k → FMap F f k ) ( IsHaskellMonoidalFunctor.natφ mono )  ⟩
                   FMap F f ( φ ( FMap F g x , FMap F h y ) )
@@ -365,17 +363,17 @@ HaskellMonoidal→Applicative {c₁} F Mono = record {
            where
                   open Relation.Binary.PropositionalEquality.≡-Reasoning
           u→F : {a : Obj Sets } {u : FObj F a} → u ≡ FMap F id u 
-          u→F {a} {u} =  sym ( ≡-cong ( λ k → k u ) ( IsFunctor.identity ( isFunctor F ) ) )
+          u→F {a} {u} =  sym (  IsFunctor.identity ( isFunctor F ) u) 
           φunitr : {a : Obj Sets } {u : FObj F a} → φ ( unit , u) ≡ FMap F (Iso.≅← (IsMonoidal.mλ-iso isM)) u
           φunitr {a} {u} = sym ( begin 
                   FMap F (Iso.≅← (IsMonoidal.mλ-iso isM)) u
                ≡⟨  ≡-cong ( λ k → FMap F (Iso.≅← (IsMonoidal.mλ-iso isM)) k ) (sym (IsHaskellMonoidalFunctor.idlφ mono)) ⟩
                   FMap F (Iso.≅← (IsMonoidal.mλ-iso isM)) ( FMap F (Iso.≅→ (IsMonoidal.mλ-iso isM)) ( φ ( unit , u) ) )
-               ≡⟨ left ( sym ( IsFunctor.distr ( isFunctor F ) )) ⟩
-                  (FMap F ( (Iso.≅← (IsMonoidal.mλ-iso isM)) o   (Iso.≅→ (IsMonoidal.mλ-iso isM)))) ( φ ( unit , u) )
-               ≡⟨ ≡-cong ( λ k → FMap F k ( φ ( unit , u) )) (Iso.iso→ ( (IsMonoidal.mλ-iso isM) ))  ⟩
+               ≡⟨  sym ( IsFunctor.distr ( isFunctor F ) _ ) ⟩
+                  (FMap F ( Sets [  (Iso.≅← (IsMonoidal.mλ-iso isM)) o   (Iso.≅→ (IsMonoidal.mλ-iso isM)) ] )) ( φ ( unit , u) )
+               ≡⟨ IsFunctor.≈-cong ( isFunctor F ) (Iso.iso→ (IsMonoidal.mλ-iso isM)) _ ⟩
                   FMap F id ( φ ( unit , u) )
-               ≡⟨ left ( IsFunctor.identity ( isFunctor F ) ) ⟩
+               ≡⟨ IsFunctor.identity ( isFunctor F ) _   ⟩
                   id ( φ ( unit , u) )
                ≡⟨⟩
                   φ ( unit , u)
@@ -387,11 +385,11 @@ HaskellMonoidal→Applicative {c₁} F Mono = record {
                   FMap F (Iso.≅← (IsMonoidal.mρ-iso isM)) u
                ≡⟨  ≡-cong ( λ k → FMap F (Iso.≅← (IsMonoidal.mρ-iso isM)) k ) (sym (IsHaskellMonoidalFunctor.idrφ mono)) ⟩
                   FMap F (Iso.≅← (IsMonoidal.mρ-iso isM)) ( FMap F (Iso.≅→ (IsMonoidal.mρ-iso isM)) ( φ ( u , unit ) ) )
-               ≡⟨ left ( sym ( IsFunctor.distr ( isFunctor F ) )) ⟩
-                  (FMap F ( (Iso.≅← (IsMonoidal.mρ-iso isM)) o   (Iso.≅→ (IsMonoidal.mρ-iso isM)))) ( φ ( u , unit ) )
-               ≡⟨ ≡-cong ( λ k → FMap F k ( φ ( u , unit ) )) (Iso.iso→ ( (IsMonoidal.mρ-iso isM) ))  ⟩
+               ≡⟨  sym ( IsFunctor.distr ( isFunctor F ) _ ) ⟩
+                  (FMap F (Sets [ (Iso.≅← (IsMonoidal.mρ-iso isM)) o   (Iso.≅→ (IsMonoidal.mρ-iso isM)) ] )) ( φ ( u , unit ) )
+               ≡⟨ IsFunctor.≈-cong ( isFunctor F ) (Iso.iso→ (IsMonoidal.mρ-iso isM)) _ ⟩
                   FMap F id ( φ ( u , unit ) )
-               ≡⟨ left ( IsFunctor.identity ( isFunctor F ) ) ⟩
+               ≡⟨  IsFunctor.identity ( isFunctor F ) _  ⟩
                   id ( φ ( u , unit ) )
                ≡⟨⟩
                   φ ( u , unit )
@@ -431,7 +429,7 @@ HaskellMonoidal→Applicative {c₁} F Mono = record {
                  FMap F (λ r → proj₁ r (proj₂ r)) (φ (FMap F (λ r → proj₁ r (proj₂ r)) (φ
                    ( (FMap F ( λ x → (λ (r : ((b → c) → _ ) * (b → c) ) → proj₁ r (proj₂ r)) ((map (λ y f g x → f (g x)) id ) x)) (FMap F (Iso.≅← (mλ-iso isM)) u) ) , v)) , w))
                 ≡⟨  ≡-cong ( λ k → FMap F (λ r → proj₁ r (proj₂ r)) (φ (FMap F (λ r → proj₁ r (proj₂ r)) (φ
-                   (k u , v)) , w)) )  (sym ( IsFunctor.distr (isFunctor F )))  ⟩
+                   (k  , v)) , w)) )  (sym ( IsFunctor.distr (isFunctor F ) _ ))  ⟩
                  FMap F (λ r → proj₁ r (proj₂ r)) (φ (FMap F (λ r → proj₁ r (proj₂ r)) (φ
                    ( FMap F (λ x → ((λ y f g x₁ → f (g x₁)) unit x) ) u , v)) , w))
                 ≡⟨⟩
@@ -440,26 +438,26 @@ HaskellMonoidal→Applicative {c₁} F Mono = record {
                 ≡⟨  ≡-cong ( λ k → FMap F (λ r → proj₁ r (proj₂ r)) (φ (FMap F (λ r → proj₁ r (proj₂ r)) (φ ( FMap F (λ x g h → x (g h) ) u , k)) , w))   ) u→F  ⟩
                      FMap F (λ r → proj₁ r (proj₂ r)) (φ (FMap F (λ r → proj₁ r (proj₂ r)) (φ (FMap F (λ x g h → x (g h)) u , FMap F id v)) , w))
                 ≡⟨  ≡-cong ( λ k → FMap F (λ r → proj₁ r (proj₂ r)) (φ (k , w))  )  FφF→F  ⟩
-                     FMap F (λ r → proj₁ r (proj₂ r)) (φ (FMap F ((λ r → proj₁ r (proj₂ r)) o map (λ x g h → x (g h)) id) (φ (u , v)) , w))
+                     FMap F (λ r → proj₁ r (proj₂ r)) (φ (FMap F (Sets [ (λ r → proj₁ r (proj₂ r)) o map (λ x g h → x (g h)) id ]) (φ (u , v)) , w))
                 ≡⟨⟩
                      FMap F (λ r → proj₁ r (proj₂ r)) (φ (FMap F (λ x h → proj₁ x (proj₂ x h)) (φ (u , v)) , w))
                 ≡⟨  ≡-cong ( λ k →  FMap F (λ r → proj₁ r (proj₂ r)) (φ (FMap F (λ x h → proj₁ x (proj₂ x h)) (φ (u , v)) , k))  ) u→F  ⟩
                      FMap F (λ r → proj₁ r (proj₂ r)) (φ (FMap F (λ x h → proj₁ x (proj₂ x h)) (φ (u , v)) , FMap F id w))
                 ≡⟨  FφF→F  ⟩
-                     FMap F ((λ r → proj₁ r (proj₂ r)) o map (λ x h → proj₁ x (proj₂ x h)) id) (φ (φ (u , v) , w))
+                     FMap F (Sets [ (λ r → proj₁ r (proj₂ r)) o map (λ x h → proj₁ x (proj₂ x h)) id ] ) (φ (φ (u , v) , w))
                 ≡⟨⟩
                     FMap F (λ x → proj₁ (proj₁ x) (proj₂ (proj₁ x) (proj₂ x))) (φ (φ (u , v) , w))
-                ≡⟨  ≡-cong ( λ k → FMap F (λ x → proj₁ (proj₁ x) (proj₂ (proj₁ x) (proj₂ x))) (k (φ (φ (u , v) , w)) )) (sym (IsFunctor.identity (isFunctor F ))) ⟩
+                ≡⟨  ≡-cong ( λ k → FMap F (λ x → proj₁ (proj₁ x) (proj₂ (proj₁ x) (proj₂ x))) k) (sym (IsFunctor.identity (isFunctor F ) _)) ⟩
                     FMap F (λ x → proj₁ (proj₁ x) (proj₂ (proj₁ x) (proj₂ x))) (FMap F id (φ (φ (u , v) , w)) )
-                ≡⟨  ≡-cong ( λ k → FMap F (λ x → proj₁ (proj₁ x) (proj₂ (proj₁ x) (proj₂ x))) (FMap F k (φ (φ (u , v) , w)) )  ) (sym (Iso.iso→ (mα-iso isM)))  ⟩
-                    FMap F (λ x → proj₁ (proj₁ x) (proj₂ (proj₁ x) (proj₂ x))) (FMap F ( (Iso.≅← (mα-iso isM)) o  (Iso.≅→ (mα-iso isM))) (φ (φ (u , v) , w)) )
-                ≡⟨  ≡-cong ( λ k →  FMap F (λ x → proj₁ (proj₁ x) (proj₂ (proj₁ x) (proj₂ x))) (k (φ (φ (u , v) , w)))) ( IsFunctor.distr (isFunctor F ))  ⟩
+                ≡⟨  ≡-cong ( λ k → FMap F (λ x → proj₁ (proj₁ x) (proj₂ (proj₁ x) (proj₂ x))) k ) (sym (IsFunctor.≈-cong (isFunctor F) (Iso.iso→  (mα-iso isM)) _)) ⟩
+                    FMap F (λ x → proj₁ (proj₁ x) (proj₂ (proj₁ x) (proj₂ x))) (FMap F (Sets [ (Iso.≅← (mα-iso isM)) o  (Iso.≅→ (mα-iso isM)) ] ) (φ (φ (u , v) , w)) )
+                ≡⟨  ≡-cong ( λ k →  FMap F (λ x → proj₁ (proj₁ x) (proj₂ (proj₁ x) (proj₂ x))) k) ( IsFunctor.distr (isFunctor F ) _ )  ⟩
                     FMap F (λ x → proj₁ (proj₁ x) (proj₂ (proj₁ x) (proj₂ x))) (FMap F  (Iso.≅← (mα-iso isM)) ( FMap F  (Iso.≅→ (mα-iso isM)) (φ (φ (u , v) , w)) ))
                 ≡⟨ ≡-cong ( λ k →   FMap F (λ x → proj₁ (proj₁ x) (proj₂ (proj₁ x) (proj₂ x))) (FMap F  (Iso.≅← (mα-iso isM)) k) ) (sym ( IsHaskellMonoidalFunctor.assocφ mono ) ) ⟩
                      FMap F (λ x → proj₁ (proj₁ x) (proj₂ (proj₁ x) (proj₂ x))) (FMap F (Iso.≅← (mα-iso isM)) (φ (u , φ (v , w))))
                 ≡⟨⟩
                      FMap F (λ x → proj₁ (proj₁ x) (proj₂ (proj₁ x) (proj₂ x))) (FMap F (λ r → (proj₁ r , proj₁ (proj₂ r)) , proj₂ (proj₂ r)) (φ (u , φ (v , w))))
-                ≡⟨ left (sym ( IsFunctor.distr (isFunctor F ))) ⟩
+                ≡⟨ (sym ( IsFunctor.distr (isFunctor F ) _ )) ⟩
                       FMap F (λ y → (λ x → proj₁ (proj₁ x) (proj₂ (proj₁ x) (proj₂ x))) ((λ r → (proj₁ r , proj₁ (proj₂ r)) , proj₂ (proj₂ r)) y )) (φ (u , φ (v , w)))
                 ≡⟨⟩
                      FMap F (λ y → proj₁ y (proj₁ (proj₂ y) (proj₂ (proj₂ y)))) (φ (u , φ (v , w)))
@@ -478,14 +476,14 @@ HaskellMonoidal→Applicative {c₁} F Mono = record {
                 ≡⟨⟩
                         FMap F (λ r → proj₁ r (proj₂ r)) (φ (FMap F (λ y → f) unit , FMap F (λ y → x) unit))
                 ≡⟨ FφF→F  ⟩
-                        FMap F ((λ r → proj₁ r (proj₂ r)) o map (λ y → f) (λ y → x)) (φ (unit , unit))
+                        FMap F (Sets [ (λ r → proj₁ r (proj₂ r)) o map (λ y → f) (λ y → x) ] ) (φ (unit , unit))
                 ≡⟨⟩
                         FMap F (λ y → f x) (φ (unit , unit))
                 ≡⟨ ≡-cong ( λ k →  FMap F (λ y → f x) k ) φunitl ⟩
                         FMap F (λ y → f x) (FMap F (Iso.≅← (mρ-iso isM)) unit)
                 ≡⟨⟩
                         FMap F (λ y → f x) (FMap F (λ y → (y , OneObj)) unit)
-                ≡⟨ left ( sym ( IsFunctor.distr (isFunctor F ))) ⟩
+                ≡⟨ sym (IsFunctor.distr (isFunctor F)  _) ⟩
                         FMap F (λ y → f x) unit
                 ≡⟨⟩
                   pure (f x)
@@ -500,21 +498,21 @@ HaskellMonoidal→Applicative {c₁} F Mono = record {
               ≡⟨  ≡-cong ( λ k →  FMap F (λ r → proj₁ r (proj₂ r)) (φ (k , FMap F (λ y → x) unit))  ) u→F  ⟩
                   FMap F (λ r → proj₁ r (proj₂ r)) (φ (FMap F id u , FMap F (λ y → x) unit))
               ≡⟨  FφF→F  ⟩
-                   FMap F ((λ r → proj₁ r (proj₂ r)) o map id (λ y → x)) (φ (u , unit))
+                   FMap F (Sets [ (λ r → proj₁ r (proj₂ r)) o map id (λ y → x) ] ) (φ (u , unit))
               ≡⟨⟩
                   FMap F (λ r → proj₁ r x) (φ (u , unit))
               ≡⟨  ≡-cong ( λ k →  FMap F (λ r → proj₁ r x) k ) φunitl ⟩
                   FMap F (λ r → proj₁ r x) (( FMap F (Iso.≅← (mρ-iso isM))) u )
-              ≡⟨ left ( sym ( IsFunctor.distr (isFunctor F )) ) ⟩
-                  FMap F (( λ r → proj₁ r x)  o ((Iso.≅← (mρ-iso isM) ))) u
+              ≡⟨ ( sym ( IsFunctor.distr (isFunctor F ) _) ) ⟩
+                  FMap F (Sets [ ( λ r → proj₁ r x)  o ((Iso.≅← (mρ-iso isM) )) ] ) u
               ≡⟨⟩
-                  FMap F (( λ r → proj₂ r x)  o ((Iso.≅← (mλ-iso isM) ))) u
-              ≡⟨ left (  IsFunctor.distr (isFunctor F ))  ⟩
+                  FMap F (Sets [( λ r → proj₂ r x)  o ((Iso.≅← (mλ-iso isM) )) ] ) u
+              ≡⟨  IsFunctor.distr (isFunctor F ) _  ⟩
                   FMap F (λ r → proj₂ r x) (FMap F (Iso.≅← (IsMonoidal.mλ-iso isM)) u)
               ≡⟨  ≡-cong ( λ k →  FMap F (λ r → proj₂ r x) k ) (sym φunitr ) ⟩
                   FMap F (λ r → proj₂ r x) (φ (unit , u))
               ≡⟨⟩
-                 FMap F ((λ r → proj₁ r (proj₂ r)) o map (λ y f → f x) id) (φ (unit , u)) 
+                 FMap F (Sets [ (λ r → proj₁ r (proj₂ r)) o map (λ y f → f x) id ] ) (φ (unit , u)) 
               ≡⟨ sym FφF→F ⟩
                   FMap F (λ r → proj₁ r (proj₂ r)) (φ (FMap F (λ y f → f x) unit , FMap F id u))
               ≡⟨  ≡-cong ( λ k → FMap F (λ r → proj₁ r (proj₂ r)) (φ (FMap F (λ y f → f x) unit , k)) ) (sym u→F) ⟩
@@ -562,7 +560,7 @@ Applicative→HaskellMonoidal {l}  F App = record {
                    FMap F (map f g) (φ (x , y))
                 ≡⟨⟩
                    FMap F (λ xy → f (proj₁ xy) , g (proj₂ xy)) (<*> (FMap F (λ j k → j , k) x) y)
-                ≡⟨  ≡-cong ( λ h → h (x , y)) (  IsNTrans.commute ( NTrans.isNTrans ( IsMonoidalFunctor.φab isMF  ))) ⟩
+                ≡⟨   IsNTrans.commute ( NTrans.isNTrans ( IsMonoidalFunctor.φab isMF  )) _ ⟩
                    <*> (FMap F (λ j k → j , k) (FMap F f x)) (FMap F g y)
                 ≡⟨⟩
                    φ (FMap F f x , FMap F g y)
@@ -571,10 +569,10 @@ Applicative→HaskellMonoidal {l}  F App = record {
                   open Relation.Binary.PropositionalEquality.≡-Reasoning
           assocφ : { x y z : Obj Sets } { a : FObj F x } { b : FObj F y }{ c : FObj F z }
              → φ (a , φ (b , c)) ≡ FMap F (Iso.≅→ (IsMonoidal.mα-iso isM)) (φ (φ (a , b) , c))
-          assocφ {x} {y} {z} {a} {b} {c} = ≡-cong ( λ h → h ((a , b) , c ) ) ( IsMonoidalFunctor.associativity isMF )
+          assocφ {x} {y} {z} {a} {b} {c} =  IsMonoidalFunctor.associativity isMF _
           idrφ : {a : Obj Sets } { x : FObj F a } → FMap F (Iso.≅→ (IsMonoidal.mρ-iso isM)) (φ (x , unit)) ≡ x
-          idrφ {a} {x} =  ≡-cong ( λ h → h (x , OneObj ) ) ( IsMonoidalFunctor.unitarity-idr isMF {a} {One}  )
+          idrφ {a} {x} =   IsMonoidalFunctor.unitarity-idr isMF {a} {One} (x , OneObj) 
           idlφ : {a : Obj Sets } { x : FObj F a } → FMap F (Iso.≅→ (IsMonoidal.mλ-iso isM)) (φ (unit , x)) ≡ x
-          idlφ {a} {x} =  ≡-cong ( λ h → h (OneObj , x ) ) ( IsMonoidalFunctor.unitarity-idl isMF {One} {a}  )
+          idlφ {a} {x} =  IsMonoidalFunctor.unitarity-idl isMF {One} {a} (OneObj , x) 
 
 -- end

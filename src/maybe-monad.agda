@@ -1,10 +1,12 @@
+{-# OPTIONS --cubical-compatible --safe #-}
+
 open import Level
 open import Category
 open import Category.Sets
 module maybe-monad  {c : Level} where
 
 open import HomReasoning
-open import cat-utility
+open import Definitions
 open import Relation.Binary.Core
 open import Category.Cat
 
@@ -25,9 +27,9 @@ Maybe = record {
       FObj = λ a → maybe a
     ; FMap = λ {a} {b} f → fmap f
     ; isFunctor = record {
-             identity = λ {x} → extensionality A ( λ y → identity1 x y )
-             ; distr = λ {a} {b} {c} {f} {g}   → extensionality A ( λ w → distr2 a b c f g w )
-             ; ≈-cong = λ {a} {b} {c} {f} f≡g  → extensionality A ( λ z → ≈-cong1  a b c f z f≡g )
+             identity = λ {x} y → identity1 x y 
+             ; distr = λ {a} {b} {c} {f} {g} w → distr2 a b c f g w 
+             ; ≈-cong = λ {a} {b} {f} {g} f≈g z → ≈-cong1 a b f g z f≈g 
       }
   } where
      fmap : {a b : Obj A} → (f : Hom A a b ) → Hom A (maybe a) (maybe b)
@@ -39,9 +41,9 @@ Maybe = record {
      distr2 : (x y z : Obj A) (f : Hom A x y ) ( g : Hom A y z ) → (w : maybe x) →  fmap (λ w → g (f w)) w  ≡  fmap g ( fmap f w)
      distr2 x y z f g nothing = refl
      distr2 x y z f g (just w) = refl
-     ≈-cong1 : (x y : Obj A) ( f g : Hom A x y ) → ( z : maybe x ) → f ≡ g  → fmap f z ≡ fmap g z
-     ≈-cong1 x y f g nothing refl = refl
-     ≈-cong1 x y f g (just z) refl = refl
+     ≈-cong1 : (x y : Obj A) ( f g : Hom A x y ) → ( z : maybe x ) → Sets [ f ≈ g ] → fmap f z ≡ fmap g z
+     ≈-cong1 x y f g nothing eq = refl
+     ≈-cong1 x y f g (just z) eq = cong just ( eq z )
 
 -- Maybe-η : 1 → M
 
@@ -61,7 +63,7 @@ Maybe-η = record {
      comm : (a b : Obj A) (f : Hom A a b) → 
         A [ A [ Functor.FMap Maybe f o (λ x → just x) ] ≈
         A [ (λ x → just x) o FMap (identityFunctor {_} {_} {_} {A} ) f ] ]
-     comm a b f = extensionality A ( λ x → comm1 a b f x )
+     comm a b f x = comm1 a b f x 
 
 
 
@@ -85,7 +87,7 @@ Maybe-μ = record {
      comm1 a b f (just (just x))  = refl
      comm : {a b : Obj A} {f : Hom A a b} →
         A [ A [ FMap Maybe f o tmap a ] ≈ A [ tmap b o FMap (Maybe ○ Maybe) f ] ]
-     comm {a} {b} {f} = extensionality A ( λ x → comm1 a b f x )
+     comm {a} {b} {f} x = comm1 a b f x 
 
 MaybeMonad : Monad A 
 MaybeMonad = record {
@@ -112,13 +114,13 @@ MaybeMonad = record {
       assoc-1 a (just (just (just x) )) = refl
       unity1  : {a : Obj A} →
         A [ A [ TMap Maybe-μ a o TMap Maybe-η (FObj Maybe a) ] ≈ id1 A (FObj Maybe a) ]
-      unity1  {a} = extensionality A ( λ x → unity1-1 a x )
+      unity1  {a} x = unity1-1 a x 
       unity2 :  {a : Obj A} →
         A [ A [ TMap Maybe-μ a o FMap Maybe (TMap Maybe-η a) ] ≈ id1 A (FObj Maybe a) ]
-      unity2  {a} = extensionality A ( λ x → unity2-1 a x )
+      unity2  {a} x = unity2-1 a x 
       assoc :  {a : Obj A} → A [ A [ TMap Maybe-μ a o TMap Maybe-μ (FObj Maybe a) ] ≈
         A [ TMap Maybe-μ a o FMap Maybe (TMap Maybe-μ a) ] ]
-      assoc  {a} = extensionality A ( λ x → assoc-1 a x )
+      assoc  {a} x = assoc-1 a x 
 
 
 

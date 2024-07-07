@@ -1,3 +1,5 @@
+{-# OPTIONS --cubical-compatible --safe #-}
+
 -- -- -- -- -- -- -- -- 
 --  Comparison Functor of Kelisli Category
 --  defines U_K and F_K as a resolution of Monad
@@ -10,7 +12,7 @@ open import Category -- https://github.com/konn/category-agda
 open import Level
 --open import Category.HomReasoning                                                                                                               
 open import HomReasoning
-open import cat-utility
+open import Definitions
 open import Category.Cat
 open import Relation.Binary.Core
 

@@ -1,7 +1,11 @@
+{-# OPTIONS --allow-unsolved-metas #-}
+
+-- {-# OPTIONS --cubical-compatible --safe #-}
+
 open import CCC
 open import Level
 open import Category
-open import cat-utility
+open import Definitions
 open import HomReasoning
 module ToposSub   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A) (t : Topos A c ) (n : ToposNat A (CCC.１ c)) where
 

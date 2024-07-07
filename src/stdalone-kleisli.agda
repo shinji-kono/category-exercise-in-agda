@@ -1,3 +1,4 @@
+{-# OPTIONS --cubical-compatible --safe #-}
 module stdalone-kleisli where
 
 open import Level

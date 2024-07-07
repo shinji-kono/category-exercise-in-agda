@@ -1,10 +1,12 @@
+{-# OPTIONS --cubical-compatible --safe #-}
+
 open import Category -- https://github.com/konn/category-agda                                                                                     
 open import Level
 
 module freyd1 {c₁ c₂ ℓ c₁' c₂' ℓ' : Level} {A : Category c₁ c₂ ℓ}  {C : Category c₁' c₂' ℓ'} 
     ( F : Functor A C ) ( G : Functor A C ) where
 
-open import cat-utility
+open import Definitions
 open import HomReasoning
 open Functor
 
@@ -65,13 +67,13 @@ open LimitPreserve
 
 -- Limit on A from Γ : I → CommaCategory
 --
-LimitC : { I : Category c₁ c₂ ℓ } → ( comp : Complete A I ) 
+LimitC : { I : Category c₁ c₂ ℓ } → ( comp : Complete  {c₁} {c₂} {ℓ} A  ) 
     → ( Γ : Functor I CommaCategory ) 
     → ( glimit :  LimitPreserve I A C G )
     → Limit I C (G  ○  (FIA Γ)) 
 LimitC  {I} comp Γ glimit  = plimit glimit (climit comp (FIA Γ))
 
-tu :  { I : Category c₁ c₂ ℓ } →  ( comp : Complete A I) →  ( Γ : Functor I CommaCategory )
+tu :  { I : Category c₁ c₂ ℓ } →  ( comp : Complete  {c₁} {c₂} {ℓ} A ) →  ( Γ : Functor I CommaCategory )
     →   NTrans I C (K I C (FObj F (limit-c comp (FIA Γ)))) (G  ○  (FIA Γ))
 tu {I} comp Γ = record {
       TMap  = λ i →  C [ hom ( FObj Γ i ) o  FMap F ( TMap (t0 ( climit comp (FIA Γ)))  i) ]
@@ -105,11 +107,11 @@ tu {I} comp Γ = record {
          ≈⟨ assoc ⟩
              ( hom (FObj Γ b) o FMap F (TMap (t0 ( climit comp (FIA Γ))) b)) o FMap (K I C (FObj F (limit-c comp (FIA Γ)))) f
          ∎
-limitHom :  { I : Category c₁ c₂ ℓ } →  (comp : Complete A I) →  ( Γ : Functor I CommaCategory )
+limitHom :  { I : Category c₁ c₂ ℓ } →  (comp : Complete  {c₁} {c₂} {ℓ} A ) →  ( Γ : Functor I CommaCategory )
     → ( glimit :  LimitPreserve I A C G ) → Hom C (FObj F (limit-c comp (FIA Γ ) )) (FObj G (limit-c comp (FIA Γ) ))
 limitHom comp Γ glimit = limit (isLimit (LimitC comp Γ glimit  )) (FObj F ( limit-c  comp (FIA Γ))) (tu comp Γ )
 
-commaLimit :  { I : Category c₁ c₂ ℓ } →  ( Complete A I) →  ( Γ : Functor I CommaCategory )  
+commaLimit :  { I : Category c₁ c₂ ℓ } →  ( Complete  {c₁} {c₂} {ℓ} A ) →  ( Γ : Functor I CommaCategory )  
     → ( glimit :  LimitPreserve I A C G )
     →  Obj CommaCategory
 commaLimit {I} comp Γ glimit = record {
@@ -118,7 +120,7 @@ commaLimit {I} comp Γ glimit = record {
    } 
 
 
-commaNat : { I : Category c₁ c₂ ℓ } →   ( comp : Complete A I) →  ( Γ : Functor I CommaCategory ) 
+commaNat : { I : Category c₁ c₂ ℓ } →   ( comp : Complete  {c₁} {c₂} {ℓ} A ) →  ( Γ : Functor I CommaCategory ) 
      → ( glimit :   LimitPreserve I A C G )
      → NTrans I CommaCategory (K I CommaCategory (commaLimit {I} comp Γ glimit))  Γ
 commaNat {I} comp  Γ glimit = record {
@@ -184,7 +186,7 @@ gnat {I} Γ a t = record {
          ∎
 
 
-comma-a0 :  { I : Category c₁ c₂ ℓ } →   ( comp : Complete A I) →  ( Γ : Functor I CommaCategory )
+comma-a0 :  { I : Category c₁ c₂ ℓ } →   ( comp : Complete  {c₁} {c₂} {ℓ} A ) →  ( Γ : Functor I CommaCategory )
      → ( glimit :   LimitPreserve I A C G ) (a : CommaObj) → ( t : NTrans I CommaCategory (K I CommaCategory a)  Γ ) → Hom CommaCategory a (commaLimit comp Γ glimit)
 comma-a0  {I} comp Γ glimit a t = record {
        arrow  = limit (isLimit ( climit comp (FIA Γ) ) ) (obj a ) (NIA  {I} Γ a t )
@@ -242,7 +244,7 @@ comma-a0  {I} comp Γ glimit a t = record {
             hom (commaLimit comp Γ glimit) o FMap F (limit (isLimit (climit comp (FIA Γ))) (obj a) (NIA Γ a t))
          ∎
 
-comma-t0f=t :  { I : Category c₁ c₂ ℓ } →   ( comp : Complete A I) →  ( Γ : Functor I CommaCategory )
+comma-t0f=t :  { I : Category c₁ c₂ ℓ } →   ( comp : Complete  {c₁} {c₂} {ℓ} A ) →  ( Γ : Functor I CommaCategory )
      → ( glimit :   LimitPreserve I A C G ) (a : CommaObj) → ( t : NTrans I CommaCategory (K I CommaCategory a)  Γ ) (i : Obj I )
      →   CommaCategory [ CommaCategory [ TMap (commaNat comp Γ glimit) i o comma-a0 comp Γ glimit a t ] ≈ TMap t i ]
 comma-t0f=t  {I} comp Γ glimit a t i = let  open ≈-Reasoning (A) in begin
@@ -251,7 +253,7 @@ comma-t0f=t  {I} comp Γ glimit a t i = let  open ≈-Reasoning (A) in begin
              TMap (NIA  {I} Γ a t ) i
          ∎
 
-comma-uniqueness :  { I : Category c₁ c₂ ℓ } →   ( comp : Complete A I) →  ( Γ : Functor I CommaCategory )
+comma-uniqueness :  { I : Category c₁ c₂ ℓ } →   ( comp : Complete  {c₁} {c₂} {ℓ} A ) →  ( Γ : Functor I CommaCategory )
      → ( glimit :   LimitPreserve I A C G ) (a : CommaObj) → ( t : NTrans I CommaCategory (K I CommaCategory a)  Γ ) 
      →  ( f :  Hom CommaCategory a  (commaLimit comp Γ glimit)) 
      →   ( ∀ { i : Obj I } → CommaCategory [ CommaCategory [ TMap ( commaNat {  I} comp Γ glimit ) i o  f ]  ≈ TMap t i ] )
@@ -262,7 +264,7 @@ comma-uniqueness  {I} comp Γ glimit a t f t=f    = let  open ≈-Reasoning (A) 
              arrow f
          ∎
 
-hasLimit : { I : Category c₁ c₂ ℓ } → ( comp : Complete A I ) 
+hasLimit : { I : Category c₁ c₂ ℓ } → ( comp : Complete  {c₁} {c₂} {ℓ} A  ) 
     → ( glimit :   LimitPreserve I A C G )
     → ( Γ : Functor I CommaCategory ) 
     → Limit I CommaCategory Γ 

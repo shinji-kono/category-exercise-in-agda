@@ -1,13 +1,14 @@
+{-# OPTIONS --cubical-compatible --safe #-}
 module negnat where
 
 
 open import Data.Nat
-open import Relation.Nullary
+open import Relation.Nullary hiding (proof)
 open import Data.Empty
 open import Data.Unit
 open import Data.Fin renaming ( suc to fsuc ; zero to fzero ; _+_ to _++_ )
 open import Relation.Binary.Core
-open import  Relation.Binary.PropositionalEquality
+open import  Relation.Binary.PropositionalEquality hiding (J)
 
 
 --  http://stackoverflow.com/questions/22580842/non-trivial-negation-in-agda

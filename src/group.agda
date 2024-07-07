@@ -1,3 +1,5 @@
+{-# OPTIONS --cubical-compatible --safe #-}
+
 -- Free Group and it's Universal Mapping 
 ---- using Sets and forgetful functor
 
@@ -10,7 +12,7 @@ module group { c c₁ c₂ ℓ : Level }   where
 open import Category.Sets
 open import Category.Cat
 open import HomReasoning
-open import cat-utility
+open import Definitions
 open import Relation.Binary.Structures
 open import universal-mapping 
 open import  Relation.Binary.PropositionalEquality hiding ( [_] )
@@ -216,8 +218,8 @@ postulate
 Homomorph : ?
 Homomorph = ?
 
-_==_ : ?
-_==_ = ?
+-- _==_ : ?
+-- _==_ = ?
 
 _*_ : ?
 _*_ = ?
@@ -230,7 +232,7 @@ isGroups  = record  { isEquivalence =  isEquivalence1
                     ; identityL =  refl
                     ; identityR =  refl
                     ; associative = refl
-                    ; o-resp-≈ =    λ {a} {b} {c} {f} {g} {h} {i} → o-resp-≈ {a} {b} {c} {f} {g} {h} {i}
+                    ; o-resp-≈ =    λ {a} {b} {c} {f} {g} {h} {i} → ? -- o-resp-≈ {a} {b} {c} {f} {g} {h} {i}
                     }
      where
         isEquivalence1 : { a b : (Group c c) } → ?
@@ -262,7 +264,7 @@ Groups  =
          ; _o_ = _*_  
          ; _≈_ = _==_
          ; Id  =  ?
-         ; isCategory = isGroups 
+         ; isCategory = ? -- isGroups 
            }
 
 open import Data.Unit

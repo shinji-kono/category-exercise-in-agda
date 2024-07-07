@@ -1,13 +1,12 @@
-module list-nat where
-                                                                        
+{-# OPTIONS --cubical-compatible --safe #-}
+
 open import Level
+module list-nat  where
 
-
-postulate A : Set
-
-postulate a : A
-postulate b : A
-postulate c : A
+data A : Set where
+ a : A
+ b : A
+ c : A
 
 
 infixr 40 _::_
@@ -31,8 +30,8 @@ data Node  ( A : Set  ) : Set  where
    node  : Node A → Node A → Node A
 
 flatten :  { A : Set } → Node A → List A
-flatten ( leaf a )   = a :: []
-flatten ( node a b ) = flatten a ++ flatten b
+flatten ( leaf x )   = x :: []
+flatten ( node x y ) = flatten x ++ flatten y
 
 n1 = node ( leaf a ) ( node ( leaf b ) ( leaf c ))
 
@@ -47,8 +46,8 @@ cong1 :  {A : Set  }  { B : Set  } →
    ( f : List A → List B ) → {x : List A } → {y : List A} → x == y → f x == f y
 cong1 f reflection = reflection
 
-eq-cons :   {A : Set } {x y : List A} ( a : A ) → x ==  y → ( a :: x ) == ( a :: y )
-eq-cons a z = cong1 ( λ x → ( a :: x) ) z
+eq-cons :   {A : Set } {x y : List A} ( w : A ) → x ==  y → ( w :: x ) == ( w :: y )
+eq-cons w z = cong1 ( λ x → ( w :: x) ) z
 
 trans-list :   {A : Set } {x y z : List A}  → x ==  y → y == z → x == z
 trans-list reflection reflection = reflection

@@ -1,3 +1,5 @@
+{-# OPTIONS --cubical-compatible --safe #-}
+
 -- -- -- -- -- -- -- -- 
 --  Monad to Kelisli Category
 --  defines U_T and F_T as a resolution of Monad
@@ -17,7 +19,7 @@ open import Category -- https://github.com/konn/category-agda
 open import Level
 --open import Category.HomReasoning
 open import HomReasoning
-open import cat-utility
+open import Definitions
 open import Category.Cat
 
 module kleisli { c₁ c₂ ℓ : Level} { A : Category c₁ c₂ ℓ }

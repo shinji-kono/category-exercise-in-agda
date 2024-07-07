@@ -1,34 +1,29 @@
+{-# OPTIONS --cubical-compatible --safe #-}
+
 open import Category -- https://github.com/konn/category-agda                                                                                     
 open import Level
 
 module freyd where
 
-open import cat-utility
+open import Definitions
 open import HomReasoning
 open import Relation.Binary.Core
 open Functor
 
 -- C is small full subcategory of A ( C is image of F )
 --    but we don't use smallness in this proof
-
-record FullSubcategory {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) 
-           : Set  (suc ℓ ⊔ (suc c₁ ⊔ suc c₂)) where
-   field
-      FSF : Functor A A  
-      FSFMap← : { a b : Obj A } → Hom A (FObj FSF a) (FObj FSF b ) → Hom A a b 
-      full→ : { a b : Obj A } { x : Hom A (FObj FSF a) (FObj FSF b) } → A [ FMap FSF ( FSFMap← x ) ≈ x ]
-      full← : { a b : Obj A } { x : Hom A (FObj FSF a) (FObj FSF b) } → A [ FSFMap← ( FMap FSF x ) ≈ x ]
-
+--
 -- pre-initial
 
 record PreInitial {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) 
-       (F : Functor A A)  : Set  (suc ℓ ⊔ (suc c₁ ⊔ suc c₂)) where
+       (P : Obj A → Set ℓ)  : Set  (suc ℓ ⊔ (suc c₁ ⊔ suc c₂)) where
    field
       preinitialObj : Obj A 
-      preinitialArrow : ∀{a : Obj A } →  Hom A ( FObj F preinitialObj ) a 
+      Pp : P preinitialObj
+      preinitialArrow : ∀{a : Obj A } →  Hom A ( FObj (InclusiveFunctor A P )  record { s = preinitialObj; p = Pp } ) a 
 
 -- initial object
---   now in cat-utility
+--   now in Definitions
 -- record HasInitialObject {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (i : Obj A) : Set  (suc ℓ ⊔ (suc c₁ ⊔ suc c₂)) where
 --    field
 --       initial :  ∀( a : Obj A ) →  Hom A i a
@@ -39,29 +34,29 @@ record PreInitial {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ)
 open NTrans
 open Limit
 open IsLimit
-open FullSubcategory
 open PreInitial
 open Complete
 open Equalizer
 open IsEqualizer
 
 initialFromPreInitialFullSubcategory : {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ)
-      (comp : Complete A A)
-      (SFS : FullSubcategory A ) → 
-      (PI : PreInitial A  (FSF SFS )) → HasInitialObject A (limit-c comp (FSF SFS))
-initialFromPreInitialFullSubcategory A comp SFS PI = record {
+      (comp : Complete A)
+      (P : Obj A → Set ℓ ) → 
+      (PI : PreInitial A  P) → HasInitialObject A (limit-c comp (InclusiveFunctor A P))
+initialFromPreInitialFullSubcategory A comp P PI = record {
       initial = initialArrow ; 
       uniqueness  = λ {a} f → lemma1 a f
     } where
-      F : Functor A A 
-      F = FSF SFS   
-      FMap← : { a b : Obj A } → Hom A (FObj F a) (FObj F b ) → Hom A a b 
-      FMap←  = FSFMap←  SFS
+      S = FullSubCategory A P
+      F : Functor S A 
+      F = InclusiveFunctor A P 
+      pri : SObj A P
+      pri = record { s = preinitialObj PI ; p = Pp PI }  
       a00 : Obj A
       a00 = limit-c comp F
-      lim : ( Γ : Functor A A ) → Limit A A Γ 
+      lim : ( Γ : Functor S A ) → Limit S A Γ 
       lim Γ =  climit comp Γ 
-      u : NTrans A A (K A A a00) F
+      u : NTrans S A (K S A a00) F
       u = t0 ( lim F )
       equ : {a b : Obj A} → (f g : Hom A a b)  → IsEqualizer A (equalizer-e comp f g ) f g
       equ f g = isEqualizer ( Complete.cequalizer comp f g  )
@@ -69,14 +64,14 @@ initialFromPreInitialFullSubcategory A comp SFS PI = record {
       ep {a} {b} {f} {g} = equalizer-p comp f g
       ee :  {a b : Obj A} → {f g : Hom A a b}  → Hom A (ep {a} {b} {f} {g} ) a 
       ee {a} {b} {f} {g} = equalizer-e comp f g  
-      f : Hom A  a00 (FObj F  (preinitialObj PI ) ) 
-      f = TMap u (preinitialObj PI ) 
+      f : Hom A  a00 (FObj F pri ) 
+      f = TMap u pri 
       initialArrow :  ∀( a : Obj A )  →  Hom A a00 a
       initialArrow a  = A [ preinitialArrow PI {a}  o f ]
       equ-fi : { a : Obj A} → {f' : Hom A a00 a} → 
           IsEqualizer A ee ( A [ preinitialArrow PI {a} o  f ] ) f'
       equ-fi  {a} {f'} = equ ( A [ preinitialArrow PI {a} o  f ] ) f'
-      e=id : {e : Hom A a00 a00} → ( {c : Obj A} → A [ A [ TMap u  c o  e ]  ≈  TMap u c ] ) → A [ e  ≈ id1 A a00 ]
+      e=id : {e : Hom A a00 a00} → ( {c : Obj S} → A [ A [ TMap u  c o  e ]  ≈  TMap u c ] ) → A [ e  ≈ id1 A a00 ]
       e=id  {e} uce=uc =  let open ≈-Reasoning (A) in
             begin
               e
@@ -85,26 +80,22 @@ initialFromPreInitialFullSubcategory A comp SFS PI = record {
             ≈⟨ limit-uniqueness (isLimit (lim F))  ( λ {i} → idR ) ⟩
               id1 A a00
             ∎
-      kfuc=uc : {c k1 : Obj A} →  {p : Hom A k1 a00} → A [ A [ TMap u  c  o  
-              A [ p o A [ preinitialArrow PI {k1} o TMap u (preinitialObj PI) ] ] ]  
+      kfuc=uc : {c : Obj S} {k1 : Obj A} →  {p : Hom A k1 a00} → A [ A [ TMap u  c  o  
+              A [ p o A [ preinitialArrow PI {k1} o TMap u pri ] ] ]  
                       ≈ TMap u c ]
       kfuc=uc {c} {k1} {p} =  let open ≈-Reasoning (A) in
             begin
-                 TMap u  c  o ( p o ( preinitialArrow PI {k1} o TMap u (preinitialObj PI)  ))
+                 TMap u  c  o ( p o ( preinitialArrow PI {k1} o TMap u pri  ))
             ≈⟨ cdr assoc  ⟩
-                 TMap u c o ((p o preinitialArrow PI) o TMap u (preinitialObj PI))
+                 TMap u c o ((p o preinitialArrow PI) o TMap u pri)
             ≈⟨ assoc ⟩
-                 (TMap u  c  o ( p o ( preinitialArrow PI {k1} ))) o TMap u (preinitialObj PI)  
-            ≈↑⟨ car  ( full→ SFS ) ⟩
-                  FMap F (FMap← (TMap u c o p o preinitialArrow PI)) o TMap u (preinitialObj PI)
+                 (TMap u  c  o ( p o ( preinitialArrow PI {k1} ))) o TMap u pri  
             ≈⟨ nat u  ⟩
-                  TMap u c o FMap (K A A a00) (FMap← (TMap u c o p o preinitialArrow PI)) 
-            ≈⟨⟩
                   TMap u c o id1 A a00
             ≈⟨ idR ⟩
                  TMap u  c  
             ∎
-      kfuc=1 : {k1 : Obj A} →  {p : Hom A k1 a00} → A [ A [ p o A [ preinitialArrow PI {k1} o TMap u (preinitialObj PI) ] ] ≈ id1 A a00 ]
+      kfuc=1 : {k1 : Obj A} →  {p : Hom A k1 a00} → A [ A [ p o A [ preinitialArrow PI {k1} o TMap u pri ] ] ≈ id1 A a00 ]
       kfuc=1 {k1} {p} = e=id ( kfuc=uc )
       -- if equalizer has right inverse, f = g
       lemma2 :  (a b : Obj A) {c : Obj A} ( f g : Hom A a b ) 

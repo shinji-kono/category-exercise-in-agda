@@ -1,4 +1,7 @@
-module system-t where
+{-# OPTIONS --cubical-compatible --safe #-}
+
+module system-t (U : Set) (V : Set) (v : V) (u : U) where
+
 open  import  Relation.Binary.PropositionalEquality
 
 record _×_ ( U : Set ) ( V : Set )   :  Set where
@@ -11,11 +14,6 @@ record _×_ ( U : Set ) ( V : Set )   :  Set where
 
 open _×_
 
-postulate U : Set
-postulate V : Set
-
-postulate v : V
-postulate u : U
 
 f : U → V
 f = λ u → v

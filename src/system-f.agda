@@ -1,4 +1,4 @@
-{-# OPTIONS --universe-polymorphism #-}
+{-# OPTIONS --cubical-compatible --safe #-}
 
 open import Level
 open import Relation.Binary.PropositionalEquality

@@ -1,4 +1,5 @@
-{-# OPTIONS --allow-unsolved-metas #-} 
+{-# OPTIONS --cubical-compatible --safe #-}
+
 
 ----
 --
@@ -13,7 +14,7 @@ module CatExponetial where
 --  {c₁ c₂ ℓ c₁' c₂' ℓ' : Level} {A : Category c₁ c₂ ℓ} {B : Category c₁' c₂' ℓ' }
 
 open import HomReasoning
-open import cat-utility
+open import Definitions
 -- open import Relation.Binary  hiding (_⇔_)
 -- open import Relation.Binary.Core hiding (_⇔_)
 -- open import  Relation.Binary.PropositionalEquality hiding ( [_] )

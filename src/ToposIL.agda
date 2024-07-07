@@ -1,7 +1,11 @@
+{-# OPTIONS --allow-unsolved-metas #-}
+
+-- {-# OPTIONS --cubical-compatible --safe #-}
+
 open import CCC
 open import Level
 open import Category
-open import cat-utility
+open import Definitions
 open import HomReasoning
 open import Data.List hiding ( [_] )
 module ToposIL   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A)  (n : ToposNat A (CCC.１ c))  where
@@ -12,7 +16,7 @@ module ToposIL   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A
   open CCC.CCC c
 
   open Functor
-  open import Category.Sets hiding (_o_)
+  open import Category.Sets hiding (_==_)
   open import Relation.Binary.PropositionalEquality hiding ( [_] ; sym)
   open import Polynominal A c
 
@@ -100,7 +104,7 @@ module ToposIL   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A
          ; applyCong = {!!}
         }
     } where
-     open ≈-Reasoning A hiding (_∙_)
+     open ≈-Reasoning A -- hiding (_∙_)
      _⊢_  : {a b : Obj A}  (p : Poly a  (Topos.Ω t) b ) (q : Poly a  (Topos.Ω t) b ) → Set  ( c₁  ⊔  c₂ ⊔ ℓ ) 
      _⊢_  {a} {b}  p q = {c : Obj A} (h : Hom A c b ) → A [ Poly.f p ∙  h  ≈  (Topos.⊤ t) ∙  ○  c  ]
          → A [   Poly.f q ∙ h  ≈  (Topos.⊤ t) ∙  ○  c  ] 

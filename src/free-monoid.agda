@@ -1,19 +1,21 @@
--- Free Monoid and it's Universal Mapping 
----- using Sets and forgetful functor
-
--- Shinji KONO <kono@ie.u-ryukyu.ac.jp>
+{-# OPTIONS --cubical-compatible --safe #-}
 
 open import Category -- https://github.com/konn/category-agda                                                                                     
 open import Level
 module free-monoid { c c₁ c₂ ℓ : Level }   where
 
-open import Category.Sets
+-- Free Monoid and it's Universal Mapping 
+---- using Sets and forgetful functor
+
+-- Shinji KONO <kono@ie.u-ryukyu.ac.jp>
+
+open import Category.Sets hiding (_==_)
 open import Category.Cat
 open import HomReasoning
-open import cat-utility
+open import Definitions
 open import Relation.Binary.Structures
 open import universal-mapping 
-open import  Relation.Binary.PropositionalEquality 
+open import Relation.Binary.PropositionalEquality 
 
 -- from https://github.com/danr/Agda-projects/blob/master/Category-Theory/FreeMonoid.agda
 
@@ -108,32 +110,28 @@ M-id : { a : ≡-Monoid } → Monomorph a a
 M-id = record { morph = λ x → x  ; identity = refl ; homo = refl }
 
 _==_ : { a b : ≡-Monoid } → Monomorph a b → Monomorph a b → Set c 
-_==_  f g =  morph f ≡ morph g
-
--- Functional Extensionality Axiom (We cannot prove this in Agda / Coq, just assumming )
--- postulate extensionality : { a b : Obj A } {f g : Hom A a b } → (∀ {x} → (f x ≡ g x))  → ( f ≡ g ) 
--- postulate extensionality : Relation.Binary.PropositionalEquality.Extensionality c c 
+_==_  {a} f g =  (x : Carrier a) → morph f x ≡ morph g x
 
 isMonoids : IsCategory ≡-Monoid Monomorph _==_  _+_  (M-id)
 isMonoids  = record  { isEquivalence =  isEquivalence1 
-                    ; identityL =  refl
-                    ; identityR =  refl
-                    ; associative = refl
+                    ; identityL =  λ {a} {b} {f} x →   refl
+                    ; identityR =  λ {a} {b} {f} x →   refl
+                    ; associative = λ x → refl
                     ; o-resp-≈ =    λ {a} {b} {c} {f} {g} {h} {i} → o-resp-≈ {a} {b} {c} {f} {g} {h} {i}
                     }
      where
         isEquivalence1 : { a b : ≡-Monoid } → IsEquivalence {_} {_} {Monomorph a b}  _==_ 
         isEquivalence1  =      -- this is the same function as A's equivalence but has different types
-           record { refl  = refl
-             ; sym   = sym
-             ; trans = trans
+           record { refl  = λ x → refl
+             ; sym   = λ {s} {t} s=t y →  sym ( s=t y )
+             ; trans = λ a=b b=c x → trans (a=b x) (b=c x) 
              } 
         o-resp-≈ :  {a b c :  ≡-Monoid } {f g : Monomorph a b } → {h i : Monomorph b c }  → 
                           f ==  g → h ==  i → (h + f) ==  (i + g)
-        o-resp-≈ {a} {b} {c} {f} {g} {h} {i} f==g h==i =  let open ≡-Reasoning in begin
-             morph ( h + f )
-         ≡⟨ ≡-cong ( λ  g → ( ( λ (x : Carrier a ) →  g x ) )) (extensionality (Sets ) {Carrier a} lemma11) ⟩
-             morph ( i + g )
+        o-resp-≈ {a} {b} {c} {f} {g} {h} {i} f==g h==i x =  let open ≡-Reasoning in begin
+             morph ( h + f ) x
+         ≡⟨ lemma11 x ⟩
+             morph ( i + g ) x
          ∎  
              where
                 lemma11 : (x : Carrier a) → morph (h + f) x ≡ morph (i + g) x
@@ -141,9 +139,9 @@ isMonoids  = record  { isEquivalence =  isEquivalence1
                           morph ( h + f ) x
                      ≡⟨⟩
                           morph h ( ( morph f ) x )
-                     ≡⟨  ≡-cong ( \y -> morph h ( y x ) )  f==g ⟩
+                     ≡⟨  ≡-cong ( λ y →   morph h y ) ( f==g x) ⟩
                           morph h ( morph g x )
-                     ≡⟨  ≡-cong ( \y -> y ( morph g  x ) )  h==i ⟩
+                     ≡⟨ h==i _ ⟩
                           morph i ( morph g x )
                      ≡⟨⟩
                           morph ( i + g ) x
@@ -162,20 +160,17 @@ Monoids  =
          ; isCategory = isMonoids 
            }
 
-A = Sets {c}
-B = Monoids  
-
 open Functor
 
-U : Functor B A
+U : Functor Monoids Sets
 U = record {
        FObj = λ m → Carrier m ;
        FMap = λ f → morph f ;
        isFunctor = record {
-              ≈-cong   = λ x → x
-             ; identity = refl
-             ; distr    = refl
-       }
+              ≈-cong   = λ f=g x → f=g x
+             ; identity = λ {a} x → refl
+             ; distr    = λ {a b c} {f} {g} x → refl
+             }
    } 
 
 -- FObj 
@@ -191,17 +186,17 @@ list a = record {
        ; identity =  ( ( λ x → list-id-l {a}  ) , ( λ x → list-id-r {a} ) )
       } }
 
-Generator : Obj A → Obj B
+Generator : Obj Sets → Obj Monoids
 Generator s =  list s
 
 -- solution
 
 --   [a,b,c] → f(a) ∙ f(b) ∙ f(c)
-Φ :  {a : Obj A } {b : Obj B} ( f : Hom A a (FObj U b) ) →  List a → Carrier b
+Φ :  {a : Obj Sets } {b : Obj Monoids} ( f : Hom Sets a (FObj U b) ) →  List a → Carrier b
 Φ {a} {b} f [] = ε b
 Φ {a} {b} f ( x :: xs ) = b < ( f x ) ∙ (Φ {a} {b} f xs ) >
 
-solution : (a : Obj A ) (b : Obj B) ( f : Hom A a (FObj U b) ) →  Hom B (Generator a ) b 
+solution : (a : Obj Sets ) (b : Obj Monoids) ( f : Hom Sets a (FObj U b) ) →  Hom Monoids (Generator a ) b 
 solution a b f = record {
          morph = λ (l : List a) → Φ f l   ;
          identity = refl;
@@ -228,10 +223,10 @@ solution a b f = record {
                 Φ {a} {b} f ((Generator a) < ( x :: xs) ∙ y > ) 
              ∎ )
 
-eta :  (a : Obj A) → Hom A a ( FObj U (Generator a) )
+eta :  (a : Obj Sets) → Hom Sets a ( FObj U (Generator a) )
 eta  a = λ ( x : a ) →  x :: []
 
-FreeMonoidUniveralMapping : UniversalMapping A B U 
+FreeMonoidUniveralMapping : UniversalMapping Sets Monoids U 
 FreeMonoidUniveralMapping = 
     record {
        F = Generator ;
@@ -242,29 +237,19 @@ FreeMonoidUniveralMapping =
              uniquness = λ {a b f g} → uniquness {a} {b} {f} {g}
        }
     } where
-        universalMapping :  {a : Obj A } {b : Obj B} { f : Hom A a (FObj U b) } →  FMap U ( solution a b f  ) o eta a   ≡ f
-        universalMapping {a} {b} {f} = let open ≡-Reasoning in 
+        universalMapping :  {a : Obj Sets } {b : Obj Monoids} { f : Hom Sets a (FObj U b) } →   Sets [ Sets [ Φ {a} {b} f o eta a ] ≈ f ]
+        universalMapping {a} {b} {f} x = 
                      begin
-                         FMap U ( solution a b f ) o eta a   
-                     ≡⟨⟩
-                         ( λ (x : a ) → Φ {a} {b} f (eta a x) )
-                     ≡⟨⟩
-                         ( λ (x : a ) → Φ {a} {b} f ( x :: [] ) )
-                     ≡⟨⟩
-                         ( λ (x : a ) →  b < ( f x ) ∙ (Φ {a} {b} f [] ) > )
-                     ≡⟨⟩
-                         ( λ (x : a ) →  b <    ( f x ) ∙ ( ε b ) > )
-                     ≡⟨ ≡-cong ( λ  g → ( ( λ (x : a ) →  g x ) )) (extensionality A {a} lemma-ext1) ⟩
-                         ( λ (x : a ) →  f x  )
-                     ≡⟨⟩
-                          f
+                          Φ {a} {b} f ( eta a x) ≡⟨⟩
+                          b < f x ∙ ε b > ≡⟨ lemma-ext1 x ⟩
+                          f x
                      ∎  where
+                        open ≡-Reasoning 
                         lemma-ext1 : ∀( x : a ) →  b <    ( f x ) ∙ ( ε b ) >  ≡ f x
                         lemma-ext1 x = ( proj₂ ( IsMonoid.identity ( isMonoid b) ) ) (f x)
-        uniquness :  {a : Obj A } {b : Obj B} { f : Hom A a (FObj U b) } →
-             { g :  Hom B (Generator a) b } → (FMap U g) o (eta a )  ≡ f  → B [ solution a b f ≈ g ]
-        uniquness {a} {b} {f} {g} eq =  
-                     extensionality  A lemma-ext2 where
+        uniquness :  {a : Obj Sets } {b : Obj Monoids} { f : Hom Sets a (FObj U b) } →
+             { g :  Hom Monoids (Generator a) b } →  Sets [ Sets [ morph g o eta a ] ≈ f ] → Monoids [ solution a b f ≈ g ]
+        uniquness {a} {b} {f} {g} eq x = lemma-ext2 x where
                         lemma-ext2 : ( ∀( x : List a ) → (morph ( solution a b f)) x  ≡ (morph g) x  )
                         -- (morph ( solution a b f)) []  ≡ (morph g) []  )
                         lemma-ext2 [] = let open ≡-Reasoning in
@@ -276,73 +261,60 @@ FreeMonoidUniveralMapping =
                                 (morph g) []
                              ∎  
                         lemma-ext2 (x :: xs)  = let open ≡-Reasoning in
-                             begin
-                                (morph ( solution a b f)) ( x :: xs )
+                             begin (morph ( solution a b f)) ( x :: xs )
                              ≡⟨ homo ( solution a b f) {x :: []} {xs} ⟩
                                  b <   ((morph ( solution a b f)) ( x :: []) ) ∙ ((morph ( solution a b f)) xs ) >
                              ≡⟨  ≡-cong ( λ  k → (b <   ((morph ( solution a b f)) ( x :: []) ) ∙ k > )) (lemma-ext2 xs )   ⟩
                                  b <   ((morph ( solution a b f)) ( x :: []) )  ∙((morph g) ( xs )) >
-                             ≡⟨  ≡-cong ( λ k → ( b <   ( k x ) ∙ ((morph g) ( xs )) >  )) (
+                             ≡⟨  ≡-cong ( λ k → ( b <   k ∙ ((morph g) ( xs )) >  )) (
                                  begin
-                                     ( λ x → (morph ( solution a b f)) ( x :: [] ) )
-                                 ≡⟨ extensionality A {a} lemma-ext3 ⟩
-                                     ( λ x → (morph g) ( x :: [] ) )
+                                     morph ( solution a b f) ( x :: [] )
+                                 ≡⟨ lemma-ext3 x ⟩
+                                     morph g ( x :: [] ) 
                                  ∎  
                              ) ⟩
                                  b <   ((morph g) ( x :: [] )) ∙((morph g) ( xs )) >
                              ≡⟨ sym ( homo g ) ⟩
                                 (morph g) ( x :: xs )
                              ∎   where
-                         lemma-ext3 :  ∀( x : a ) → (morph ( solution a b f)) (x :: [])  ≡ (morph g) ( x :: []  )
-                         lemma-ext3 x = let open ≡-Reasoning in
-                             begin
-                               (morph ( solution a b f)) (x :: [])
-                             ≡⟨  ( proj₂  ( IsMonoid.identity ( isMonoid b) )(f x) ) ⟩
-                                f x
-                             ≡⟨  sym ( ≡-cong (λ f → f x )  eq  ) ⟩
-                               (morph g) ( x :: []  )
-                             ∎   
+                             lemma-ext3 :  ∀( x : a ) → (morph ( solution a b f)) (x :: [])  ≡ (morph g) ( x :: []  )
+                             lemma-ext3 x = let open ≡-Reasoning in
+                                 begin
+                                   (morph ( solution a b f)) (x :: [])
+                                 ≡⟨  ( proj₂  ( IsMonoid.identity ( isMonoid b) )(f x) ) ⟩
+                                    f x
+                                 ≡⟨  sym (eq x) ⟩
+                                   (morph g) ( x :: []  )
+                                 ∎   
 
 open NTrans
 --   fm-ε b = Φ
 
-fm-ε :  NTrans B B ( ( FunctorF A B FreeMonoidUniveralMapping) ○ U) identityFunctor
-fm-ε =  nat-ε A B FreeMonoidUniveralMapping 
---   TMap = λ a  →  solution (FObj U a) a (λ x → x ) ;
---   isNTrans = record {
---        commute =  commute1 
---     }
---   } where
---     commute1 :  {a b : Obj B} {f : Hom B a b} → let open ≈-Reasoning B  renaming (_o_ to _*_ ) in 
---                ( FMap (identityFunctor {_} {_} {_} {B}) f * solution (FObj U a) a (λ x → x) ) ≈
---                (  solution (FObj U b) b (λ x → x) * FMap (FunctorF A B FreeMonoidUniveralMapping ○ U) f )
---     commute1 {a} {b} {f} = let open ≡-Reasoning in begin
---              morph ((B ≈-Reasoning.o FMap identityFunctor f) (solution (FObj U a) a (λ x → x)))
---         ≡⟨ {!!}  ⟩
---             morph ((B ≈-Reasoning.o solution (FObj U b) b (λ x → x)) (FMap (FunctorF A B FreeMonoidUniveralMapping ○ U) f))
---         ∎
+fm-ε :  NTrans Monoids Monoids ( ( FunctorF Sets Monoids FreeMonoidUniveralMapping) ○ U) identityFunctor
+fm-ε =  nat-ε Sets Monoids FreeMonoidUniveralMapping 
 
-
-fm-η :  NTrans A A identityFunctor ( U ○ ( FunctorF A B FreeMonoidUniveralMapping) ) 
+fm-η :  NTrans Sets Sets identityFunctor ( U ○ ( FunctorF Sets Monoids FreeMonoidUniveralMapping) ) 
 fm-η =  record { 
    TMap = λ a →  λ (x : a) → x :: [] ;
    isNTrans =  record {
        commute = commute1
      }
   } where
-     commute1 :  {a b : Obj A} {f : Hom A a b} → let open ≈-Reasoning A  renaming (_o_ to _*_ ) in 
-           (( FMap (U ○ FunctorF A B FreeMonoidUniveralMapping) f ) * (λ x → x :: []) ) ≈ ( (λ x → x :: []) * (λ z → FMap (identityFunctor {_} {_} {_} {A}) f z ) )
-     commute1 {a} {b} {f} =  refl   --    λ (x : a ) → f x :: []
+     commute1 :  {a b : Obj Sets} {f : Hom Sets a b} → let open ≈-Reasoning Sets  renaming (_o_ to _*_ ) in 
+           (( FMap (U ○ FunctorF Sets Monoids FreeMonoidUniveralMapping) f ) * (λ x → x :: []) ) ≈ ( (λ x → x :: []) * (λ z → FMap (identityFunctor {_} {_} {_} {Sets}) f z ) )
+     commute1 {a} {b} {f} x =  begin 
+         morph (solution a (list b) (λ y → (f y :: []))) ((λ x₁ → x₁ :: []) x)  ≡⟨ refl ⟩
+        (λ x₁ → x₁ :: []) (f x) ∎  where open ≡-Reasoning 
         
 
--- A = Sets {c}
--- B = Monoids  
+-- Sets = Sets {c}
+-- Monoids = Monoids  
 -- U   underline funcotr
 -- F   generator = x :: []
 -- Eta          x :: []
 -- Epsiron      morph = Φ
 
-adj = UMAdjunction A B U FreeMonoidUniveralMapping 
+adj = UMAdjunction Sets Monoids U FreeMonoidUniveralMapping 
 
  
 

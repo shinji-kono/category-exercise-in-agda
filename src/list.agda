@@ -9,5 +9,5 @@ postulate c : Set
 
 l1 = [ a ]
 
-l2 = ( a :: [] )
+l2 = ( a ∷ [] )
 

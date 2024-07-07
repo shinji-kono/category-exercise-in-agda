@@ -1,8 +1,12 @@
 {-# OPTIONS --allow-unsolved-metas #-}
+-- {-# OPTIONS --cubical-compatible --safe #-}
+
+-- {-# OPTIONS --cubical-compatible #-}
+
 open import CCC
 open import Level
 open import Category
-open import cat-utility
+open import Definitions
 open import HomReasoning
 module ToposEx   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A) (t : Topos A c ) (n : ToposNat A (CCC.１ c)) where
 
@@ -322,7 +326,7 @@ module ToposEx   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A
                      nsuc (prop33.xnat (p f (g o π))) o initialNat (prop33.xnat (p f' (g' o π))) ∎
  
   open Functor
-  open import Category.Sets hiding (_o_)
+  open import Category.Sets -- hiding (_o_)
   open import Relation.Binary.PropositionalEquality hiding ( [_] ; sym)
 
   record Singleton (a : Obj A) : Set (c₁ ⊔ c₂ ⊔ ℓ) where
@@ -379,15 +383,15 @@ module ToposEx   {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (c : CCC A
          pb : {a : Obj A} ( d f : Hom A a b) → (dm : Mono A d ) → Pullback A (smc d f dm) (id1 A _) 
          uniq : {a : Obj A} ( d f : Hom A a b) → (dm : Mono A d ) → (p : Hom A a b) → Pullback A p (id1 A _) → A [ smc d f dm ≈ p ]
 
-  postulate
-    I : Set c₁
-    small : Small A I 
+--  postulate
+--    I : Set c₁
+--    small : Small A I 
 
-  open import yoneda A I small
-
-  cs : CCC SetsAop
-  cs = {!!}
-  
-  toposS : Topos SetsAop cs
-  toposS = {!!}
-
+--   open import yoneda A I small
+-- 
+--   cs : CCC SetsAop
+--   cs = {!!}
+--   
+--   toposS : Topos SetsAop cs
+--   toposS = {!!}
+-- 

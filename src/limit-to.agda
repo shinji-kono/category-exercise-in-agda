@@ -1,9 +1,11 @@
+{-# OPTIONS --cubical-compatible --safe #-}
+
 open import Category -- https://github.com/konn/category-agda
 open import Level
 
 module limit-to where
 
-open import cat-utility
+open import Definitions
 open import HomReasoning
 open import Relation.Binary.Core
 open  import  Relation.Binary.PropositionalEquality hiding ([_])
@@ -34,7 +36,7 @@ open import graph
 ---
 ---
 
-open Complete
+-- open Complete
 open Limit
 open IsLimit
 open NTrans

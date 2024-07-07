@@ -1,3 +1,5 @@
+{-# OPTIONS --cubical-compatible --safe #-}
+
 -- -- -- -- -- -- -- -- 
 --  Monad to Eilenberg-Moore  Category
 --  defines U^T and F^T as a resolution of Monad
@@ -17,7 +19,7 @@ open import Category -- https://github.com/konn/category-agda
 open import Level
 --open import Category.HomReasoning
 open import HomReasoning
-open import cat-utility
+open import Definitions
 open import Category.Cat
 
 module em-category { c₁ c₂ ℓ : Level} { A : Category c₁ c₂ ℓ }
@@ -115,7 +117,7 @@ EMassoc :   {a b c d : EMObj} → {f : EMHom c d } → {g : EMHom b c } → {h :
 EMassoc {_} {_} {_} {_} {f} {g} {h} =   ( IsCategory.associative (Category.isCategory A) )
 
 isEilenberg-MooreCategory : IsCategory EMObj EMHom _≗_ _∙_  EM-id 
-isEilenberg-MooreCategory  = record  { isEquivalence =  isEquivalence 
+isEilenberg-MooreCategory  = record  { isEquivalence =  record { refl  = refl-hom ; sym   = sym ; trans = trans-hom }
                     ; identityL =   IsCategory.identityL (Category.isCategory A)
                     ; identityR =   IsCategory.identityR (Category.isCategory A)
                     ; o-resp-≈ =    IsCategory.o-resp-≈ (Category.isCategory A)
@@ -123,13 +125,6 @@ isEilenberg-MooreCategory  = record  { isEquivalence =  isEquivalence
                     }
      where
          open ≈-Reasoning (A) 
-         isEquivalence : {a : EMObj } {b : EMObj } →
-               IsEquivalence {_} {_} {EMHom a b } _≗_
-         isEquivalence {C} {D} =      -- this is the same function as A's equivalence but has different types
-           record { refl  = refl-hom
-             ; sym   = sym
-             ; trans = trans-hom
-             } 
 Eilenberg-MooreCategory : Category (c₁ ⊔ c₂ ⊔ ℓ) (c₁ ⊔ c₂ ⊔ ℓ) ℓ
 Eilenberg-MooreCategory =
   record { Obj = EMObj

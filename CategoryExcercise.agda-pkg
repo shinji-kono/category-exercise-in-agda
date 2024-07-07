@@ -10,8 +10,10 @@ source-repository: git@github.com:shinji-kono/category-exercise-in-agda.git
 tested-with:       2.6.2-102d9c8
 description:       CategoryExcercise is an Agda library ...
 depend:
-    - standard-library
-    - category-agda
+    - standard-library-2.0
 include:
     - src
+flags:
+  --warning=noUnsupportedIndexedMatch
+
 # End 

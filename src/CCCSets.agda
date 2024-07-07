@@ -1,13 +1,14 @@
-{-# OPTIONS --allow-unsolved-metas #-}
+{-# OPTIONS --with-K --cubical-compatible --allow-unsolved-metas #-}
+--- {-# OPTIONS --allow-unsolved-metas #-}
 module CCCSets where
 
 open import Level
 open import Category 
 open import HomReasoning
-open import cat-utility
+open import Definitions
 open import Data.Product renaming (_×_ to _/\_  ) hiding ( <_,_> )
 open import Category.Constructions.Product
-open import  Relation.Binary.PropositionalEquality hiding ( [_] )
+open import Relation.Binary.PropositionalEquality hiding ( [_] )
 open import CCC
 
 open Functor
@@ -71,32 +72,32 @@ sets  = record {
              ; *-cong = *-cong
            } where
                 e2 : {a : Obj Sets} {f : Hom Sets a １} → Sets [ f ≈ ○ a ]
-                e2 {a} {f} = extensionality Sets ( λ x → e20 x )
+                e2 {a} {f} = ?  -- extensionality Sets ( λ x → e20 x )
                   where
                         e20 : (x : a ) → f x ≡ ○ a x
                         e20 x with f x
                         e20 x | ! = refl
                 e3a : {a b c : Obj Sets} {f : Hom Sets c a} {g : Hom Sets c b} →
                     Sets [ ( Sets [  π  o ( <,> f g)  ] ) ≈ f ]
-                e3a = refl
+                e3a _ = refl
                 e3b : {a b c : Obj Sets} {f : Hom Sets c a} {g : Hom Sets c b} →
                     Sets [ Sets [ π' o ( <,> f g ) ] ≈ g ]
-                e3b = refl
+                e3b _ = refl
                 e3c : {a b c : Obj Sets} {h : Hom Sets c (a ∧ b)} →
                     Sets [ <,> (Sets [ π o h ]) (Sets [ π' o h ]) ≈ h ]
-                e3c = refl
+                e3c _ = refl
                 π-cong : {a b c : Obj Sets} {f f' : Hom Sets c a} {g g' : Hom Sets c b} →
                     Sets [ f ≈ f' ] → Sets [ g ≈ g' ] → Sets [ <,> f g ≈ <,> f' g' ]
-                π-cong refl refl = refl
+                π-cong = ?
                 e4a : {a b c : Obj Sets} {h : Hom Sets (c ∧ b) a} →
                     Sets [ Sets [ ε o <,> (Sets [ h * o π ]) π' ] ≈ h ]
-                e4a = refl
+                e4a _ = refl
                 e4b : {a b c : Obj Sets} {k : Hom Sets c (a <= b)} →
                     Sets [ (Sets [ ε o <,> (Sets [ k o π ]) π' ]) * ≈ k ]
-                e4b = refl
+                e4b _ = refl
                 *-cong : {a b c : Obj Sets} {f f' : Hom Sets (a ∧ b) c} →
                     Sets [ f ≈ f' ] → Sets [ f * ≈ f' * ]
-                *-cong refl = refl
+                *-cong = ?
 
 open import Relation.Nullary
 open import Data.Empty
@@ -136,7 +137,7 @@ topos {c} lem = record {
       ;  Ker = tker
       ;  char = λ m mono → tchar m mono
       ;  isTopos = record {
-                 char-uniqueness  = λ {a} {b} {h} →  extensionality Sets ( λ x → uniq h x )
+                 char-uniqueness  = λ {a} {b} {h} →  ? -- extensionality Sets ( λ x → uniq h x )
               ;  char-iso  = iso-m
               ;  ker-m = ker-iso 
          }
@@ -159,7 +160,7 @@ topos {c} lem = record {
         tker {a} h = record {
                 equalizer-c =  sequ a Bool h (λ _ → true )
               ; equalizer = λ e → equ e
-              ; isEqualizer = SetsIsEqualizer _ _ _ _ }
+              ; isEqualizer = SetsIsEqualizer _ _ _ _ ? }
         tchar : {a b : Obj Sets} (m : Hom Sets b a) → (mono : Mono Sets m ) → a → Bool {c}
         tchar {a} {b} m mono y with lem (image m y )
         ... | case1 t = true
@@ -168,18 +169,19 @@ topos {c} lem = record {
         -- imequ {a} {b} m mono = equalizerIso _ _ (tker (tchar m mono)) m (isol m mono)
         uniq : {a : Obj (Sets {c})}  (h : Hom Sets a Bool)   (y : a) →
                tchar (Equalizer.equalizer (tker h)) (record { isMono = λ f g → monic (tker h) }) y ≡ h y
-        uniq {a}  h y with h y  | inspect h y | lem (image (Equalizer.equalizer (tker h)) y ) | inspect (tchar (Equalizer.equalizer (tker h)) (record { isMono = λ f g → monic (tker h) })) y
-        ... | true  | record { eq = eqhy } | case1 x | record { eq = eq1 } = eq1 
-        ... | true  | record { eq = eqhy } | case2 x | record { eq = eq1 } = ⊥-elim (x (isImage (elem y eqhy)))
-        ... | false | record { eq = eqhy } | case1 (isImage (elem x eq)) | record { eq = eq1 } = ⊥-elim ( ¬x≡t∧x≡f record {fst = eqhy ; snd = eq })
-        ... | false | record { eq = eqhy } | case2 x | record { eq = eq1 } = eq1
+        uniq = ?
+--        uniq {a}  h y with h y  | inspect h y | lem (image (Equalizer.equalizer (tker h)) y ) | inspect (tchar (Equalizer.equalizer (tker h)) (record { isMono = λ f g → monic (tker h) })) y
+--        ... | true  | record { eq = eqhy } | case1 x | record { eq = eq1 } = eq1 
+--        ... | true  | record { eq = eqhy } | case2 x | record { eq = eq1 } = ⊥-elim (x (isImage (elem y eqhy)))
+--        ... | false | record { eq = eqhy } | case1 (isImage (elem x eq)) | record { eq = eq1 } = ⊥-elim ( ¬x≡t∧x≡f record {fst = eqhy ; snd = eq })
+--        ... | false | record { eq = eqhy } | case2 x | record { eq = eq1 } = eq1
            
         -- technical detail of equalizer-image isomorphism (isol) below
         open import Relation.Binary.HeterogeneousEquality as HE using (_≅_ ) 
         img-cong : {a b : Obj (Sets {c}) } (m : Hom Sets b a) → (mono : Mono Sets m ) → (y y' : a) → y ≡ y' → (s : image m y ) (t : image m y') → s ≅ t
-        img-cong {a} {b} m mono .(m x) .(m x₁) eq (isImage x) (isImage x₁)
-            with cong (λ k → k ! ) ( Mono.isMono mono {One} (λ _ → x) (λ _ → x₁ ) ( extensionality Sets ( λ _ → eq )) )
-        ... | refl = HE.refl
+        img-cong {a} {b} m mono .(m x) .(m x₁) eq (isImage x) (isImage x₁) = ?
+         --   with cong (λ k → k ! ) ? -- ( Mono.isMono mono {One} (λ _ → x) (λ _ → x₁ ) ? ) -- ( extensionality Sets ( λ _ → eq )) )
+        -- ... | refl = HE.refl
         image-uniq : {a b : Obj (Sets {c})} (m : Hom Sets b a) → (mono : Mono Sets m )  (y : a) → (i0 i1 : image m y ) → i0 ≡ i1
         image-uniq {a} {b} m mono y i0 i1 = HE.≅-to-≡ (img-cong m mono y y refl i0 i1)
         tchar¬Img : {a b : Obj Sets} (m : Hom Sets b a) → (mono : Mono Sets m )  (y : a) → tchar m mono y ≡ false → ¬ image m y
@@ -202,7 +204,7 @@ topos {c} lem = record {
         s2i {a} {b} m mono (elem y eq) with lem (image m y)
         ... | case1 im = im
         ker-iso :  {a b : Obj Sets} (m : Hom Sets b a) (mono : Mono Sets m) → IsEqualizer Sets m (tchar m mono) (Sets [ (λ _ → true) o CCC.○ sets a ])
-        ker-iso {a} {b} m mono = equalizerIso _ _ (tker (tchar m mono)) m  isol (extensionality Sets ( λ x → iso4 x)) where
+        ker-iso {a} {b} m mono = equalizerIso _ _ (tker (tchar m mono)) m  isol ? where -- (extensionality Sets ( λ x → iso4 x)) where
           b→s : Hom Sets b (sequ a Bool (tchar m mono) (λ _ → true))
           b→s x = b2s m mono x
           b←s : Hom Sets (sequ a Bool (tchar m mono) (λ _ → true)) b
@@ -227,8 +229,8 @@ topos {c} lem = record {
           iso2 (elem y eq) = begin
              b→s ( b←s (elem y eq)) ≡⟨⟩
              b2s m mono ( i2b m (s2i m mono (elem y eq)))  ≡⟨⟩
-             b2s m mono x  ≡⟨ elm-cong _ _ (iso21 x ) ⟩
-             elem (m x) eq1 ≡⟨ elm-cong _ _ mx=y ⟩
+             b2s m mono x  ≡⟨ equ-inject ? _ _ (iso21 x ) ⟩
+             elem (m x) eq1 ≡⟨ equ-inject ?  _ _ mx=y ⟩
              elem y eq  ∎ where
                open ≡-Reasoning
                x : b
@@ -246,12 +248,13 @@ topos {c} lem = record {
                ... | t = ⊥-elim (t (isImage x)) 
           isol :  Iso Sets b (Equalizer.equalizer-c (tker (tchar m mono)))
           isol = record { ≅→ = b→s ; ≅← = b←s ;
-                iso→  =  extensionality Sets ( λ x → iso1 x )
-              ; iso←  =  extensionality Sets ( λ x → iso2 x) } 
+                iso→  =  ? -- extensionality Sets ( λ x → iso1 x )
+              ; iso←  =  ? } -- extensionality Sets ( λ x → iso2 x) } 
 
         iso-m :  {a a' b : Obj Sets} (p : Hom Sets a b) (q : Hom Sets a' b) (mp : Mono Sets p) (mq : Mono Sets q) →
             (i : Iso Sets a a' ) → Sets [ p ≈ Sets [ q o Iso.≅→ i ] ] → Sets [ tchar p mp ≈ tchar q mq ]
-        iso-m {a} {a'} {b} p q mp mq i ei = extensionality Sets (λ y → iso-m1 y ) where
+        iso-m {a} {a'} {b} p q mp mq i ei = ? -- extensionality Sets (λ y → iso-m1 y ) where
+          where
            --
            --          Iso.≅← i     x      ○ a            mq : q ( f x ) ≡ q ( g x ) → f x ≡ g x 
            --       a'------------→ a -----------→ 1
@@ -286,21 +289,21 @@ topos {c} lem = record {
         ⊤ = λ _ → true
         ○ = λ _ → λ _ → !
         _⊢_  : {a b : Obj A}  (p : Poly a  Ω b ) (q : Poly a  Ω b ) → Set (suc c )
-        _⊢_  {a} {b} p q = {c : Obj A} (h : Hom A c b ) → A [ Poly.f p o  h  ≈   ⊤ o ○  c  ]
-               → A [   Poly.f q ∙ h  ≈  ⊤ o  ○  c  ] 
+        _⊢_  {a} {b} p q = {c : Obj A} (h : Hom A c b ) → A [ A [ Poly.f p o  h ]  ≈ A [  ⊤ o ○  c  ] ]
+               → A [   Poly.f q ∙ h  ≈  A [ ⊤ o  ○  c  ]  ]
         tl01 : {a b : Obj A}  (p : Poly a  Ω b ) (q : Poly a  Ω b )
              → p ⊢ q → q ⊢ p →  A [ Poly.f p ≈ Poly.f q ]
-        tl01 {a} {b} p q p<q q<p = extensionality Sets t1011 where
+        tl01 {a} {b} p q p<q q<p = ? where  -- extensionality Sets t1011 where
             open ≡-Reasoning
             t1011 : (s : b ) → Poly.f p s ≡ Poly.f q s 
             t1011 x with Poly.f p x | inspect ( Poly.f p) x
             ... | true | record { eq = eq1 } = sym tt1 where
                  tt1 : Poly.f q _ ≡ true 
-                 tt1 = cong (λ k → k !) (p<q _ ( extensionality Sets (λ x → eq1) ))
+                 tt1 = cong (λ k → k !) (p<q _ ? ) -- ( extensionality Sets (λ x → eq1) ))
             ... | false |  record { eq = eq1 } with Poly.f q x | inspect (Poly.f q) x
             ... | true | record { eq = eq2 } = ⊥-elim ( ¬x≡t∧x≡f record { fst  = eq1 ; snd = tt1 } ) where
                  tt1 : Poly.f p _ ≡ true 
-                 tt1 = cong (λ k → k !) (q<p _ ( extensionality Sets (λ x → eq2) ))
+                 tt1 = cong (λ k → k !) (q<p _ ? ) -- ( extensionality Sets (λ x → eq2) ))
             ... | false | eq2 = refl
 
 
@@ -428,8 +431,8 @@ module ccc-from-graph {c₁ c₂ : Level }  (G : Graph {c₁} {c₂})  where
                 ( x : Arrow d c ) → fmap ( iv x (g + f) ) z  ≡ fmap ( iv x g ) (fmap f z )
            adistr eq x = cong ( λ k → amap x k ) eq
         isf : IsFunctor PL Sets fobj fmap 
-        IsFunctor.identity isf = extensionality Sets ( λ x → refl )
+        IsFunctor.identity isf = ? -- extensionality Sets ( λ x → refl )
         IsFunctor.≈-cong isf refl = refl 
-        IsFunctor.distr isf {a} {b} {c} {g} {f} = extensionality Sets ( λ z → distr {a} {b} {c} {g} {f} z ) 
+        IsFunctor.distr isf {a} {b} {c} {g} {f} = ? -- extensionality Sets ( λ z → distr {a} {b} {c} {g} {f} z ) 
 
 
