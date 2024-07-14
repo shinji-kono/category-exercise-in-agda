@@ -3,7 +3,7 @@ module negnat where
 
 
 open import Data.Nat
-open import Relation.Nullary hiding (proof)
+open import Relation.Nullary hiding (proof; ⌊_⌋)
 open import Data.Empty
 open import Data.Unit
 open import Data.Fin renaming ( suc to fsuc ; zero to fzero ; _+_ to _++_ )
@@ -176,8 +176,8 @@ lemma2 :  {A : Set} ( x : A) → x ≡ x
 lemma2 x  = refl
 
 
-open import Data.Empty
-open import Relation.Nullary
+-- open import Data.Empty
+-- open import Relation.Nullary
 open import Level
 
 lemma4 : Set (Level.suc Level.zero)
