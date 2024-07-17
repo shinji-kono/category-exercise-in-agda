@@ -69,15 +69,24 @@ module Definitions where
     ----
     -- C is locally small i.e. Hom C i j is a set c₁
     --
-    open  import  Relation.Binary.PropositionalEquality using (_≡_)
-    record Small  {  c₁ c₂ ℓ : Level} ( C : Category c₁ c₂ ℓ ) ( I :  Set  c₁ )
-                    : Set (suc (c₁ ⊔ c₂ ⊔ ℓ )) where
+    open import Data.Product renaming (_×_ to _∧_) hiding (_<*>_)
+    open  import  Relation.Binary.PropositionalEquality as EqR using (_≡_)
+    record Small  {  c₁ c₂ ℓ : Level} (c : Level) ( C : Category c₁ c₂ ℓ ) : Set (suc (c₁ ⊔ c₂ ⊔ ℓ ⊔ c)) where
        field
+         I : Set c
          hom→ : {i j : Obj C } →    Hom C i j →  I
          hom← : {i j : Obj C } →  ( f : I ) →  Hom C i j
          hom-iso : {i j : Obj C } →  { f : Hom C i j } →   C [ hom← ( hom→ f )  ≈ f ]
          hom-rev : {i j : Obj C } →  { f : I } →   hom→ ( hom← {i} {j} f )  ≡ f
          ≡←≈ : {i j : Obj C } →  { f g : Hom C i j } →  C [ f ≈ g ] →   f ≡ g
+         hom-inject  : {i j k l : Obj C } →  { f : Hom C i j } →  { g : Hom C k l } →  hom→ f ≡ hom→ g →  (i ≡ k ) ∧  (j ≡ l) 
+
+         -- we cannot remove ≡←≈ in easy way, because it interferes with Sets and Yoneda Functor
+         -- we also having troube with cong below, it does not satisfy the resp
+       hom→cong : {i j : Obj C } →  { f g : Hom C i j } → C [ f ≈ g ] → hom→ f ≡ hom→ g
+       hom→cong {i} {j} {f} {g} f=g = EqR.cong hom→ (≡←≈ f=g)
+       -- hom←cong : {i j i1 j1 : Obj C } →  { f g : I } → f ≡ g → Category.dom C (hom← {i} {j} f) ≡ Category.dom C (hom← {i1} {j1} g)
+       -- hom←cong {i} {j} {f} {g} f=g = EqR.cong Category.dom C (hom← {i1} {j1} g)
 
     record IsUniversalMapping  {c₁ c₂ ℓ c₁' c₂' ℓ' : Level} (A : Category c₁ c₂ ℓ) (B : Category c₁' c₂' ℓ')
                      ( U : Functor B A )
@@ -588,59 +597,26 @@ module Definitions where
 
     open import Category.Sets
 
-    Yoneda : { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) ( ≡←≈ :   {a b : Obj A } { x y : Hom A a b } →  (x≈y : A [ x ≈ y  ]) → x ≡ y )
-       (a : Obj A) → Functor (Category.op A) (Sets {c₂})
-    Yoneda  {c₁} {c₂} {ℓ} A ≡←≈ a = record {
-        FObj = λ b → Hom (Category.op A) a b
-      ; FMap = λ {x} {y} (f : Hom A y x ) → λ ( g : Hom A x a ) →  (Category.op A)  [ f o g ]    --   f : Hom A x y  → Hom Sets (Hom A a x ) (Hom A a y)
-      ; isFunctor = record {
-                 identity =  λ {b} x → ≡←≈ idL
-               ; distr = λ {a} {b} {c} {f} {g} x → ≡←≈ ( sym assoc )
-               ; ≈-cong = λ eq x → ≡←≈ ( resp refl-hom eq )
-            }
-        }  where
-            open ≈-Reasoning  (Category.op A)
-
-    --
-    --   better than ≡←≈
-    --
-    Cong≈ : { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) (a : Obj A) → Set (c₁ ⊔ c₂ ⊔ ℓ)
-    Cong≈ A a  = {c b : Obj A} (f : Hom A a c → Hom A a b )
-        {x y : Hom A a c} → A [ x ≈ y ] → A [ f x ≈ f y ]  where
-                      open ≈-Reasoning A
-
-    Sets≈ : { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) (a : Obj A) → Cong≈ A a  → Category c₁ c₂ (c₂ ⊔ ℓ)
-    Sets≈ A a ≈-cong = record { Obj =  Obj A
-                      ; Hom = λ b c →  Hom (Category.op A) b a → Hom (Category.op A) c a
-                      ; _o_ = λ f g x → f (g x )
-                      ; _≈_ = λ {b} f g → (x : Hom (Category.op A) b a) → f x ≈ g x
-        ;  isCategory = record { isEquivalence = record {refl = λ x → refl-hom
-           ; trans = λ i=j j=k x → trans-hom (i=j x) (j=k x) ; sym = λ eq x → sym-hom (eq x)}
-                            ; identityL     = λ x → refl-hom
-                            ; identityR     = λ x → refl-hom
-                            ; o-resp-≈      = λ {c} {b} {a} {f} {g} {h} {i} f=g h=i x → trans-hom (h=i (f x)) ( ≈-cong i (f=g x) )
-                            ; associative   = λ x → refl-hom }
-                    } where
-                      open ≈-Reasoning A
-
-    Yoneda≈ : { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ )
-       (a : Obj A) → (≈-cong : Cong≈ (Category.op A) a ) → Functor (Category.op A) (Sets≈ (Category.op A) a ≈-cong)
-    Yoneda≈  {c₁} {c₂} {ℓ} A a ≈-cong = record {
-        FObj = λ b → b
+    Yoneda : { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ )
+       (a : Obj A) → (s : Small c₂ (Category.op A) ) → Functor (Category.op A) (Sets {c₂})
+    Yoneda {c₁} {c₂} {ℓ} A a s = record {
+        FObj = λ b → Hom A b a
       ; FMap = λ {x} {y} (f : Hom A y x ) ( g : Hom A x a ) →  A [ g o f ]
       ; isFunctor = record {
-                 identity =  λ {b} x → idR
-               ; distr = λ {a} {b} {c} {f} {g} x → assoc
-               ; ≈-cong = λ eq x → resp eq refl-hom
+                 identity =  λ {b} x → ≡←≈ idR  
+               ; distr = λ {a} {b} {c} {f} {g} x → ≡←≈ assoc
+               ; ≈-cong = λ eq x → ≡←≈ ( resp eq refl-hom )
             }
         }  where
+            open Small s
             open ≈-Reasoning  A
+
 
     --
     -- Representable  U  ≈　Hom(A,-)
 
     record Representable  { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ )
-          ( ≡←≈ :   {a b : Obj A } { x y : Hom A b a } →  (x≈y :  (Category.op A)  [ x ≈ y  ]) → x ≡ y )
+          ( s : Small c₂ (Category.op A))
           ( U : Functor  (Category.op A)  (Sets {c₂}) ) (a : Obj A) : Set  (suc ℓ ⊔ (suc (suc c₂) ⊔ suc c₁ ))  where
        field
              -- FObj U x  :  A  → Set
@@ -648,24 +624,11 @@ module Definitions where
              -- λ b → Hom (a,b) :  A → Set
              -- λ f → Hom (a,-) = λ b → Hom  a b
 
-             repr→ : NTrans  (Category.op A)  (Sets {c₂}) U (Yoneda A  ≡←≈  a )
-             repr← : NTrans  (Category.op A)  (Sets {c₂}) (Yoneda A  ≡←≈  a)  U
-             reprId→  :  {x : Obj A} →  Sets [ Sets [ TMap repr→ x  o  TMap repr← x ] ≈ id1 (Sets {c₂}) (FObj (Yoneda A  ≡←≈  a) x )]
+             repr→ : NTrans  (Category.op A)  (Sets {c₂}) U (Yoneda A a s )
+             repr← : NTrans  (Category.op A)  (Sets {c₂}) (Yoneda A a s)  U
+             reprId→  :  {x : Obj A} →  Sets [ Sets [ TMap repr→ x  o  TMap repr← x ] ≈ id1 (Sets {c₂}) (FObj (Yoneda A a s) x )]
              reprId←  :  {x : Obj A} →  Sets [ Sets [ TMap repr← x  o  TMap repr→ x ] ≈ id1 (Sets {c₂}) (FObj U x)]
 
-
-    record Representable≈  { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ )
-          ( ≡←≈ :   {a b : Obj A } { x y : Hom A b a } →  (x≈y :  (Category.op A)  [ x ≈ y  ]) → x ≡ y )
-          (≈-cong : (a : Obj A) → Cong≈ (Category.op A) a )
-          (a : Obj A)
-          ( U : Functor  (Category.op A)  (Sets≈ (Category.op A) a (≈-cong a)) )  : Set  (suc ℓ ⊔ (suc (suc c₂) ⊔ suc c₁ ))  where
-       field
-             repr→ : NTrans  (Category.op A)  (Sets≈ (Category.op A) a (≈-cong a)) U (Yoneda≈ A a (≈-cong a))
-             repr← : NTrans  (Category.op A)  (Sets≈ (Category.op A) a (≈-cong a)) (Yoneda≈ A a (≈-cong a))  U
-             reprId→  :  {x : Obj A} →  Sets [ Sets [ TMap repr→ x  o  TMap repr← x ]
-                ≈ id1 (Sets≈ (Category.op A) a (≈-cong a)) (FObj (Yoneda≈ A a (≈-cong a)) x )]
-             reprId←  :  {x : Obj A} →  Sets [ Sets [ TMap repr← x  o  TMap repr→ x ]
-                ≈ id1 (Sets≈ (Category.op A) a (≈-cong a)) (FObj U x)]
 
 
     -- they say it is not possible to prove FreeTheorem in Agda nor Coq

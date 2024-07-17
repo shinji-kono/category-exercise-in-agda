@@ -73,9 +73,9 @@ module ≈-Reasoning {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) where
 --  ≡←≈ : {a b : Obj A } { x y : Hom A a b } →  (x≈y : x ≈ y ) → x ≡ y
 --  ≡←≈  x≈y = irr x≈y
 
-  ≡-cong : { c₁′ c₂′ ℓ′ : Level}  {B : Category c₁′ c₂′ ℓ′} {x y : Obj B } { a b : Hom B x y } {x' y' : Obj A }  →
+  ≡-cong : { c₁′ c₂′ ℓ′ : Level}  (B : Category c₁′ c₂′ ℓ′) {x y : Obj B } { a b : Hom B x y } {x' y' : Obj A }  →
              (f : Hom B x y → Hom A x' y' ) →  a ≡ b  → f a  ≈  f b
-  ≡-cong f _≡_.refl =  ≈←≡ _≡_.refl
+  ≡-cong B f _≡_.refl =  ≈←≡ _≡_.refl
 
 --  cong-≈ :  { c₁′ c₂′ ℓ′ : Level}  {B : Category c₁′ c₂′ ℓ′} {x y : Obj B } { a b : Hom B x y } {x' y' : Obj A }  → 
 --             B [ a ≈ b ] → (f : Hom B x y → Hom A x' y' ) →  f a ≈ f b

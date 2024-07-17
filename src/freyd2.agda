@@ -5,13 +5,14 @@ open import Level
 open import Category.Sets -- renaming ( _o_ to _*_ )
 open import Relation.Binary.Core
 open import Relation.Binary.PropositionalEquality hiding ( [_] ; sym ; resp )
+open import Definitions
 
-module freyd2 (
-    ≡←≈ :  { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ )  {a b : Obj A } { x y : Hom A a b } →  (x≈y : A [ x ≈ y  ]) → x ≡ y )
+module freyd2 
+     { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ )  
+     ( small : Small c₂ (Category.op A) )
    where
 
 open import HomReasoning
-open import Definitions
 open import Function
 
 ----------
@@ -61,23 +62,23 @@ open LimitPreserve
 --    Yoneda A b =  λ a → Hom A a b    : Functor A Sets
 --                                     : Functor Sets A
 
-YonedaFpreserveLimit0 : {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (I : Category c₁ c₂ ℓ)
+YonedaFpreserveLimit0 : (I : Category c₁ c₂ ℓ)
       (b : Obj A ) 
       (Γ : Functor I (Category.op A)) (limita : Limit I (Category.op A) Γ) →
-        IsLimit I Sets (Yoneda A (≡←≈ A) b ○ Γ) (FObj (Yoneda A (≡←≈ A) b) (a0 limita)) (LimitNat I (Category.op A) Sets Γ (a0 limita) (t0 limita) (Yoneda A (≡←≈ A) b))
-YonedaFpreserveLimit0 {c₁} {c₂} {ℓ} A I b Γ lim = record {
+        IsLimit I Sets (Yoneda A b small ○ Γ) (FObj (Yoneda A b small) (a0 limita)) (LimitNat I (Category.op A) Sets Γ (a0 limita) (t0 limita) (Yoneda A b small))
+YonedaFpreserveLimit0 I b Γ lim = record {
          limit = λ a t → ψ a t
        ; t0f=t = λ {a t i} → t0f=t0 a t i
        ; limit-uniqueness = λ {b} {t} {f} t0f=t → limit-uniqueness0 {b} {t} {f} t0f=t 
     } where 
       opA = Category.op A
-      hat0 :  NTrans I Sets (K I Sets (FObj (Yoneda A (≡←≈ A) b) (a0 lim))) (Yoneda A (≡←≈ A) b ○ Γ)
-      hat0 = LimitNat I opA Sets Γ (a0 lim) (t0 lim) (Yoneda A (≡←≈ A) b)
+      hat0 :  NTrans I Sets (K I Sets (FObj (Yoneda A b small) (a0 lim))) (Yoneda A b small ○ Γ)
+      hat0 = LimitNat I opA Sets Γ (a0 lim) (t0 lim) (Yoneda A b small)
       haa0 : Obj Sets
-      haa0 = FObj (Yoneda A (≡←≈ A) b) (a0 lim)
+      haa0 = FObj (Yoneda A b small) (a0 lim)
       _*_ : {a b c : Obj (Sets {c₁} ) } → (b → c) → (a → b) → a → c
       _*_ f g = λ x → f (g x)
-      ta : (a : Obj Sets) ( x : a ) ( t : NTrans I Sets (K I Sets a) (Yoneda A (≡←≈ A) b ○ Γ)) → NTrans I opA (K I opA b ) Γ
+      ta : (a : Obj Sets) ( x : a ) ( t : NTrans I Sets (K I Sets a) (Yoneda A b small ○ Γ)) → NTrans I opA (K I opA b ) Γ
       ta a x t = record { TMap = λ i → (TMap t i ) x ; isNTrans = record { commute = commute1 } } where
          commute1 :  {a₁ b₁ : Obj I} {f : Hom I a₁ b₁} →
                 opA [ opA [ FMap Γ f o TMap t a₁ x ] ≈ opA [ TMap t b₁ x o FMap (K I opA b) f ]  ]
@@ -86,15 +87,15 @@ YonedaFpreserveLimit0 {c₁} {c₂} {ℓ} A I b Γ lim = record {
              (Sets [ TMap t b₁ o id1 Sets a ]) x   ≈⟨⟩
              TMap t b₁ x   ≈⟨ sym idR ⟩
              opA [ TMap t b₁ x o id1 opA b ] ∎ 
-      ψ  :  (X : Obj Sets)  ( t : NTrans I Sets (K I Sets X) (Yoneda A (≡←≈ A) b ○ Γ))
-          →  Hom Sets X (FObj (Yoneda A (≡←≈ A) b) (a0 lim))
-      ψ X t x = FMap (Yoneda A (≡←≈ A) b) (limit (isLimit lim) b (ta X x t )) (id1 A b )
-      t0f=t0 : (a : Obj Sets ) ( t : NTrans I Sets (K I Sets a) (Yoneda A (≡←≈ A) b ○ Γ)) (i : Obj I)
-           → Sets [ Sets [ TMap (LimitNat I opA Sets Γ (a0 lim) (t0 lim) (Yoneda A (≡←≈ A) b)) i o ψ a t ] ≈ TMap t i ]
-      t0f=t0 a t i = let open ≈-Reasoning opA in ( λ x →  (≡←≈ A) ( begin 
-                 ( Sets [ TMap (LimitNat I opA Sets Γ (a0 lim) (t0 lim) (Yoneda A (≡←≈ A) b)) i o ψ a t  ] ) x
+      ψ  :  (X : Obj Sets)  ( t : NTrans I Sets (K I Sets X) (Yoneda A b small ○ Γ))
+          →  Hom Sets X (FObj (Yoneda A b small) (a0 lim))
+      ψ X t x = FMap (Yoneda A b small) (limit (isLimit lim) b (ta X x t )) (id1 A b )
+      t0f=t0 : (a : Obj Sets ) ( t : NTrans I Sets (K I Sets a) (Yoneda A b small ○ Γ)) (i : Obj I)
+           → Sets [ Sets [ TMap (LimitNat I opA Sets Γ (a0 lim) (t0 lim) (Yoneda A b small)) i o ψ a t ] ≈ TMap t i ]
+      t0f=t0 a t i = let open ≈-Reasoning opA in ( λ x →  (Small.≡←≈ small) ( begin 
+                 ( Sets [ TMap (LimitNat I opA Sets Γ (a0 lim) (t0 lim) (Yoneda A b small)) i o ψ a t  ] ) x
              ≈⟨⟩
-                FMap (Yoneda A (≡←≈ A) b) ( TMap (t0 lim) i) (FMap (Yoneda A (≡←≈ A) b) (limit (isLimit lim) b (ta a x t )) (id1 A b ))
+                FMap (Yoneda A b small) ( TMap (t0 lim) i) (FMap (Yoneda A b small) (limit (isLimit lim) b (ta a x t )) (id1 A b ))
              ≈⟨⟩ -- FMap (Hom A b ) f g  = A [ f o g  ]
                 TMap (t0 lim) i o (limit (isLimit lim) b (ta a x t ) o id1 A b )
              ≈⟨  cdr idR ⟩
@@ -104,13 +105,13 @@ YonedaFpreserveLimit0 {c₁} {c₂} {ℓ} A I b Γ lim = record {
              ≈⟨⟩
                  TMap t i x
              ∎  ))
-      limit-uniqueness0 :  {a : Obj Sets} {t : NTrans I Sets (K I Sets a) (Yoneda A (≡←≈ A) b ○ Γ)} {f : Hom Sets a (FObj (Yoneda A (≡←≈ A) b) (a0 lim))} →
-        ({i : Obj I} → Sets [ Sets [ TMap (LimitNat I opA Sets Γ (a0 lim) (t0 lim) (Yoneda A (≡←≈ A) b)) i o f ] ≈ TMap t i ]) →
+      limit-uniqueness0 :  {a : Obj Sets} {t : NTrans I Sets (K I Sets a) (Yoneda A b small ○ Γ)} {f : Hom Sets a (FObj (Yoneda A b small) (a0 lim))} →
+        ({i : Obj I} → Sets [ Sets [ TMap (LimitNat I opA Sets Γ (a0 lim) (t0 lim) (Yoneda A b small)) i o f ] ≈ TMap t i ]) →
         Sets [ ψ a t ≈ f ]
-      limit-uniqueness0 {a} {t} {f} t0f=t = let open ≈-Reasoning opA in ( λ x →  (≡←≈ A) ( begin 
+      limit-uniqueness0 {a} {t} {f} t0f=t = let open ≈-Reasoning opA in ( λ x →  (Small.≡←≈ small) ( begin 
                   ψ a t x
              ≈⟨⟩
-                 FMap (Yoneda A (≡←≈ A) b) (limit (isLimit lim) b (ta a x t )) (id1 A b )
+                 FMap (Yoneda A b small) (limit (isLimit lim) b (ta a x t )) (id1 A b )
              ≈⟨⟩
                  limit (isLimit lim) b (ta a x t ) o id1 A b 
              ≈⟨ idR ⟩
@@ -120,10 +121,10 @@ YonedaFpreserveLimit0 {c₁} {c₂} {ℓ} A I b Γ lim = record {
              ∎  ))
 
 
-YonedaFpreserveLimit : {c₁ c₂ ℓ : Level} (I : Category c₁ c₂ ℓ) (A : Category c₁ c₂ ℓ)
-       (b : Obj A ) → LimitPreserve I (Category.op A) Sets (Yoneda A (≡←≈ A) b) 
-YonedaFpreserveLimit I opA b = record {
-       preserve = λ Γ lim → YonedaFpreserveLimit0 opA I b Γ lim
+YonedaFpreserveLimit : (I : Category c₁ c₂ ℓ) 
+       (b : Obj A ) → LimitPreserve I (Category.op A) Sets (Yoneda A b small) 
+YonedaFpreserveLimit I b = record {
+       preserve = λ Γ lim → YonedaFpreserveLimit0 I b Γ lim
    } 
 
 
@@ -135,31 +136,30 @@ open CommaHom
 data * {c : Level} : Set c where
   OneObj : *
 
-KUhasInitialObj : {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ)
-      (a : Obj A )
-      → HasInitialObject  ( K (Category.op A) Sets * ↓ (Yoneda A (≡←≈ A) a) ) ( record  { obj = a ; hom = λ x → id1 A a } )
-KUhasInitialObj {c₁} {c₂} {ℓ} A a = record {
+KUhasInitialObj : (a : Obj A )
+      → HasInitialObject  ( K (Category.op A) Sets * ↓ (Yoneda A a small) ) ( record  { obj = a ; hom = λ x → id1 A a } )
+KUhasInitialObj a = record {
            initial =  λ b → initial0 b
          ; uniqueness =  λ f → unique f
      } where
          opA = Category.op A
          commaCat : Category  (c₂ ⊔ c₁) c₂ ℓ
-         commaCat = K opA Sets * ↓ Yoneda A (≡←≈ A) a
-         initObj  : Obj (K opA Sets * ↓ Yoneda A (≡←≈ A) a)
+         commaCat = K opA Sets * ↓ Yoneda A a small
+         initObj  : Obj (K opA Sets * ↓ Yoneda A a small)
          initObj = record { obj = a ; hom = λ x → id1 A a }
-         comm2 : (b : Obj commaCat) ( x : * ) → ( Sets [ FMap (Yoneda A (≡←≈ A) a) (hom b OneObj) o (λ x₁ → id1 A a) ] )  x ≡ hom b x
-         comm2 b OneObj = let open ≈-Reasoning opA in  (≡←≈ A) ( begin
-                ( Sets [ FMap (Yoneda A (≡←≈ A) a) (hom b OneObj) o (λ x₁ → id1 A a) ] ) OneObj
+         comm2 : (b : Obj commaCat) ( x : * ) → ( Sets [ FMap (Yoneda A a small) (hom b OneObj) o (λ x₁ → id1 A a) ] )  x ≡ hom b x
+         comm2 b OneObj = let open ≈-Reasoning opA in Small.≡←≈ small ( begin
+                ( Sets [ FMap (Yoneda A a small) (hom b OneObj) o (λ x₁ → id1 A a) ] ) OneObj
              ≈⟨⟩
-                FMap (Yoneda A (≡←≈ A) a) (hom b OneObj) (id1 A a)
+                FMap (Yoneda A a small) (hom b OneObj) (id1 A a)
              ≈⟨⟩
                 hom b OneObj o id1 A a
              ≈⟨ idR ⟩
                 hom b OneObj 
              ∎  )
-         comm1 : (b : Obj commaCat) → Sets [ Sets [ FMap (Yoneda A (≡←≈ A) a) (hom b OneObj) o hom initObj ] ≈ Sets [ hom b o FMap (K opA Sets *) (hom b OneObj) ] ]
+         comm1 : (b : Obj commaCat) → Sets [ Sets [ FMap (Yoneda A a small) (hom b OneObj) o hom initObj ] ≈ Sets [ hom b o FMap (K opA Sets *) (hom b OneObj) ] ]
          comm1 b = let open ≈-Reasoning Sets in begin
-                FMap (Yoneda A (≡←≈ A) a) (hom b OneObj) o ( λ x → id1 A a )
+                FMap (Yoneda A a small) (hom b OneObj) o ( λ x → id1 A a )
              ≈⟨ ( λ x → comm2 b x ) ⟩
                 hom b 
              ≈⟨⟩
@@ -171,20 +171,20 @@ KUhasInitialObj {c₁} {c₂} {ℓ} A a = record {
                 arrow = hom b OneObj
               ; comm = comm1 b }
          -- what is comm f ?
-         comm-f :  (b : Obj (K opA Sets * ↓ (Yoneda A (≡←≈ A) a))) (f : Hom (K opA Sets * ↓ Yoneda A (≡←≈ A) a) initObj b)
-            → Sets [ Sets [ FMap  (Yoneda A (≡←≈ A) a) (arrow f) o ( λ x → id1 A a ) ]
+         comm-f :  (b : Obj (K opA Sets * ↓ (Yoneda A a small))) (f : Hom (K opA Sets * ↓ Yoneda A a small) initObj b)
+            → Sets [ Sets [ FMap  (Yoneda A a small) (arrow f) o ( λ x → id1 A a ) ]
                ≈ Sets [ hom b  o  FMap  (K opA Sets *) (arrow f) ]  ] 
          comm-f b f = comm f
-         unique : {b : Obj (K opA Sets * ↓ Yoneda A (≡←≈ A) a)}  (f : Hom (K opA Sets * ↓ Yoneda A (≡←≈ A) a) initObj b)
-                → (K opA Sets * ↓ Yoneda A (≡←≈ A) a) [ f ≈ initial0 b ]
+         unique : {b : Obj (K opA Sets * ↓ Yoneda A a small)}  (f : Hom (K opA Sets * ↓ Yoneda A a small) initObj b)
+                → (K opA Sets * ↓ Yoneda A a small) [ f ≈ initial0 b ]
          unique {b} f = let open ≈-Reasoning opA in begin
                 arrow f
              ≈↑⟨ idR ⟩
                 arrow f o id1 A a
              ≈⟨⟩
-                ( Sets [ FMap  (Yoneda A (≡←≈ A) a) (arrow f) o id1 Sets (FObj (Yoneda A (≡←≈ A) a) a)  ] ) (id1 A a)
+                ( Sets [ FMap  (Yoneda A a small) (arrow f) o id1 Sets (FObj (Yoneda A a small) a)  ] ) (id1 A a)
              ≈⟨⟩
-               ( Sets [ FMap  (Yoneda A (≡←≈ A) a) (arrow f) o ( λ x → id1 A a ) ] ) OneObj
+               ( Sets [ FMap  (Yoneda A a small) (arrow f) o ( λ x → id1 A a ) ] ) OneObj
              ≈⟨ ≈←≡ ( comm f OneObj ) ⟩
                ( Sets [ hom b  o  FMap  (K opA Sets *) (arrow f) ]  ) OneObj
              ≈⟨⟩
@@ -231,12 +231,12 @@ fArrow A U {a} {b} f x = record { arrow = f ; comm = fArrowComm a b f x }
 
 -- if K{*}↓U has initial Obj, U is representable
 
-UisRepresentable : {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) 
+UisRepresentable : 
      (U : Functor (Category.op A) (Sets {c₂}) )
      ( i : Obj ( K (Category.op A) Sets * ↓ U) )
      (In : HasInitialObject ( K (Category.op A) Sets * ↓ U) i ) 
-       → Representable A (≡←≈ A) U (obj i)
-UisRepresentable A U i In = record {
+       → Representable A small U (obj i)
+UisRepresentable  U i In = record {
         repr→ = record { TMap = tmap1 ; isNTrans = record { commute = comm1 } }
         ; repr← = record { TMap = tmap2 ; isNTrans = record { commute = comm2 } }
         ; reprId→  = iso→ 
@@ -244,28 +244,28 @@ UisRepresentable A U i In = record {
    } where
       opA = Category.op A
       comm11 : (a b : Obj opA) (f : Hom opA a b) (y : FObj U a ) →
-         ( Sets [ FMap (Yoneda A (≡←≈ A) (obj i)) f o ( λ x → arrow (initial In (ob opA U a x))) ] ) y   
+         ( Sets [ FMap (Yoneda A (obj i) small ) f o ( λ x → arrow (initial In (ob opA U a x))) ] ) y   
            ≡ (Sets [ ( λ x → arrow (initial In (ob opA U b x))) o FMap U f ] ) y
       comm11 a b f y = begin
-               ( Sets [ FMap (Yoneda A (≡←≈ A) (obj i)) f o ( λ x → arrow (initial In (ob opA U a x))) ] ) y   
+               ( Sets [ FMap (Yoneda A (obj i) small ) f o ( λ x → arrow (initial In (ob opA U a x))) ] ) y   
              ≡⟨⟩
                  opA [ f o arrow (initial In (ob opA U a y)) ]
              ≡⟨⟩
                  opA [ arrow ( fArrow opA U f y ) o arrow (initial In (ob opA U a y)) ]
-             ≡⟨  (≡←≈ A) ( uniqueness In {ob opA U b (FMap U f y) } (( K opA Sets * ↓ U) [ fArrow opA U f y  o initial In (ob opA U a y)] ) ) ⟩
+             ≡⟨  (Small.≡←≈ small) ( uniqueness In {ob opA U b (FMap U f y) } (( K opA Sets * ↓ U) [ fArrow opA U f y  o initial In (ob opA U a y)] ) ) ⟩
                 arrow (initial In (ob opA U b (FMap U f y) ))
              ≡⟨⟩
                 (Sets [ ( λ x → arrow (initial In (ob opA U b x))) o FMap U f ] ) y
              ∎  where
                   open  import  Relation.Binary.PropositionalEquality
                   open ≡-Reasoning
-      tmap1 :  (b : Obj A) → Hom Sets (FObj U b) (FObj (Yoneda A (≡←≈ A) (obj i)) b)
+      tmap1 :  (b : Obj A) → Hom Sets (FObj U b) (FObj (Yoneda A (obj i) small ) b)
       tmap1 b x = arrow ( initial In (ob opA U b x ) ) 
-      comm1 : {a b : Obj opA} {f : Hom opA a b} → Sets [ Sets [ FMap (Yoneda A (≡←≈ A) (obj i)) f o tmap1 a ] ≈ Sets [ tmap1 b o FMap U f ] ]
+      comm1 : {a b : Obj opA} {f : Hom opA a b} → Sets [ Sets [ FMap (Yoneda A (obj i) small ) f o tmap1 a ] ≈ Sets [ tmap1 b o FMap U f ] ]
       comm1 {a} {b} {f} = let open ≈-Reasoning Sets in begin
-                FMap (Yoneda A (≡←≈ A) (obj i)) f o tmap1 a 
+                FMap (Yoneda A (obj i) small ) f o tmap1 a 
              ≈⟨⟩
-                FMap (Yoneda A (≡←≈ A) (obj i)) f o ( λ x → arrow (initial In ( ob opA U a x )))  
+                FMap (Yoneda A (obj i) small ) f o ( λ x → arrow (initial In ( ob opA U a x )))  
              ≈⟨ ( λ y → comm11 a b f y ) ⟩
                 ( λ x → arrow (initial In (ob opA U b x))) o FMap U f 
              ≈⟨⟩
@@ -281,10 +281,10 @@ UisRepresentable A U i In = record {
              ∎  where
                   open  import  Relation.Binary.PropositionalEquality
                   open ≡-Reasoning
-      tmap2 :  (b : Obj A) → Hom Sets (FObj (Yoneda A (≡←≈ A) (obj i)) b) (FObj U b)
+      tmap2 :  (b : Obj A) → Hom Sets (FObj (Yoneda A (obj i) small ) b) (FObj U b)
       tmap2 b x =  ( FMap U x ) ( hom i OneObj )
       comm2 : {a b : Obj opA} {f : Hom opA a b} → Sets [ Sets [ FMap U f o tmap2 a ] ≈
-        Sets [ tmap2 b o FMap (Yoneda A (≡←≈ A) (obj i)) f ] ]
+        Sets [ tmap2 b o FMap (Yoneda A (obj i) small ) f ] ]
       comm2 {a} {b} {f} = let open ≈-Reasoning Sets in begin
                 FMap U f o tmap2 a 
              ≈⟨⟩
@@ -292,15 +292,15 @@ UisRepresentable A U i In = record {
              ≈⟨ ( λ y → comm21 a b f y ) ⟩
                 ( λ x → ( FMap U x ) ( hom i OneObj ) ) o ( λ x → opA [ f o x  ]  )
              ≈⟨⟩
-                ( λ x → ( FMap U x ) ( hom i OneObj ) ) o FMap (Yoneda A (≡←≈ A) (obj i)) f 
+                ( λ x → ( FMap U x ) ( hom i OneObj ) ) o FMap (Yoneda A (obj i) small ) f 
              ≈⟨⟩
-                tmap2 b o FMap (Yoneda A (≡←≈ A) (obj i)) f 
+                tmap2 b o FMap (Yoneda A (obj i) small ) f 
              ∎
       iso0 : ( x : Obj opA) ( y : Hom opA (obj i ) x ) ( z : * )
          → ( Sets [ FMap U y o hom i ] ) z ≡ ( Sets [ ub opA U x (FMap U y (hom i OneObj)) o FMap (K opA Sets *) y ] ) z 
       iso0 x y  OneObj = refl
-      iso→  : {x : Obj opA} → Sets [ Sets [ tmap1 x o tmap2 x ] ≈ id1 Sets (FObj (Yoneda A (≡←≈ A) (obj i)) x) ]
-      iso→ {x} = let open ≈-Reasoning opA in ( λ ( y : Hom opA (obj i ) x ) → (≡←≈ A) ( begin
+      iso→  : {x : Obj opA} → Sets [ Sets [ tmap1 x o tmap2 x ] ≈ id1 Sets (FObj (Yoneda A (obj i) small ) x) ]
+      iso→ {x} = let open ≈-Reasoning opA in ( λ ( y : Hom opA (obj i ) x ) → (Small.≡←≈ small) ( begin
                ( Sets [ tmap1 x o tmap2 x ] ) y
              ≈⟨⟩
                 arrow ( initial In (ob opA U x (( FMap U y ) ( hom i OneObj ) ))) 
@@ -328,6 +328,7 @@ module Adjoint-Functor {c₁ c₂ ℓ : Level} (A B : Category c₁ c₂ ℓ) (I
      (U : Functor A B )
      (i :  (b : Obj B) → Obj ( K A B b ↓ U) )
      (In :  (b : Obj B) → HasInitialObject ( K A B b ↓ U) (i b) ) 
+     (smallb : Small c₂ B )
         where
 
    tmap-η : (y : Obj B)  → Hom B y (FObj U (obj (i y)))
@@ -355,7 +356,7 @@ module Adjoint-Functor {c₁ c₂ ℓ : Level} (A B : Category c₁ c₂ ℓ) (I
       B [ B [ FMap U g o  tmap-η a ]  ≈ f ] → A [ arrow (solution f)  ≈ g ]
    unique {a} {b} {f} {g} ugη=f = let open ≈-Reasoning A in begin
         arrow (solution f) 
-      ≈↑⟨ ≈←≡ ( cong (λ k → arrow (solution k)) ( (≡←≈ B) ugη=f )) ⟩
+      ≈↑⟨ ≈←≡ ( cong (λ k → arrow (solution k)) ( (Small.≡←≈ smallb) ugη=f )) ⟩
         arrow (solution (B [ FMap U g o tmap-η a ] )) 
       ≈↑⟨ uniqueness (In a) (record { arrow = g ; comm = comm1 }) ⟩
         g 
@@ -393,7 +394,7 @@ module Adjoint-Functor {c₁ c₂ ℓ : Level} (A B : Category c₁ c₂ ℓ) (I
 open import Data.Product renaming (_×_ to _∧_  ) hiding ( <_,_> )
 open import Category.Constructions.Product
 
-module pro-ex {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) ( _*_ : Obj A → Obj A → Obj A ) 
+module pro-ex   ( _*_ : Obj A → Obj A → Obj A ) 
       (*-iso : (a b c x : Obj A) → IsoS A (A × A)  x c (x , x ) (a , b  )) where
 
 --  Hom A x c ≅ ( Hom A x a ) * ( Hom A x b )
@@ -406,7 +407,7 @@ module pro-ex {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) ( _*_ : Obj A
     open import Category.Cat
 
     *eq :   {a b : Obj (A × A) } { x y : Hom (A × A) a b } →  (x≈y : (A × A) [ x ≈ y  ]) → x ≡ y
-    *eq {a} {b} {x1 , x2} {y1 , y2} (eq1 , eq2) = cong₂ _,_ ( ≡←≈ A eq1 ) ( ≡←≈ A eq2 )
+    *eq {a} {b} {x1 , x2} {y1 , y2} (eq1 , eq2) = cong₂ _,_ ( Small.≡←≈ small eq1 ) ( Small.≡←≈ small eq2 )
 
     opA = Category.op A
     prodFunctor : Functor (Category.op A) (Category.op (A × A))

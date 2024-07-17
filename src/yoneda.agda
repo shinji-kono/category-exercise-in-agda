@@ -11,12 +11,12 @@ open import Level
 open import Category.Sets hiding (_==_)
 open import Category
 open import Definitions
-module yoneda { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) (I : Set c₁) ( small : Small A I ) where
+module yoneda { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ )  ( small : Small c₂ (Category.op A) ) where
 
 open import HomReasoning
 open import Relation.Binary.Core
 open import Relation.Binary
-open import Relation.Binary.PropositionalEquality hiding ( [_] ; resp ) renaming ( sym to ≡sym )
+open import Relation.Binary.PropositionalEquality as EqR hiding ( [_] ; resp ; sym ) 
 
 -- Contravariant Functor : op A → Sets  ( Obj of Sets^{A^op} )
 --   Obj and Hom of Sets^A^op
@@ -31,11 +31,11 @@ SetsAop  = record { Obj = YObj
          ; _≈_ = _==_
          ; Id  = Yid
          ; isCategory = record  {
-              isEquivalence =  record {refl = ?  ; trans = λ {i} {j} {k} → trans1 {_} {_} {i} {j} {k} ; sym = λ {i j} → sym1  {_} {_} {i} {j}}
-            ; identityL = ?
-            ; identityR = ? 
+              isEquivalence =  record {refl = λ {i} x → refl  ; trans = λ {i} {j} {k} → trans1 {_} {_} {i} {j} {k} ; sym = λ {i j} → sym1  {_} {_} {i} {j}}
+            ; identityL = λ {a} {b} {f} x → refl
+            ; identityR = λ {a} {b} {f} x → refl
             ; o-resp-≈ =  λ{a b c f g h i } → o-resp-≈      {a} {b} {c} {f} {g} {h} {i}
-            ; associative = ?
+            ; associative = λ {a b c d f g h} x → refl
         } } where 
             open ≈-Reasoning (Sets {c₂}) 
             YObj : Set (suc ℓ ⊔ (suc (suc c₂) ⊔ suc c₁))
@@ -46,7 +46,7 @@ SetsAop  = record { Obj = YObj
             Yid : {a : YObj } → YHom a a
             Yid {a} = record { TMap = λ a → λ x → x ; isNTrans = isNTrans1 {a} } where
                isNTrans1 : {a : YObj } → IsNTrans (Category.op A) (Sets {c₂}) a a (λ a → λ x → x )
-               isNTrans1 {a} = record { commute = ? }
+               isNTrans1 {a} = record { commute = λ {a} {b} {f} x → refl  }
 
             _+_ : {a b c : YObj} → YHom b c → YHom a b → YHom a c
             _+_ {a} {b} {c} f g  =
@@ -75,9 +75,6 @@ SetsAop  = record { Obj = YObj
                 f == g → h == i → (h + f) == (i + g)
             o-resp-≈ {a} {b} {c} {f} {g} {h} {i} f=g h=i {x} = resp  f=g h=i
 
--- A is Locally small
--- postulate ≈-≡ :  { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ )  {a b : Obj A } { x y : Hom A a b } →  (x≈y : A [ x ≈ y  ]) → x ≡ y
-
 ---
 --
 --  Object mapping in Yoneda Functor
@@ -87,16 +84,13 @@ SetsAop  = record { Obj = YObj
 open import Function
 
 y-obj :  (a : Obj A) → Functor (Category.op A) (Sets {c₂})
-y-obj a = ? -- Yoneda A (≈-≡ A) a
+y-obj a = Yoneda A a small
 
 ----
 --
 --  Hom mapping in Yoneda Functor
 --
 ----
-
--- import Axiom.Extensionality.Propositional
--- postulate extensionality : { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) → Axiom.Extensionality.Propositional.Extensionality c₂ c₂
 
 y-tmap :   ( a b : Obj A ) → (f : Hom A a b ) → (x : Obj (Category.op A)) → 
      FObj (y-obj a) x → FObj (y-obj b ) x 
@@ -107,9 +101,10 @@ y-map  {a} {b} f = record { TMap =  y-tmap  a b f ; isNTrans = isNTrans1 {a} {b}
    lemma-y-obj4 : {a₁ b₁ : Obj (Category.op A)} {g : Hom (Category.op A) a₁ b₁} → {a b : Obj A } → (f : Hom A a b ) →
         Sets [ Sets [ FMap (y-obj b) g o y-tmap  a b f a₁ ] ≈
         Sets [ y-tmap  a b f b₁ o FMap (y-obj a) g ] ]
-   lemma-y-obj4 {a₁} {b₁} {g} {a} {b} f = ? -- let open ≈-Reasoning A in extensionality A ( λ x →  ≈-≡ A ( begin
-                -- A [ A [ f o x ] o g ] ≈↑⟨ assoc ⟩
-                -- A [ f o A [ x  o g ] ] ∎ ) )
+   lemma-y-obj4 {a₁} {b₁} {g} {a} {b} f x = Small.≡←≈ small ( begin
+                A [ A [ f o x ] o g ] ≈↑⟨ assoc ⟩
+                A [ f o A [ x  o g ] ] ∎ ) 
+                   where open ≈-Reasoning A
    isNTrans1 : {a b : Obj A } →  (f : Hom A a b ) → IsNTrans (Category.op A) (Sets {c₂}) (y-obj a) (y-obj b) (y-tmap  a b f )
    isNTrans1 {a} {b} f = record { commute = λ{a₁ b₁ g } → lemma-y-obj4 {a₁} {b₁} {g} {a} {b} f } 
 
@@ -129,20 +124,20 @@ YonedaFunctor  = record {
              ; ≈-cong = ≈-cong
         } } where
         ≈-cong : {a b : Obj A} {f g : Hom A a b} → A [ f ≈ g ] → SetsAop [ y-map  f ≈ y-map  g ]
-        ≈-cong {a} {b} {f} {g} eq  =  ? -- let open ≈-Reasoning A in  -- (λ x g₁ → A [ f o g₁ ] ) ≡ (λ x g₁ → A [  g o  g₁ ] )
-             -- extensionality A ( λ h → ≈-≡ A  ( begin
-             --    A [ f o h ] ≈⟨ resp refl-hom eq ⟩
-             --    A [ g o h ] ∎ ) ) 
+        ≈-cong {a} {b} {f} {g} eq  h =  let open ≈-Reasoning A in  -- (λ x g₁ → A [ f o g₁ ] ) ≡ (λ x g₁ → A [  g o  g₁ ] )
+             Small.≡←≈ small ( begin
+                 A [ f o h ] ≈⟨ resp refl-hom eq ⟩
+                 A [ g o h ] ∎ ) 
         identity : {a : Obj A} → SetsAop [ y-map (id1 A a) ≈ id1 SetsAop (y-obj a )  ]
-        identity  {a} = ? --  let open ≈-Reasoning A in -- (λ x g → A [ id1 A a o g ] ) ≡ (λ a₁ x → x)
-             -- extensionality A ( λ g →  ≈-≡ A  ( begin
-             --   A [ id1 A a o g ] ≈⟨ idL ⟩
-             --    g ∎ ) )  
+        identity  {a} g = let open ≈-Reasoning A in -- (λ x g → A [ id1 A a o g ] ) ≡ (λ a₁ x → x)
+             Small.≡←≈ small ( begin
+                 A [ id1 A a o g ] ≈⟨ idL ⟩
+                 g ∎ ) 
         distr1 : {a b c : Obj A} {f : Hom A a b} {g : Hom A b c} → SetsAop [ y-map (A [ g o f ]) ≈ SetsAop [ y-map g o y-map f ] ]
-        distr1 {a} {b} {c} {f} {g} = ? -- let open ≈-Reasoning A in -- (λ x g₁ → (A [  (A [ g o f]  o g₁ ]))) ≡ (λ x x₁ → A [  g o A [ f o x₁ ] ] )
-           -- extensionality A ( λ h →  ≈-≡ A  ( begin
-           --      A [ A [ g o f ]  o h ] ≈↑⟨ assoc  ⟩
-           --      A [  g o A [ f o h ] ] ∎ ) )  
+        distr1 {a} {b} {c} {f} {g} h = let open ≈-Reasoning A in -- (λ x g₁ → (A [  (A [ g o f]  o g₁ ]))) ≡ (λ x x₁ → A [  g o A [ f o x₁ ] ] )
+           Small.≡←≈ small ( begin
+               A [ A [ g o f ]  o h ] ≈↑⟨ assoc  ⟩
+               A [  g o A [ f o h ] ] ∎ ) 
 
 ------
 --
@@ -185,22 +180,14 @@ F2Natmap  {a} {F} {x} b = λ ( g : Hom A b a ) → ( FMap F g ) x
 
 F2Nat :   {a : Obj A} → {F : Obj SetsAop } →  FObj F a  → Hom SetsAop (y-obj a) F
 F2Nat  {a} {F} x = record { TMap = F2Natmap {a} {F} {x} ; isNTrans = isNTrans1 } where
-   commute1 : {a₁ b : Obj (Category.op A)} {f : Hom (Category.op A) a₁ b} (g : Hom A  a₁ a) →
-                (Sets [ FMap F f o  FMap F g ]) x ≡ FMap F (A [ g o  f ] ) x
-   commute1 g =  let open ≈-Reasoning (Sets) in
-            cong ( λ f → f x ) ? -- ( sym ( distr F )  )
-   commute : {a₁ b : Obj (Category.op A)} {f : Hom (Category.op A) a₁ b} → 
-        Sets [ Sets [ FMap F f o F2Natmap {a} {F} {x} a₁ ] ≈ Sets [ F2Natmap  {a} {F} {x} b o FMap (y-obj  a) f ] ]
-   commute {a₁} {b} {f} =  let open ≈-Reasoning (Sets) in
-             begin
-                Sets [ FMap F f o F2Natmap  {a} {F} {x} a₁ ]
-             ≈⟨⟩
-                Sets [ FMap F f o (λ ( g : Hom A a₁ a ) → ( FMap F g ) x) ]
-             ≈⟨ ? ⟩ -- extensionality A  ( λ (g : Hom A  a₁ a) → commute1 {a₁} {b} {f} g ) ⟩
-                Sets [  (λ ( g : Hom A b a ) → ( FMap F g ) x) o FMap (y-obj  a) f ] 
-             ≈⟨⟩
-                Sets [ F2Natmap  {a} {F} {x} b o FMap (y-obj  a) f ] 
-             ∎
+   commute : {y b : Obj (Category.op A)} {f : Hom (Category.op A) y b} → 
+        Sets [ Sets [ FMap F f o F2Natmap {a} {F} {x} y ] ≈ Sets [ F2Natmap  {a} {F} {x} b o FMap (y-obj  a) f ] ]
+   commute {y} {b} {f} ay =  begin
+         FMap F f (FMap F ay x) ≡⟨ (EqR.sym (IsFunctor.distr (isFunctor F) x )) ⟩
+         FMap F (FMap (y-obj a) f ay) x ∎ where 
+            open ≡-Reasoning 
+            c00 : Functor (Category.op A) (Sets {c₂})
+            c00 = F
    isNTrans1 : IsNTrans (Category.op A) (Sets {c₂}) (y-obj  a) F (F2Natmap  {a} {F})
    isNTrans1 = record { commute = λ {a₁ b f}  →  commute {a₁} {b} {f} } 
 
@@ -220,29 +207,19 @@ Nat2F  {a} {F} ha =  ( TMap ha a ) (id1 A a)
 
 F2Nat→Nat2F :     {a : Obj A } → {F : Obj SetsAop } → (fa : FObj F a) 
     →  Nat2F  {a} {F} (F2Nat  {a} {F} fa) ≡ fa 
-F2Nat→Nat2F  {a} {F} fa = ? -- let open ≈-Reasoning (Sets) in cong ( λ f → f fa ) (
-             -- FMap F (Category.Category.Id A) fa ≡ fa
-             -- begin
-             --   ( FMap F (id1 A _ )) 
-             -- ≈⟨ IsFunctor.identity (isFunctor F)    ⟩
-             --    id1 Sets (FObj F a)
-             -- ∎ )
-
-≡-cong = Relation.Binary.PropositionalEquality.cong 
+F2Nat→Nat2F  {a} {F} fa = IsFunctor.identity (isFunctor F) fa
 
 --     ha : NTrans (op A) Sets (y-obj {a}) F
 --                FMap F  g  o TMap ha a ≈   TMap ha b  o FMap (y-obj {a}) g
 Nat2F→F2Nat :  {a : Obj A } → {F : Obj SetsAop } → (ha : Hom SetsAop  (y-obj  a) F) 
      →  SetsAop  [ F2Nat  {a} {F} (Nat2F  {a} {F} ha) ≈ ha ]
-Nat2F→F2Nat {a} {F} ha {b} = ? -- let open ≡-Reasoning in begin
---    TMap (F2Nat  {a} {F} (Nat2F {a} {F} ha)) b ≡⟨⟩
---    (λ g → FMap F g (TMap ha a (id1 A _))) ≡⟨  extensionality A  (λ g → ( begin
---           FMap F g (TMap ha a (id1 A _)) ≡⟨  ≡-cong (λ f → f (id1 A _)) (IsNTrans.commute (isNTrans ha)) ⟩
---           TMap ha b (FMap (y-obj a) g (id1 A _)) ≡⟨⟩
---           TMap ha b ( A [ id1 A _ o g ] ) ≡⟨  ≡-cong ( TMap ha b ) ( ≈-≡ A (≈-Reasoning.idL A)) ⟩
---           TMap ha b g ∎ )) ⟩
---       TMap ha b
---    ∎ 
+Nat2F→F2Nat {a} {F} ha {b} g = begin
+    F2Natmap {a} {F} b g  ≡⟨⟩
+    FMap F g (TMap ha a (id1 A _)) ≡⟨ (IsNTrans.commute (isNTrans ha) (id1 A _) ) ⟩ 
+    TMap ha b (FMap (y-obj a) g (id1 A _)) ≡⟨ cong (TMap ha b) ( Small.≡←≈ small (≈-Reasoning.idL A) ) ⟩
+    TMap ha b g ∎ where
+       open ≡-Reasoning
+
 --
 -- Yoneda's Lemma
 --    Yoneda Functor is full and faithfull
@@ -251,11 +228,11 @@ Nat2F→F2Nat {a} {F} ha {b} = ? -- let open ≡-Reasoning in begin
 --  λ b g → (A Category.o f₁) g
 YonedaLemma1 :  {a a' : Obj A } {f : FObj (FObj YonedaFunctor  a) a' } 
      → SetsAop [ F2Nat  {a'} {FObj YonedaFunctor  a} f ≈ FMap YonedaFunctor  f ]
-YonedaLemma1 {a} {a'} {f} = ? -- refl
+YonedaLemma1 {a} {a'} {f} x = refl
 
 YonedaIso0 :  {a a' : Obj A } {f : FObj (FObj YonedaFunctor  a) a' } 
      → Nat2F ( FMap YonedaFunctor  f ) ≡ f
-YonedaIso0 {a} {a'} {f} = ? --  ≈-≡ A (≈-Reasoning.idR A)
+YonedaIso0 {a} {a'} {f} = Small.≡←≈ small (≈-Reasoning.idR A)
 
 YonedaIso1 : {a a' : Obj A } →  (ha : Hom SetsAop  (y-obj  a) (y-obj a'))
      →  SetsAop  [ FMap YonedaFunctor (Nat2F  {a} ha) ≈ ha ]
@@ -290,14 +267,10 @@ _^ : {a a' b : Obj A } → (f : Hom A a  a' )  → Hom A b a →  Hom A b a'
 _^ {a} {a'} {b} f g = (FMap (FObj YonedaFunctor a') g) f
 
 f-unique : {a a' b : Obj A } (f : Hom A a  a' ) →  f ^ ≡ TMap  (FMap YonedaFunctor  f) b
-f-unique {a} {a'} {b} f  = ? --  extensionality A  (λ g → begin
---             (f ^ ) g ≡⟨⟩
---             (FMap (FObj YonedaFunctor a') g) f ≡⟨⟩
---             A [ f o g ] ≡⟨⟩
---             TMap  (FMap YonedaFunctor  f) b g ∎  ) where  open ≡-Reasoning 
+f-unique {a} {a'} {b} f  = refl 
 
 f-u : {a a' b : Obj A } (f : FObj (FObj YonedaFunctor a') a  ) → Sets [  f ^ ≈   TMap (FMap YonedaFunctor f ) b ]
-f-u = ? -- f-unique
+f-u f  x = cong (λ k → k x) (f-unique f)
 
 -- faithful (injective )
 Yoneda-injective : {a b b'  : Obj A } → {x y : Obj SetsAop} → (g h : Hom A b b' )  (f : Hom A a b )
@@ -308,10 +281,11 @@ Yoneda-injective {a} {b} {x} {y} g h f yg=yh = begin
              Nat2F (FMap YonedaFunctor g)  ≈⟨ ylem11 yg=yh ⟩ 
              Nat2F (FMap YonedaFunctor h)  ≈⟨ idR ⟩
              h  ∎  where
-     ylem11 : SetsAop [ FMap YonedaFunctor g  ≈  FMap YonedaFunctor h ] → A [ Nat2F (FMap YonedaFunctor g) ≈ Nat2F (FMap YonedaFunctor h) ]
-     ylem11 yg=yh with  yg=yh {b}
-     ... | eq = ≈-Reasoning.≈←≡ A ( cong (λ k →  k (id1 A b)) ? )
      open ≈-Reasoning A
+     ylem11 : SetsAop [ FMap YonedaFunctor g  ≈  FMap YonedaFunctor h ] → A [ Nat2F (FMap YonedaFunctor g) ≈ Nat2F (FMap YonedaFunctor h) ]
+     ylem11 yg=yh = begin
+         g o id1 A b ≈⟨ ≈←≡ (yg=yh (id1 A b)) ⟩
+         h o id1 A b ∎
 
 -- full (surjective)
 
@@ -334,8 +308,6 @@ CatEpi F s g h  eq = begin
      Sets [ h o  FMap F (sur s (id1 Sets _)) ]  ≈⟨ cdr (surjective s (id1 Sets _) ) ⟩
      Sets [ h o id1  Sets _ ]  ≈⟨ idR ⟩
      h ∎ where open ≈-Reasoning Sets
-     -- sj : B [ FMap F ( CatSurjective.sur s (FMap F (f g h))) ≈ FMap F (f g h) ]
-     -- sj  = CatSurjective.surjective s (FMap F (f g h)) 
 
 Yoneda-surjective : CatSurjective A SetsAop YonedaFunctor 
 Yoneda-surjective  = record { sur = λ {a} {a'} g → f g ; surjective = λ g → 
@@ -360,33 +332,24 @@ Yoneda-epi {b} {x} {y} g h yg=yh = begin
          TMap h _
          ∎ where open ≈-Reasoning Sets
 
---- How to prove it? from smallness?
 
-data _~_   {a b : Obj A} (f : Hom A a b)
-      : ∀{x y : Obj A} → Hom A x y → Set (suc (c₁ ⊔ c₂ ⊔ ℓ)) where
-   ~refl : {g : Hom A a b} → (eqv : A [ f ≈ g ]) →  f ~ g
-
-≃→b=b : {a b a' b' : Obj A }
-      → ( f : Hom A a b )
-      → ( g : Hom A a' b' )
-      → f ~ g → b ≡ b'
-≃→b=b f g (~refl eqv) = refl
-
--- open import Relation.Binary.HeterogeneousEquality as HE using (_≅_ ) 
-
---
--- if Hom A a a ≡ Hom A a b, b must be a cod of id1 A a, so a ≡ b
---
---postulate  -- ?
---     ylem0 : {a b : Obj A } → Hom A a a ≡ Hom A a b → a ≡ b
-
--- Obj : Set c₂
--- Hom : Obj → Obj → Set c₂
--- cod : {A B : Obj} → Hom A B → Obj
--- cod {a} {b} _ = b
+open import Data.Product renaming (_×_ to _∧_) hiding (_<*>_)
 
 Yoneda-full-embed : {a b : Obj A } → FObj YonedaFunctor a ≡ FObj YonedaFunctor b → a ≡ b
-Yoneda-full-embed {a} {b} eq = ? where -- ylem0 ylem1 where
-     ylem1 : Hom A a a ≡ Hom A a b
-     ylem1 = cong (λ k → FObj k a) eq
-
+Yoneda-full-embed {a} {b} eq = ylem4 _ ylem5 where
+     open Small small
+     ylem0 : I
+     ylem0 = hom→ (id1 A a) 
+     ylem2 : Hom A a b
+     ylem2 = hom← {b} {a} ( hom→ (id1 A a) )
+     ylem7 : I
+     ylem7 = hom→ ylem2
+     open ≡-Reasoning 
+     ylem5 : ylem0 ≡ ylem7
+     ylem5 = begin
+         hom→ (id1 A a) ≡⟨ EqR.sym hom-rev ⟩
+         hom→ (hom← {b} {a} ( hom→ (id1 A a) )) ∎
+     ylem4 : (f : Hom A a b ) → hom→ (id1 A a) ≡ hom→ f → a ≡ b
+     ylem4 f eq = begin
+         a ≡⟨ proj₁ (hom-inject eq) ⟩
+         b ∎

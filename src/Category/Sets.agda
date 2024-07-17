@@ -16,6 +16,7 @@ Sets {ℓ} = record { Obj = Set ℓ
                   ; Hom = λ a b → a → b
                   ; _o_ = λ f g → f ∘ g
                   ; _≈_ = _==_ 
+                  ; Id = λ a → a
                   ; isCategory = isCategory
                   }
   where

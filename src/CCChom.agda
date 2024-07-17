@@ -404,7 +404,7 @@ hom→CCC A h = record {
                      f
                   ≈↑⟨  iso← ( ccc-1 (isCCChom h )) ⟩
                     ≅← ( ccc-1 (isCCChom h )  {a} {OneObj} {OneObj}) (  ≅→ ( ccc-1 (isCCChom h ) {a} {OneObj} {OneObj} ) f ) 
-                  ≈⟨  ≡-cong {Level.zero} {Level.zero} {Level.zero} {OneCat} {OneObj} {OneObj}  (
+                  ≈⟨  ≡-cong OneCat {OneObj} {OneObj}  (
                          λ y → ≅← ( ccc-1 (isCCChom h ) {a} {OneObj} {OneObj} ) y ) (e20 ( ≅→ ( ccc-1 (isCCChom h ) {a} {OneObj} {OneObj} ) f) )  ⟩
                     ≅← ( ccc-1 (isCCChom h ) {a} {OneObj} {OneObj} ) OneObj
                   ≈⟨⟩
