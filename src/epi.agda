@@ -1,4 +1,4 @@
-{-# OPTIONS --cubical-compatible --safe #-}
+{-# OPTIONS --cubical-compatible --safe --warning=noUnsupportedIndexedMatch #-}
 open import Category -- https://github.com/konn/category-agda
 open import Level
 
@@ -33,13 +33,18 @@ data FourHom  : FourObject → FourObject → Set  where
 --       |                          |
 --       c-----------------+        |
 --       |                 ↓        ↓
---       + ----→  a ----→  b ----→  d 
+--       + ----→  a ----→  b ----→  d
 --                |                 ↑
 --                +-----------------+
 --
 
+open import graph -- hiding -- (_・_)
 
-_・_ :  {a b c : FourObject } →  FourHom b c  →  FourHom a b   →  FourHom a c 
+FourCat' : Category  Level.zero Level.zero Level.zero
+FourCat'  = GraphtoCat ( record { vertex = FourObject ; edge = FourHom } )
+   where open graphtocat
+
+_・_ :  {a b c : FourObject } →  FourHom b c  →  FourHom a b   →  FourHom a c
 _・_ {x} {ta} {ta}  id-ta   y  = y
 _・_ {x} {tb} {tb}  id-tb   y  = y
 _・_ {x} {tc} {tc}  id-tc   y  = y
@@ -90,12 +95,12 @@ assoc-・  arrow-ad arrow-ca id-tc = refl
 assoc-・  arrow-cd id-tc id-tc = refl
 
 FourId :   (a : FourObject  ) →  (FourHom  a a )
-FourId ta = id-ta 
-FourId tb = id-tb 
-FourId tc = id-tc 
-FourId td = id-td 
+FourId ta = id-ta
+FourId tb = id-tb
+FourId tc = id-tc
+FourId td = id-td
 
-open import Relation.Binary.PropositionalEquality 
+open import Relation.Binary.PropositionalEquality
 
 FourCat :  Category   zero zero zero
 FourCat    = record {
@@ -173,7 +178,7 @@ record Rev  {a b : FourObject } (f : Hom FourCat a b ) : Set where
      eq  :   f ・ rev  ≡ id1 FourCat b
 
 not-rev : ¬ ( {a b : FourObject } →  (f : Hom FourCat a b ) →  Rev f )
-not-rev r =  lemma1 arrow-ab (Rev.rev (r  arrow-ab)) (Rev.eq (r  arrow-ab))  
+not-rev r =  lemma1 arrow-ab (Rev.rev (r  arrow-ab)) (Rev.eq (r  arrow-ab))
   where
      lemma1 :  (f : Hom FourCat ta tb )  →  (e₁ : Hom FourCat tb ta )
           → ( f ・ e₁  ≡ id1 FourCat tb )  →  ⊥

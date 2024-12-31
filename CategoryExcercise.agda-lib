@@ -3,7 +3,7 @@ name:    CategoryExcercise
 depend:  standard-library 
 include: src
 flags:
-  --warning=noUnsupportedIndexedMatch
+--   --warning=noUnsupportedIndexedMatch
 
 
 -- End 

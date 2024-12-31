@@ -1,4 +1,5 @@
-{-# OPTIONS --cubical-compatible --safe #-}
+{-# OPTIONS --with-K --cubical-compatible #-}
+-- {-# OPTIONS --cubical-compatible --safe #-}
 module CCCgraph where
 
 open import Level

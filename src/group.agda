@@ -5,9 +5,11 @@
 
 -- Shinji KONO <kono@ie.u-ryukyu.ac.jp>
 
+import Axiom.Extensionality.Propositional
+
 open import Category -- https://github.com/konn/category-agda                                                                                     
 open import Level
-module group { c c₁ c₂ ℓ : Level }   where
+module group { c c₁ c₂ ℓ : Level }  (f-extensionality : { n m : Level}  → Axiom.Extensionality.Propositional.Extensionality n m ) where
 
 open import Category.Sets
 open import Category.Cat
@@ -65,8 +67,6 @@ infixr 9 _<_∙_>
 
 open GroupMorphisms
 
-import Axiom.Extensionality.Propositional
-postulate f-extensionality : { n m : Level}  → Axiom.Extensionality.Propositional.Extensionality n m
 
 GR : {c l : Level } → Group c l → RawGroup c l
 GR G = record {

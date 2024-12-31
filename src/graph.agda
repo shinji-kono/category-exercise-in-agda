@@ -1,4 +1,4 @@
-{-# OPTIONS --cubical-compatible --safe #-}
+{-# OPTIONS --cubical-compatible --safe --warning=noUnsupportedIndexedMatch #-}
 
 open import Category -- https://github.com/konn/category-agda
 open import Level
@@ -80,72 +80,75 @@ data TwoHom  : TwoObject   → TwoObject  → Set  where
    arrow-f :  TwoHom t0 t1
    arrow-g :  TwoHom t0 t1
 
-TwoCat' : Category  Level.zero Level.zero Level.zero
-TwoCat'  = GraphtoCat ( record { vertex = TwoObject ; edge = TwoHom } )
+TwoCat : Category  Level.zero Level.zero Level.zero
+TwoCat  = GraphtoCat ( record { vertex = TwoObject ; edge = TwoHom } )
    where open graphtocat
 
-_×_ :  {a b c : TwoObject } →  TwoHom   b c  →  TwoHom   a b   →  TwoHom   a c 
-_×_ {t0} {t1} {t1}  id-t1   arrow-f  = arrow-f 
-_×_ {t0} {t1} {t1}  id-t1   arrow-g  = arrow-g 
-_×_ {t1} {t1} {t1}  id-t1   id-t1    = id-t1 
-_×_ {t0} {t0} {t1}  arrow-f id-t0    = arrow-f 
-_×_ {t0} {t0} {t1}  arrow-g id-t0    = arrow-g 
-_×_ {t0} {t0} {t0}  id-t0   id-t0    = id-t0 
+module TW where
+    -- {-# OPTIONS --warning=noUnsupportedIndexedMatch #-}
+
+    _×_ :  {a b c : TwoObject } →  TwoHom   b c  →  TwoHom   a b   →  TwoHom   a c 
+    _×_ {t0} {t1} {t1}  id-t1   arrow-f  = arrow-f 
+    _×_ {t0} {t1} {t1}  id-t1   arrow-g  = arrow-g 
+    _×_ {t1} {t1} {t1}  id-t1   id-t1    = id-t1 
+    _×_ {t0} {t0} {t1}  arrow-f id-t0    = arrow-f 
+    _×_ {t0} {t0} {t1}  arrow-g id-t0    = arrow-g 
+    _×_ {t0} {t0} {t0}  id-t0   id-t0    = id-t0 
 
 
-open TwoHom
+    open TwoHom
 
---          f    g    h
---       d <- c <- b <- a
---
---   It can be proved without TwoHom constraints
+    --          f    g    h
+    --       d <- c <- b <- a
+    --
+    --   It can be proved without TwoHom constraints
 
-assoc-× :    {a b c d : TwoObject   }
-       {f : (TwoHom    c d )} → {g : (TwoHom b c )} → {h : (TwoHom a b )} →
-       ( f × (g × h)) ≡ ((f × g) × h )
-assoc-×   {t0} {t0} {t0} {t0} { id-t0   }{ id-t0   }{ id-t0   } = refl
-assoc-×   {t0} {t0} {t0} {t1} { arrow-f }{ id-t0   }{ id-t0   } = refl
-assoc-×   {t0} {t0} {t0} {t1} { arrow-g }{ id-t0   }{ id-t0   } = refl
-assoc-×   {t0} {t0} {t1} {t1} { id-t1   }{ arrow-f }{ id-t0   } = refl
-assoc-×   {t0} {t0} {t1} {t1} { id-t1   }{ arrow-g }{ id-t0   } = refl
-assoc-×   {t0} {t1} {t1} {t1} { id-t1   }{ id-t1   }{ arrow-f } = refl
-assoc-×   {t0} {t1} {t1} {t1} { id-t1   }{ id-t1   }{ arrow-g } = refl
-assoc-×   {t1} {t1} {t1} {t1} { id-t1   }{ id-t1   }{ id-t1   } = refl
+    assoc-× :    {a b c d : TwoObject   }
+           {f : (TwoHom    c d )} → {g : (TwoHom b c )} → {h : (TwoHom a b )} →
+           ( f × (g × h)) ≡ ((f × g) × h )
+    assoc-×   {t0} {t0} {t0} {t0} { id-t0   }{ id-t0   }{ id-t0   } = refl
+    assoc-×   {t0} {t0} {t0} {t1} { arrow-f }{ id-t0   }{ id-t0   } = refl
+    assoc-×   {t0} {t0} {t0} {t1} { arrow-g }{ id-t0   }{ id-t0   } = refl
+    assoc-×   {t0} {t0} {t1} {t1} { id-t1   }{ arrow-f }{ id-t0   } = refl
+    assoc-×   {t0} {t0} {t1} {t1} { id-t1   }{ arrow-g }{ id-t0   } = refl
+    assoc-×   {t0} {t1} {t1} {t1} { id-t1   }{ id-t1   }{ arrow-f } = refl
+    assoc-×   {t0} {t1} {t1} {t1} { id-t1   }{ id-t1   }{ arrow-g } = refl
+    assoc-×   {t1} {t1} {t1} {t1} { id-t1   }{ id-t1   }{ id-t1   } = refl
 
-TwoId :   (a : TwoObject   ) →  (TwoHom    a a )
-TwoId  t0 = id-t0 
-TwoId   t1 = id-t1 
+    TwoId :   (a : TwoObject   ) →  (TwoHom    a a )
+    TwoId  t0 = id-t0 
+    TwoId  t1 = id-t1 
 
-open import Relation.Binary.PropositionalEquality renaming ( cong to ≡-cong )
+    open import Relation.Binary.PropositionalEquality renaming ( cong to ≡-cong )
 
-TwoCat :  Category  Level.zero Level.zero Level.zero   
-TwoCat      = record {
-    Obj  = TwoObject ;
-    Hom = λ a b →   TwoHom a b  ;
-    _≈_ =  λ x y → x  ≡ y ;
-    Id  =  λ{a} → TwoId a ;
-    isCategory  = record {
-            isEquivalence =  record {refl = refl ; trans = trans ; sym = sym } ;
-            identityL  = λ{a b f} → identityL    {a} {b} {f} ;
-            identityR  = λ{a b f} → identityR    {a} {b} {f} ;
-            o-resp-≈  = λ{a b c f g h i} →  o-resp-≈     {a} {b} {c} {f} {g} {h} {i} ;
-            associative  = λ{a b c d f g h } → assoc-×      {a} {b} {c} {d} {f} {g} {h}
-       }
-   }  where
-        identityL :   {A B : TwoObject } {f : ( TwoHom    A B) } →  ((TwoId B)  × f)  ≡ f
-        identityL      {t1} {t1} { id-t1 } = refl
-        identityL      {t0} {t0} { id-t0 } = refl
-        identityL      {t0} {t1} { arrow-f } = refl
-        identityL      {t0} {t1} { arrow-g } = refl
-        identityR :   {A B : TwoObject } {f : ( TwoHom    A B) } →   ( f × TwoId A )  ≡ f
-        identityR      {t1} {t1} { id-t1  } = refl
-        identityR      {t0} {t0} { id-t0 } = refl
-        identityR      {t0} {t1} { arrow-f } = refl
-        identityR      {t0} {t1} { arrow-g } = refl
-        o-resp-≈ :   {A B C : TwoObject   } {f g :  ( TwoHom    A B)} {h i : ( TwoHom B C)} →
-            f  ≡ g → h  ≡ i → ( h × f )  ≡ ( i × g )
-        o-resp-≈     {a} {b} {c} {f} {.f} {h} {.h}  refl refl = refl
-
+    TwoCat' :  Category  Level.zero Level.zero Level.zero   
+    TwoCat'      = record {
+        Obj  = TwoObject ;
+        Hom = λ a b →   TwoHom a b  ;
+        _≈_ =  λ x y → x  ≡ y ;
+        Id  =  λ{a} → TwoId a ;
+        isCategory  = record {
+                isEquivalence =  record {refl = refl ; trans = trans ; sym = sym } ;
+                identityL  = λ{a b f} → identityL    {a} {b} {f} ;
+                identityR  = λ{a b f} → identityR    {a} {b} {f} ;
+                o-resp-≈  = λ{a b c f g h i} →  o-resp-≈     {a} {b} {c} {f} {g} {h} {i} ;
+                associative  = λ{a b c d f g h } → assoc-×      {a} {b} {c} {d} {f} {g} {h}
+           }
+       }  where
+            identityL :   {A B : TwoObject } {f : ( TwoHom    A B) } →  ((TwoId B)  × f)  ≡ f
+            identityL      {t1} {t1} { id-t1 } = refl
+            identityL      {t0} {t0} { id-t0 } = refl
+            identityL      {t0} {t1} { arrow-f } = refl
+            identityL      {t0} {t1} { arrow-g } = refl
+            identityR :   {A B : TwoObject } {f : ( TwoHom    A B) } →   ( f × TwoId A )  ≡ f
+            identityR      {t1} {t1} { id-t1  } = refl
+            identityR      {t0} {t0} { id-t0 } = refl
+            identityR      {t0} {t1} { arrow-f } = refl
+            identityR      {t0} {t1} { arrow-g } = refl
+            o-resp-≈ :   {A B C : TwoObject   } {f g :  ( TwoHom    A B)} {h i : ( TwoHom B C)} →
+                f  ≡ g → h  ≡ i → ( h × f )  ≡ ( i × g )
+            o-resp-≈     {a} {b} {c} {f} {.f} {h} {.h}  refl refl = refl
+      
 
 -- Category with no arrow but identity
 

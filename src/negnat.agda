@@ -1,4 +1,4 @@
-{-# OPTIONS --cubical-compatible --safe #-}
+{-# OPTIONS --cubical-compatible --safe --warning=noUnsupportedIndexedMatch #-}
 module negnat where
 
 

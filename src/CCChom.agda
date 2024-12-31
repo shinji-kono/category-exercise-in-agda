@@ -11,6 +11,7 @@ open  import  Relation.Binary.PropositionalEquality hiding ( [_] )
 
 open Functor
 
+--  CCC satisfies   hom natural iso
 --   ccc-1 : Hom A a 1 ≅ {*}
 --   ccc-2 : Hom A c (a × b) ≅ (Hom A c a ) × ( Hom A c b )
 --   ccc-3 : Hom A a (c ^ b) ≅ Hom A (a × b) c
@@ -52,17 +53,7 @@ record IsCCChom {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (１ : Obj 
                     (IsoS.≅← (ccc-2 ) (A [ k o (proj₁ ( IsoS.≅→ ccc-2  (id1 A (c *  b)))) ] ,
                         (proj₂ ( IsoS.≅→ ccc-2  (id1 A (c *  b) ))))) ] ≈ IsoS.≅→ (ccc-3 ) k ]
 
---------
---  CCC satisfies   hom natural iso
---
---   ccc-1 : Hom A a 1 ≅ {*}
---   ccc-2 : Hom A c (a × b) ≅ (Hom A c a ) × ( Hom A c b )
---   ccc-3 : Hom A a (c ^ b) ≅ Hom A (a × b) c
---
---------
-
 open import CCC
-
         
 record CCChom {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) :  Set ( c₁  ⊔  c₂ ⊔ ℓ ) where
      field
@@ -73,8 +64,10 @@ record CCChom {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) :  Set ( c₁
 
 open import HomReasoning 
 
-CCC→hom : {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) ( c : CCC A ) → CCChom A
-CCC→hom A c = record {
+CCC→hom : {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) ( c : CCC A ) 
+   → (CCCcong : IsCCC-*-cong A _ _ _ _ _ _ _ _ _ (CCC.isCCC c))
+   → CCChom A
+CCC→hom A c ccong = record {
        one = CCC.１ c
      ; _*_ = CCC._∧_ c 
      ; _^_ = CCC._<=_ c
@@ -126,7 +119,7 @@ CCC→hom A c = record {
                       CCC.π' c o g 
                   ∎ ) where open ≈-Reasoning A
       c305  : { a b  c₁ : Obj A } {f g : Hom A ((c CCC.∧ a) b) c₁} → A [ f ≈ g ] → A [ (c CCC.*) f ≈ (c CCC.*) g ]
-      c305  f=g = IsCCC.*-cong (CCC.isCCC c ) f=g
+      c305  f=g = IsCCC-*-cong.*-cong ccong f=g
       c306  : { a b  c₁ : Obj A } {f g : Hom A a ((c CCC.<= c₁) b)} → A [ f ≈ g ] → A [ c301 f ≈ c301 g ]
       c306  {a} {b} {c₁} {f} {g} f=g =  begin
                        CCC.ε c o  CCC.<_,_> c (  f o CCC.π c ) ( CCC.π' c ) 
@@ -165,30 +158,33 @@ CCC→hom A c = record {
                  c301 k
              ∎ where open ≈-Reasoning A
 
-U_b : {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) → ( ccc : CCC A ) → (b : Obj A)  → Functor A A
-FObj (U_b A ccc b) = λ a → (CCC._<=_ ccc  a b )
-FMap (U_b A ccc b) = λ f → CCC._* ccc ( A [ f o  CCC.ε ccc ] ) 
-isFunctor (U_b A ccc b) = isF where
+U_b : {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) → ( ccc : CCC A ) → (b : Obj A)  
+   → (CCCcong : IsCCC-*-cong A _ _ _ _ _ _ _ _ _ (CCC.isCCC ccc))
+   → Functor A A
+FObj (U_b A ccc b ccong) = λ a → (CCC._<=_ ccc  a b )
+FMap (U_b A ccc b ccong) = λ f → CCC._* ccc ( A [ f o  CCC.ε ccc ] ) 
+isFunctor (U_b A ccc b ccong) = isF where
    open CCC.CCC ccc
    isc = isCCC 
    open IsCCC isCCC 
+   *-cong = IsCCC-*-cong.*-cong ccong 
 
    isF : IsFunctor A A ( λ a → (a <=  b)) (  λ f → CCC._* ccc ( A [ f o  ε ] ) )
-   IsFunctor.≈-cong isF f≈g = IsCCC.*-cong (CCC.isCCC ccc) ( car f≈g ) where open ≈-Reasoning A
+   IsFunctor.≈-cong isF f≈g = *-cong ( car f≈g ) where open ≈-Reasoning A
    --    e4b : {a b c : Obj A} → { k : Hom A c (a <= b ) } →  A [ ( A [ ε o < A [ k o  π ]  ,  π' > ] ) * ≈ k ]
    IsFunctor.identity isF {a} = begin
                  (id1 A a o ε ) * 
-             ≈⟨ IsCCC.*-cong (CCC.isCCC ccc) ( begin
-                  id1 A a o CCC.ε ccc
-             ≈⟨  idL  ⟩
-                  ε 
-             ≈↑⟨  idR  ⟩
-                  ε o id1 A ( ( a <= b ) ∧ b )
-             ≈↑⟨  cdr ( IsCCC.π-id isc) ⟩
-                   ε o ( < π , π'  > )
-             ≈↑⟨  cdr ( π-cong  idL refl-hom)  ⟩
-                   ε o ( < id1 A (a <= b)  o π , π' > )
-             ∎ ) ⟩
+            ≈⟨ *-cong  ( begin
+                 id1 A a o CCC.ε ccc
+            ≈⟨  idL  ⟩
+                 ε 
+            ≈↑⟨  idR  ⟩
+                 ε o id1 A ( ( a <= b ) ∧ b )
+            ≈↑⟨  cdr ( IsCCC.π-id isc) ⟩
+                  ε o ( < π , π'  > )
+            ≈↑⟨  cdr ( π-cong  idL refl-hom)  ⟩
+                  ε o ( < id1 A (a <= b)  o π , π' > )
+            ∎ ) ⟩
                   (  ε o ( < id1 A ( a <= b)  o π ,  π'  > ) ) *
              ≈⟨ IsCCC.e4b (CCC.isCCC ccc) ⟩
                  id1 A (a <= b)
@@ -201,7 +197,7 @@ isFunctor (U_b A ccc b) = isF where
                   ( g o ( ε  o ( < ( ( f o ε ) * ) o π , π' > ) )) *
              ≈⟨ *-cong assoc ⟩
                   ( ( g o ε ) o ( < ( ( f o ε ) * ) o π , π' > ) ) *
-             ≈↑⟨ IsCCC.distr-* isc ⟩
+             ≈↑⟨ IsCCC-*-cong.distr-* ccong ⟩
                   ( g o ε ) *  o  ( f o ε ) *  
              ∎ where open ≈-Reasoning A
 
@@ -232,8 +228,10 @@ isFunctor (F_b A ccc b) = isF where
 --- U_b and F_b is an adjunction Functor
 -------
 
-CCCtoAdj : {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (  ccc : CCC A ) → (b : Obj A ) → coUniversalMapping A A (F_b A ccc b)
-CCCtoAdj  A ccc b = record {
+CCCtoAdj : {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (  ccc : CCC A ) 
+    → (CCCcong : IsCCC-*-cong A _ _ _ _ _ _ _ _ _ (CCC.isCCC ccc))
+    → (b : Obj A ) → coUniversalMapping A A (F_b A ccc b)
+CCCtoAdj  A ccc ccong b = record {
         U  = λ a → a <= b 
    ;    ε  = ε'
    ;    _*  = solution
@@ -247,6 +245,7 @@ CCCtoAdj  A ccc b = record {
    open IsCCC isCCC 
    ε' :  (a : Obj A) → Hom A (FObj (F_b A ccc b) (a <= b)) a
    ε' a = ε
+   *-cong = IsCCC-*-cong.*-cong ccong 
    solution :  { b' : Obj A} {a : Obj A} → Hom A (FObj (F_b A ccc b) a) b' → Hom A a (b' <= b)
    solution f = f *
    couniversalMapping : {b = b₁ : Obj A} {a : Obj A}
@@ -269,11 +268,13 @@ CCCtoAdj  A ccc b = record {
 
 ----------
 --- Hom A １ ( c ^ b ) ≅ Hom A b c
+---     p54 (3.3)
 ----------
 
-c^b=b<=c : {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) ( ccc : CCC A ) → {a b c : Obj A} →  
-                          IsoS A A  (CCC.１ ccc ) (CCC._<=_ ccc  c b) b c
-c^b=b<=c A ccc {a} {b} {c} = record {
+c^b=b<=c : {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) ( ccc : CCC A ) 
+    → (CCCcong : IsCCC-*-cong A _ _ _ _ _ _ _ _ _ (CCC.isCCC ccc))
+    → {a b c : Obj A} →  IsoS A A  (CCC.１ ccc ) (CCC._<=_ ccc  c b) b c
+c^b=b<=c A ccc ccong {a} {b} {c} = record {
            ≅→ = λ f → A [ CCC.ε ccc o  CCC.<_,_> ccc ( A [ f o CCC.○ ccc b ] ) ( id1 A b )  ] ---   g ’   (g : 1 → b ^ a) of
        ;   ≅← =  λ f → CCC._* ccc ( A [ f o  CCC.π' ccc  ] )                                  --- ┌ f ┐   name of (f : b ^a → 1 )
        ;   iso→  = iso→
@@ -281,7 +282,8 @@ c^b=b<=c A ccc {a} {b} {c} = record {
        ;   cong→ = cong*
        ;   cong← = cong2
    } where
-       cc = IsCCChom.ccc-3 ( CCChom.isCCChom (CCC→hom  A ccc ) ) 
+       cc = IsCCChom.ccc-3 ( CCChom.isCCChom (CCC→hom  A ccc ccong ) )  
+       *-cong = IsCCC-*-cong.*-cong ccong 
        -- e4a : {a b c : Obj A} → { k : Hom A (c /\ b) a } →  A [ A [ ε o ( <,> ( A [ (k *) o π ] )   π')  ] ≈ k ]
        iso→ : {f : Hom A b c} → A [
             (A Category.o CCC.ε ccc) (CCC.< ccc , (A Category.o (ccc CCC.*) ((A Category.o f) (CCC.π' ccc))) (CCC.○ ccc b) > (Category.Category.Id A)) ≈ f ]
@@ -325,11 +327,11 @@ c^b=b<=c A ccc {a} {b} {c} = record {
                           (Category.Category.Id A))) (CCC.π' ccc)) ≈ f ]
        iso← {f} = begin
                 CCC._* ccc (( CCC.ε ccc o ( CCC.<_,_> ccc ( f o (CCC.○ ccc b) ) (id1 A b ))) o (CCC.π' ccc))
-             ≈↑⟨ IsCCC.*-cong ( CCC.isCCC ccc ) assoc ⟩
+             ≈↑⟨ *-cong  assoc ⟩
                 CCC._* ccc ( CCC.ε ccc o (( CCC.<_,_> ccc ( f o (CCC.○ ccc b) ) (id1 A b )) o (CCC.π' ccc)))
-             ≈⟨ IsCCC.*-cong ( CCC.isCCC ccc ) (cdr ( IsCCC.distr-π ( CCC.isCCC ccc ) ) ) ⟩
+             ≈⟨ *-cong  (cdr ( IsCCC.distr-π ( CCC.isCCC ccc ) ) ) ⟩
                 CCC._* ccc ( CCC.ε ccc o CCC.<_,_> ccc ( (f o (CCC.○ ccc b)) o  CCC.π' ccc ) (id1 A b o CCC.π' ccc) )
-             ≈⟨ IsCCC.*-cong ( CCC.isCCC ccc ) (cdr ( IsCCC.π-cong ( CCC.isCCC ccc ) lemma idL )) ⟩
+             ≈⟨ *-cong  (cdr ( IsCCC.π-cong ( CCC.isCCC ccc ) lemma idL )) ⟩
                 CCC._* ccc ( CCC.ε ccc o CCC.<_,_> ccc ( f o CCC.π ccc ) (CCC.π' ccc) )
              ≈⟨  IsCCC.e4b (CCC.isCCC ccc)  ⟩
                f
@@ -346,7 +348,7 @@ c^b=b<=c A ccc {a} {b} {c} = record {
             A [ (ccc CCC.*) ((A Category.o f) (CCC.π' ccc)) ≈ (ccc CCC.*) ((A Category.o g) (CCC.π' ccc)) ]
        cong2 {f} {g} f≈g = begin
                 CCC._* ccc ( f o (CCC.π' ccc) )
-             ≈⟨ IsCCC.*-cong ( CCC.isCCC ccc ) (car f≈g ) ⟩
+             ≈⟨ *-cong  (car f≈g ) ⟩
                 CCC._* ccc ( g o (CCC.π' ccc) )
              ∎ where open ≈-Reasoning A
 
@@ -395,7 +397,7 @@ hom→CCC A h = record {
              ; π-cong = π-cong
              ; e4a = e4a
              ; e4b = e4b
-             ; *-cong = *-cong
+             -- ; *-cong = *-cong
            } where
                e20 : ∀ ( f : Hom OneCat OneObj OneObj ) →  _[_≈_] OneCat {OneObj} {OneObj} f OneObj 
                e20 OneObj = refl

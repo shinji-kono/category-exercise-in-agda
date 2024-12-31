@@ -353,3 +353,6 @@ Yoneda-full-embed {a} {b} eq = ylem4 _ ylem5 where
      ylem4 f eq = begin
          a ≡⟨ proj₁ (hom-inject eq) ⟩
          b ∎
+
+
+-- end

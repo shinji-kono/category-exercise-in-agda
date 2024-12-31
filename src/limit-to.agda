@@ -1,4 +1,4 @@
-{-# OPTIONS --cubical-compatible --safe #-}
+{-# OPTIONS --cubical-compatible --safe --warning=noUnsupportedIndexedMatch #-}
 
 open import Category -- https://github.com/konn/category-agda
 open import Level

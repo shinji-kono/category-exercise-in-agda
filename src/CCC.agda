@@ -33,7 +33,6 @@ record IsCCC {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ)
        -- closed
        e4a : {a b c : Obj A} → { h : Hom A (c ∧ b) a } →  A [ A [ ε o < A [ (h *) o π ]  ,  π' > ] ≈ h ]
        e4b : {a b c : Obj A} → { k : Hom A c (a <= b ) } →  A [ ( A [ ε o < A [ k o  π ]  ,  π' > ] ) * ≈ k ]
-       *-cong :  {a b c : Obj A} → { f f' : Hom A (a ∧ b) c } → A [ f ≈ f' ]  → A [  f *  ≈  f' * ] 
      open  ≈-Reasoning A 
      e'2 :  ○ １ ≈ id1 A １ 
      e'2 = begin
@@ -101,28 +100,6 @@ record IsCCC {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ)
         π' o < f' , g' >  ≈⟨ e3b ⟩
         g'
         ∎ 
-     distr-* : {a b c d : Obj A } { h : Hom A (a ∧ b) c } { k : Hom A d a } → ( h * o k )  ≈ ( h o < ( k o π ) , π' > )  * 
-     distr-* {a} {b} {c} {d} {h} {k} = begin
-             h * o k
-        ≈↑⟨ e4b  ⟩
-             (  ε o < (h * o k ) o π  , π' > ) *
-        ≈⟨ *-cong ( begin
-              ε o < (h * o k ) o π  , π' > 
-        ≈↑⟨ cdr ( π-cong assoc refl-hom ) ⟩
-              ε o ( < h * o ( k o π ) , π' > ) 
-        ≈↑⟨ cdr ( π-cong (cdr e3a) e3b ) ⟩
-               ε o ( < h * o ( π o < k o π , π' > ) , π' o < k o π , π' > > ) 
-        ≈⟨ cdr ( π-cong assoc refl-hom) ⟩
-               ε o ( < (h * o π) o < k o π , π' > , π' o < k o π , π' > > ) 
-        ≈↑⟨ cdr ( distr-π ) ⟩
-               ε o ( < h * o π , π' >  o < k o π , π' > )
-        ≈⟨ assoc ⟩
-              ( ε o < h * o π , π' > ) o < k o π , π' > 
-        ≈⟨ car e4a  ⟩
-               h o < k o π , π' > 
-        ∎ ) ⟩
-            ( h o  <  k o π  , π' > ) *
-        ∎ 
      α : {a b c : Obj A } → Hom A (( a ∧ b ) ∧ c ) ( a ∧ ( b ∧ c ) )
      α = < ( π  o π  )  , < ( π'  o π )  , π'  > >
      α' : {a b c : Obj A } → Hom A  ( a ∧ ( b ∧ c ) ) (( a ∧ b ) ∧ c )
@@ -144,6 +121,46 @@ record IsCCC {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ)
             < f , < g , h > >
          ∎ 
 
+-- In Sets, *-cong requires Functional Extensionality 
+
+record IsCCC-*-cong {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) 
+       ( １ : Obj A )
+       ( ○ : (a : Obj A ) → Hom A a １ )
+        ( _∧_ : Obj A → Obj A → Obj A  ) 
+        ( <_,_> : {a b c : Obj A } → Hom A c a → Hom A c b → Hom A c (a ∧ b)  ) 
+        ( π : {a b : Obj A } → Hom A (a ∧ b) a ) 
+        ( π' : {a b : Obj A } → Hom A (a ∧ b) b ) 
+        ( _<=_ : (a b : Obj A ) → Obj A ) 
+        ( _* : {a b c : Obj A } → Hom A (a ∧ b) c → Hom A a (c <= b) ) 
+        ( ε : {a b : Obj A } → Hom A ((a <= b ) ∧ b) a )
+        (isCCC : IsCCC A １ ○ _∧_ <_,_> π π' _<=_ _* ε )
+           :  Set ( c₁  ⊔  c₂ ⊔ ℓ ) where
+   field
+     *-cong :  {a b c : Obj A} → { f f' : Hom A (a ∧ b) c } → A [ f ≈ f' ]  → A [  f *  ≈  f' * ] 
+   distr-* : {a b c d : Obj A } { h : Hom A (a ∧ b) c } { k : Hom A d a } → A [ A [ h * o k ]  ≈ ( A [ h o < ( A [ k o π  ] ) , π' > ] ) *  ] 
+   distr-* {a} {b} {c} {d} {h} {k} = begin
+           h * o k
+      ≈↑⟨ e4b  ⟩
+           (  ε o < (h * o k ) o π  , π' > ) *
+      ≈⟨ *-cong ( begin
+            ε o < (h * o k ) o π  , π' > 
+      ≈↑⟨ cdr ( π-cong assoc refl-hom ) ⟩
+            ε o ( < h * o ( k o π ) , π' > ) 
+      ≈↑⟨ cdr ( π-cong (cdr e3a) e3b ) ⟩
+             ε o ( < h * o ( π o < k o π , π' > ) , π' o < k o π , π' > > ) 
+      ≈⟨ cdr ( π-cong assoc refl-hom) ⟩
+             ε o ( < (h * o π) o < k o π , π' > , π' o < k o π , π' > > ) 
+      ≈↑⟨ cdr ( distr-π ) ⟩
+             ε o ( < h * o π , π' >  o < k o π , π' > )
+      ≈⟨ assoc ⟩
+            ( ε o < h * o π , π' > ) o < k o π , π' > 
+      ≈⟨ car e4a  ⟩
+             h o < k o π , π' > 
+      ∎ ) ⟩
+          ( h o  <  k o π  , π' > ) *
+      ∎  where
+        open  ≈-Reasoning A 
+        open IsCCC isCCC
 
 record CCC {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) :  Set ( c₁  ⊔  c₂ ⊔ ℓ ) where
      field

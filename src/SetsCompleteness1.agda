@@ -1,4 +1,7 @@
-{-# OPTIONS --safe --with-K #-}
+{-# OPTIONS --warning=noUnsupportedIndexedMatch --with-K #-}
+
+-- we cannot run this proof in curical compatible and with out warning
+
 
 open import Category -- https://github.com/konn/category-agda
 open import Level
