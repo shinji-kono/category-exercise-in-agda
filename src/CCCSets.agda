@@ -1,5 +1,5 @@
-{-# OPTIONS --cubical-compatible --allow-unsolved-metas #-}
--- {-# OPTIONS  --cubical-compatible --safe #-}
+-- {-# OPTIONS --cubical-compatible --allow-unsolved-metas #-}
+{-# OPTIONS  --cubical-compatible --safe #-}
 -- {-# OPTIONS  --warning=noUnsupportedIndexedMatch --allow-unsolved-metas #-}
 module CCCSets where
 
@@ -187,31 +187,32 @@ module ccc-from-graph {c₁ c₂ : Level }  (G : Graph {c₁} {c₂})  where
               o-resp-≈  : {A B C : Objs} {f g : Arrows A B} {h i : Arrows B C} →
                                     f ≡  g → h ≡  i → (h ・ f) ≡ (i ・ g)
               o-resp-≈ refl refl = refl
-   ccc-PL : CCC PL
-   ccc-PL = record {
-         １  =  ⊤
-       ; ○ = λ a → ○ a
-       ; _∧_ = _∧_
-       ; <_,_> = λ {a} {b} {c} f g → < f , g >
-       ; π = λ {a} {b}  → iv  π  (id _)
-       ; π' = λ {a} {b}  → iv  π'  (id _)
-       ; _<=_ = λ f g → f <= g
-       ; _* = λ {a} {b} {c} f → iv  (f *)  (id _)
-       ; ε = λ {a} {b} → iv  ε  (id _)
-       ; isCCC = isCCC
-     } where
-         isCCC : CCC.IsCCC PL ⊤ (λ a → ○ a)  _∧_ ((λ {a} {b} {c} f g → < f , g >)) (iv π (id _)) (iv π' (id _)) 
-             (λ f g → f <= g ) (λ f → iv (f *) (id _)) (iv ε (id _))
-         isCCC = record {
-               e2  = λ {a} {f} → ?
-             ; e3a = λ {a} {b} {c} {f} {g} → ?
-             ; e3b = λ {a} {b} {c} {f} {g} → ?
-             ; e3c = ?
-             ; π-cong = ?
-             ; e4a = ?
-             ; e4b = ?
-           } 
 
+--  ccc-PL : CCC PL
+--  ccc-PL = record {
+--        １  =  ⊤
+--      ; ○ = λ a → ○ a
+--      ; _∧_ = _∧_
+--      ; <_,_> = λ {a} {b} {c} f g → < f , g >
+--      ; π = λ {a} {b}  → iv  π  (id _)
+--      ; π' = λ {a} {b}  → iv  π'  (id _)
+--      ; _<=_ = λ f g → f <= g
+--      ; _* = λ {a} {b} {c} f → iv  (f *)  (id _)
+--      ; ε = λ {a} {b} → iv  ε  (id _)
+--      ; isCCC = isCCC
+--    } where
+--        isCCC : CCC.IsCCC PL ⊤ (λ a → ○ a)  _∧_ ((λ {a} {b} {c} f g → < f , g >)) (iv π (id _)) (iv π' (id _)) 
+--            (λ f g → f <= g ) (λ f → iv (f *) (id _)) (iv ε (id _))
+--        isCCC = record {
+--              e2  = λ {a} {f} → ?
+--            ; e3a = λ {a} {b} {c} {f} {g} → ?
+--            ; e3b = λ {a} {b} {c} {f} {g} → ?
+--            ; e3c = ?
+--            ; π-cong = ?
+--            ; e4a = ?
+--            ; e4b = ?
+--          } 
+--
 --------
 --
 -- Functor from Positive Logic to Sets
