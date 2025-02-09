@@ -173,7 +173,7 @@ module _ (M : ≡-Monoid c) where
 
     -- Lemma-MM12 =  Monad.join MonoidMonad (F m f) (F m' g)
 
-    open import kleisli {_} {_} {_} {A} {T} {η} {μ} {Monad.isMonad MonoidMonad}
+    -- open import kleisli {_} {_} {_} {A} {T} {η} {μ} {Monad.isMonad MonoidMonad}
 
     -- nat-ε   TMap = λ a₁ → record { KMap = λ x → x }
     -- nat-η   TMap = λ a₁ → _,_ (ε,  M)

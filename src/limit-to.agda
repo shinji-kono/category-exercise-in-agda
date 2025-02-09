@@ -43,7 +43,11 @@ open NTrans
 
 -- Functor Γ : TwoCat → A
 
-IndexFunctor :  {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) ( a b : Obj A) ( f g : Hom A a b ) →  Functor (TwoCat ) A
+open TW 
+
+-- we can use TwoCat but ...
+
+IndexFunctor :  {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) ( a b : Obj A) ( f g : Hom A a b ) →  Functor (TwoCat' ) A
 IndexFunctor  {c₁} {c₂} {ℓ} A a b f g = record {
          FObj = λ a → fobj a
        ; FMap = λ {a} {b} f → fmap {a} {b} f
@@ -53,7 +57,7 @@ IndexFunctor  {c₁} {c₂} {ℓ} A a b f g = record {
              ; ≈-cong = λ {a} {b} {c} {f}   → ≈-cong  {a} {b} {c} {f}
        }
       } where
-          T = TwoCat 
+          T = TwoCat'
           fobj :  Obj T → Obj A
           fobj t0 = a
           fobj t1 = b
@@ -114,14 +118,14 @@ open Functor
 IndexNat : {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ)
         →  {a b : Obj A}      (f g : Hom A  a b )
     (d : Obj A) → (h : Hom A d a ) →  A [ A [ f  o  h ] ≈ A [ g  o h ] ]   →
-        NTrans TwoCat  A (K TwoCat A d) (IndexFunctor {c₁} {c₂} {ℓ} A a b f g)
+        NTrans TwoCat'  A (K TwoCat' A d) (IndexFunctor {c₁} {c₂} {ℓ} A a b f g)
 IndexNat {c₁} {c₂} {ℓ} A {a} {b} f g d h fh=gh = record {
     TMap = λ x → nmap x d h ;
     isNTrans = record {
         commute = λ {x} {y} {f'} → commute1 {x} {y} {f'} d h fh=gh
     }
  } where
-         I = TwoCat 
+         I = TwoCat' 
          Γ : Functor I A
          Γ = IndexFunctor {c₁} {c₂} {ℓ} A a b f g
          nmap :  (x : Obj I ) ( d : Obj (A)  ) (h : Hom A d a ) → Hom A (FObj (K I A d) x) (FObj Γ x)
@@ -157,13 +161,13 @@ IndexNat {c₁} {c₂} {ℓ} A {a} {b} f g d h fh=gh = record {
                 ∎
 
 
-equlimit : {c₁ c₂ ℓ : Level} (A : Category c₁ c₂  ℓ) {a b : Obj A} → (f g : Hom A a b)  (lim : Limit TwoCat A (IndexFunctor A a b f g) ) →
+equlimit : {c₁ c₂ ℓ : Level} (A : Category c₁ c₂  ℓ) {a b : Obj A} → (f g : Hom A a b)  (lim : Limit TwoCat' A (IndexFunctor A a b f g) ) →
          Hom A (a0 lim) a
 equlimit A {a} {b} f g lim = TMap (Limit.t0 lim) graph.t0
 
 lim-to-equ :  {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ)
         →  {a b : Obj A}  (f g : Hom A  a b )
-       (lim : Limit TwoCat A (IndexFunctor A a b f g) )
+       (lim : Limit TwoCat' A (IndexFunctor A a b f g) )
         → IsEqualizer A (equlimit A f g lim) f g
 lim-to-equ {c₁} {c₂} {ℓ} A {a} {b} f g lim =  record {
         fe=ge =  fe=ge0
@@ -172,7 +176,7 @@ lim-to-equ {c₁} {c₂} {ℓ} A {a} {b} f g lim =  record {
         ; uniqueness = λ {d} {h} {fh=gh} {k'} → uniquness d h fh=gh k'
      } where
          I : Category Level.zero Level.zero Level.zero   
-         I = TwoCat
+         I = TwoCat'
          Γ : Functor I A
          Γ = IndexFunctor A a b f g
          e : Hom A (a0 lim) a
@@ -187,7 +191,7 @@ lim-to-equ {c₁} {c₂} {ℓ} A {a} {b} f g lim =  record {
                 ≈⟨⟩
                     FMap  Γ arrow-f o TMap (Limit.t0 lim) graph.t0
                 ≈⟨  IsNTrans.commute ( isNTrans (Limit.t0 lim)) {graph.t0} {graph.t1} {arrow-f} ⟩ 
-                    TMap (Limit.t0 lim) graph.t1 o FMap (K (TwoCat   ) A (a0 lim)) id-t0
+                    TMap (Limit.t0 lim) graph.t1 o FMap (K (TwoCat'   ) A (a0 lim)) id-t0
                 ≈↑⟨ IsNTrans.commute ( isNTrans (Limit.t0 lim)) {graph.t0} {graph.t1} {arrow-g} ⟩ 
                     FMap  Γ arrow-g o TMap (Limit.t0 lim) graph.t0
                 ≈⟨⟩

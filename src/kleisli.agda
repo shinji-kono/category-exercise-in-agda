@@ -215,59 +215,38 @@ Lemma10 {a} {b} {c} f g h i f≈g h≈i = let open ≈-Reasoning (A) in
 --  Hom in Kleisli Category
 --
 
-
-record KleisliHom { c₁ c₂ ℓ : Level} { A : Category c₁ c₂ ℓ } { T : Functor A A } (a : Obj A)  (b : Obj A)
-      : Set c₂ where
-    field
-        KMap :  Hom A a ( FObj T b )
- 
-open KleisliHom 
-
--- we need this to make agda check stop
-KHom  = λ (a b : Obj A) → KleisliHom {c₁} {c₂} {ℓ} {A} {T} a b
-
-K-id :  {a : Obj A} → KHom a a
-K-id {a = a} = record { KMap =  TMap η a } 
+K-id :  {a : Obj A} → Hom A a (FObj T a)
+K-id {a = a} = TMap η a 
 
 open import Relation.Binary
 
-_⋍_ : { a : Obj A } { b : Obj A } (f g  : KHom a b ) → Set ℓ 
-_⋍_ {a} {b} f g = A [ KMap f ≈ KMap g ]
+_⋍_ : { a : Obj A } { b : Obj A } (f g  : Hom A a (FObj T b) ) → Set ℓ 
+_⋍_ {a} {b} f g = A [ f ≈ g ]
 
-_*_ : { a b c : Obj A } → ( KHom b c) → (  KHom a b) → KHom a c 
-_*_ {a} {b} {c} g f = record { KMap = join M {a} {b} {c} (KMap g) (KMap f) }
+_*_ : { a b c : Obj A } → ( Hom A b (FObj T c)) → Hom A a (FObj T b) → Hom A a (FObj T c )
+_*_ {a} {b} {c} g f = join M {a} {b} {c} g f
 
-isKleisliCategory : IsCategory ( Obj A ) KHom _⋍_ _*_ K-id 
+isKleisliCategory : IsCategory ( Obj A ) (λ a b → Hom A a (FObj T b))_⋍_ _*_ K-id 
 isKleisliCategory  = record  { isEquivalence =  isEquivalence 
-                    ; identityL =   KidL
-                    ; identityR =   KidR
-                    ; o-resp-≈ =    Ko-resp
-                    ; associative = Kassoc
+                    ; identityL =   λ {a} {b} {f} → Lemma7 f
+                    ; identityR =   λ {a} {b} {f} → Lemma8 f
+                    ; o-resp-≈ =    λ {a} {b} {c} {f} {g} {h} {i} → Lemma10 f g h i
+                    ; associative = λ {a} {b} {c} {d} {f} {g} {h} →  Lemma9 f g h
                     }
      where
          open ≈-Reasoning (A) 
          isEquivalence :  { a b : Obj A } →
-               IsEquivalence {_} {_} {KHom a b} _⋍_
+               IsEquivalence {_} {_} {Hom A a (FObj T b)} _⋍_
          isEquivalence {C} {D} =      -- this is the same function as A's equivalence but has different types
            record { refl  = refl-hom
              ; sym   = sym
              ; trans = trans-hom
              } 
-         KidL : {C D : Obj A} → {f : KHom C D} → (K-id * f) ⋍ f
-         KidL {_} {_} {f} =  Lemma7 (KMap f) 
-         KidR : {C D : Obj A} → {f : KHom C D} → (f * K-id) ⋍ f
-         KidR {_} {_} {f} =  Lemma8 (KMap f) 
-         Ko-resp :  {a b c : Obj A} → {f g : KHom a b } → {h i : KHom  b c } → 
-                          f ⋍ g → h ⋍ i → (h * f) ⋍ (i * g)
-         Ko-resp {a} {b} {c} {f} {g} {h} {i} eq-fg eq-hi = Lemma10 {a} {b} {c} (KMap f) (KMap g) (KMap h) (KMap i) eq-fg eq-hi
-         Kassoc :   {a b c d : Obj A} → {f : KHom c d } → {g : KHom b c } → {h : KHom a b } →
-                          (f * (g * h)) ⋍ ((f * g) * h)
-         Kassoc {_} {_} {_} {_} {f} {g} {h} =  Lemma9 (KMap f) (KMap g) (KMap h) 
 
 KleisliCategory : Category c₁ c₂ ℓ
 KleisliCategory =
   record { Obj = Obj A
-         ; Hom = KHom
+         ; Hom = λ a b → Hom A a (FObj T b)
          ; _o_ = _*_
          ; _≈_ = _⋍_
          ; Id  = K-id
@@ -281,8 +260,8 @@ KleisliCategory =
 --      nat-η
 --
 
-ufmap : {a b : Obj A} (f : KHom a b ) → Hom A (FObj T a) (FObj T b)
-ufmap {a} {b} f =  A [ TMap μ (b)  o FMap T (KMap f) ]
+ufmap : {a b : Obj A} (f : Hom A a (FObj T b) ) → Hom A (FObj T a) (FObj T b)
+ufmap {a} {b} f =  A [ TMap μ (b)  o FMap T (f) ]
 
 U_T : Functor KleisliCategory A
 U_T = record {
@@ -301,46 +280,46 @@ U_T = record {
           ≈⟨ IsMonad.unity2 M ⟩
              id (FObj T a)
           ∎
-        ≈-cong : {a b : Obj A} {f g : KHom a b} → A [ KMap f ≈ KMap g ] → A [ ufmap f ≈ ufmap g ]
+        ≈-cong : {a b : Obj A} {f g : Hom A a (FObj T b)} → A [ f ≈ g ] → A [ ufmap f ≈ ufmap g ]
         ≈-cong {a} {b} {f} {g} f≈g = let open ≈-Reasoning (A) in
           begin
-             TMap μ (b)  o FMap T (KMap f)
+             TMap μ (b)  o FMap T (f)
           ≈⟨ cdr (fcong T f≈g) ⟩
-             TMap μ (b)  o FMap T (KMap g)
+             TMap μ (b)  o FMap T (g)
           ∎
-        distr1 :  {a b c : Obj A} {f : KHom a b} {g : KHom b c} → A [ ufmap (g * f) ≈ (A [ ufmap g o ufmap f ] )]
+        distr1 :  {a b c : Obj A} {f : Hom A a (FObj T b)} {g : Hom A b (FObj T c)} → A [ ufmap (g * f) ≈ (A [ ufmap g o ufmap f ] )]
         distr1 {a} {b} {c} {f} {g} = let open ≈-Reasoning (A) in
           begin
              ufmap (g * f)
           ≈⟨⟩
-             ufmap {a} {c} ( record { KMap = TMap μ (c) o (FMap T (KMap g)  o (KMap f)) } )
+             ufmap {a} {c} ( TMap μ (c) o (FMap T (g)  o (f))  )
           ≈⟨⟩
-             TMap μ (c)  o  FMap T ( TMap μ (c) o (FMap T (KMap g)  o (KMap f)))
+             TMap μ (c)  o  FMap T ( TMap μ (c) o (FMap T (g)  o (f)))
           ≈⟨ cdr ( distr T) ⟩
-             TMap μ (c)  o (( FMap T ( TMap μ (c)) o FMap T  (FMap T (KMap g)  o (KMap f))))
+             TMap μ (c)  o (( FMap T ( TMap μ (c)) o FMap T  (FMap T (g)  o (f))))
           ≈⟨ assoc ⟩
-             (TMap μ (c)  o ( FMap T ( TMap μ (c)))) o FMap T  (FMap T (KMap g)  o (KMap f))
+             (TMap μ (c)  o ( FMap T ( TMap μ (c)))) o FMap T  (FMap T (g)  o (f))
           ≈⟨ car (sym (IsMonad.assoc M)) ⟩
-             (TMap μ (c)  o ( TMap μ (FObj T c))) o FMap T  (FMap T (KMap g)  o (KMap f))
+             (TMap μ (c)  o ( TMap μ (FObj T c))) o FMap T  (FMap T (g)  o (f))
           ≈⟨ sym assoc ⟩
-             TMap μ (c)  o (( TMap μ (FObj T c)) o FMap T  (FMap T (KMap g)  o (KMap f)))
+             TMap μ (c)  o (( TMap μ (FObj T c)) o FMap T  (FMap T (g)  o (f)))
           ≈⟨ cdr (cdr (distr T)) ⟩
-             TMap μ (c)  o (( TMap μ (FObj T c)) o (FMap T  (FMap T (KMap g))  o FMap T (KMap f)))
+             TMap μ (c)  o (( TMap μ (FObj T c)) o (FMap T  (FMap T (g))  o FMap T (f)))
           ≈⟨ cdr (assoc) ⟩
-             TMap μ (c)  o ((( TMap μ (FObj T c)) o (FMap T  (FMap T (KMap g))))  o FMap T (KMap f))
+             TMap μ (c)  o ((( TMap μ (FObj T c)) o (FMap T  (FMap T (g))))  o FMap T (f))
           ≈⟨ sym (cdr (car (nat μ ))) ⟩
-             TMap μ (c)  o ((FMap T (KMap g )  o  TMap μ (b))  o FMap T (KMap f ))
+             TMap μ (c)  o ((FMap T (g )  o  TMap μ (b))  o FMap T (f ))
           ≈⟨ cdr (sym assoc) ⟩
-             TMap μ (c)  o (FMap T (KMap g )  o  ( TMap μ (b)  o FMap T (KMap f )))
+             TMap μ (c)  o (FMap T (g )  o  ( TMap μ (b)  o FMap T (f )))
           ≈⟨ assoc ⟩
-             ( TMap μ (c)  o FMap T (KMap g ) )  o  ( TMap μ (b)  o FMap T (KMap f ) )
+             ( TMap μ (c)  o FMap T (g ) )  o  ( TMap μ (b)  o FMap T (f ) )
           ≈⟨⟩
              ufmap g o ufmap f
           ∎
 
 
-ffmap :  {a b : Obj A} (f : Hom A a b) → KHom a b
-ffmap {a} {b} f = record { KMap = A [ TMap η b o f ] }
+ffmap :  {a b : Obj A} (f : Hom A a b) → Hom A a (FObj T b)
+ffmap {a} {b} f = A [ TMap η b o f ] 
 
 F_T : Functor A KleisliCategory
 F_T = record {
@@ -363,7 +342,7 @@ F_T = record {
                  ( ffmap (A [ g o f ]) ⋍  ( ffmap g * ffmap f ) )
         distr1 {a} {b} {c} {f} {g} =  let open ≈-Reasoning (A) in
           begin
-             KMap (ffmap (A [ g o f ]))
+             (ffmap (A [ g o f ]))
           ≈⟨⟩
              TMap η (c) o (g o f)
           ≈⟨ assoc ⟩
@@ -393,7 +372,7 @@ F_T = record {
           ≈⟨⟩
              join M (TMap η c o g)  (TMap η b o f) 
           ≈⟨⟩
-             KMap  ( ffmap g * ffmap f )
+              ( ffmap g * ffmap f )
           ∎
 
 --
@@ -407,7 +386,7 @@ Lemma11-1 {a} {b} f = let open ≈-Reasoning (A) in
      ≈⟨⟩
           FMap U_T ( FMap F_T f )
      ≈⟨⟩  
-           TMap μ (b)  o FMap T (KMap ( ffmap f ) )
+           TMap μ (b)  o FMap T (( ffmap f ) )
      ≈⟨⟩  
            TMap μ (b)  o FMap T (TMap η (b) o f)
      ≈⟨ cdr (distr T ) ⟩  
@@ -442,42 +421,42 @@ nat-η = record { TMap = λ x → TMap η x ; isNTrans =  record { commute = com
               TMap η b o f
           ∎ 
 
-tmap-ε : (a : Obj A) → KHom (FObj T a) a
-tmap-ε a = record { KMap = id1 A (FObj T a) }
+tmap-ε : (a : Obj A) → Hom A (FObj T a) (FObj T a)
+tmap-ε a = id1 A (FObj T a) 
 
 nat-ε : NTrans KleisliCategory KleisliCategory  ( F_T ○ U_T ) identityFunctor
 nat-ε = record { TMap = λ a → tmap-ε a; isNTrans = isNTrans1 } where
-       commute1 : {a b : Obj A} {f : KHom a b}
+       commute1 : {a b : Obj A} {f : Hom A a (FObj T b)}
             →  (f * ( tmap-ε a ) ) ⋍   (( tmap-ε b ) * (  FMap (F_T ○ U_T) f ) )
        commute1 {a} {b} {f} =  let open ≈-Reasoning (A) in
           sym ( begin
-              KMap (( tmap-ε b ) * (  FMap (F_T ○ U_T) f ))
+              (( tmap-ε b ) * (  FMap (F_T ○ U_T) f ))
           ≈⟨⟩
-              TMap μ b  o ( FMap T ( id (FObj T b) )  o (  KMap (FMap (F_T ○ U_T) f ) ))
+              TMap μ b  o ( FMap T ( id (FObj T b) )  o (  (FMap (F_T ○ U_T) f ) ))
           ≈⟨ cdr ( cdr (
                begin
-                  KMap (FMap (F_T ○ U_T) f ) 
+                  (FMap (F_T ○ U_T) f ) 
                ≈⟨⟩
-                  KMap (FMap F_T (FMap U_T f))
+                  (FMap F_T (FMap U_T f))
                ≈⟨⟩
-                 TMap η (FObj T b) o (TMap μ (b)  o FMap T (KMap f))
+                 TMap η (FObj T b) o (TMap μ (b)  o FMap T (f))
                ∎  
           ))  ⟩
-              TMap μ b  o ( FMap T ( id (FObj T b) )  o (TMap η (FObj T b) o (TMap μ (b)  o FMap T (KMap f))))
+              TMap μ b  o ( FMap T ( id (FObj T b) )  o (TMap η (FObj T b) o (TMap μ (b)  o FMap T (f))))
           ≈⟨ cdr (car (IsFunctor.identity (isFunctor T))) ⟩
-              TMap μ b  o ( id (FObj T (FObj T b) )  o (TMap η (FObj T b) o (TMap μ (b)  o FMap T (KMap f))))
+              TMap μ b  o ( id (FObj T (FObj T b) )  o (TMap η (FObj T b) o (TMap μ (b)  o FMap T (f))))
           ≈⟨ cdr idL ⟩
-              TMap μ b  o  (TMap η (FObj T b) o (TMap μ (b)  o FMap T (KMap f)))
+              TMap μ b  o  (TMap η (FObj T b) o (TMap μ (b)  o FMap T (f)))
           ≈⟨ assoc ⟩
-              (TMap μ b  o  (TMap η (FObj T b))) o (TMap μ (b)  o FMap T (KMap f))
+              (TMap μ b  o  (TMap η (FObj T b))) o (TMap μ (b)  o FMap T (f))
           ≈⟨ (car (IsMonad.unity1 M)) ⟩
-              id (FObj T b) o (TMap μ (b)  o FMap T (KMap f))
+              id (FObj T b) o (TMap μ (b)  o FMap T (f))
           ≈⟨ idL ⟩
-              TMap μ b  o FMap T (KMap f) 
+              TMap μ b  o FMap T (f) 
           ≈⟨ cdr (sym idR) ⟩
-              TMap μ b  o ( FMap T (KMap f)  o id (FObj T a) )
+              TMap μ b  o ( FMap T (f)  o id (FObj T a) )
           ≈⟨⟩
-              KMap (f * ( tmap-ε a ))
+              (f * ( tmap-ε a ))
           ∎ )
        isNTrans1 : IsNTrans  KleisliCategory KleisliCategory ( F_T ○ U_T ) identityFunctor (λ a → tmap-ε a )
        isNTrans1 = record { commute = commute1 } 
@@ -561,7 +540,7 @@ Adj_T = record {
                                      ≈ id1 KleisliCategory (FObj F_T a) ]
            adjoint2 {a} =  let open ≈-Reasoning (A) in
                begin
-                  KMap (( TMap nat-ε ( FObj F_T a )) * ( FMap F_T ( TMap nat-η a )) )
+                  (( TMap nat-ε ( FObj F_T a )) * ( FMap F_T ( TMap nat-η a )) )
                ≈⟨⟩
                   TMap μ a o (FMap T (id (FObj T a) ) o ((TMap η (FObj T a)) o (TMap η a)))
                ≈⟨ cdr ( car ( IsFunctor.identity (isFunctor T))) ⟩
@@ -577,7 +556,7 @@ Adj_T = record {
                ≈⟨⟩
                   TMap η (FObj F_T a)
                ≈⟨⟩
-                  KMap (id1 KleisliCategory (FObj F_T a))
+                  (id1 KleisliCategory (FObj F_T a))
                ∎
 
 open MResolution

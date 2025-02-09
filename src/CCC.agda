@@ -175,6 +175,20 @@ record CCC {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) :  Set ( c₁  �
          ε : {a b : Obj A } → Hom A ((a <= b ) ∧ b) a 
          isCCC : IsCCC A １ ○ _∧_ <_,_> π π' _<=_ _* ε 
 
+record CCC-* {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) :  Set ( c₁  ⊔  c₂ ⊔ ℓ ) where
+     field
+         １ : Obj A 
+         ○ : (a : Obj A ) → Hom A a １ 
+         _∧_ : Obj A → Obj A → Obj A   
+         <_,_> : {a b c : Obj A } → Hom A c a → Hom A c b → Hom A c (a ∧ b)  
+         π : {a b : Obj A } → Hom A (a ∧ b) a 
+         π' : {a b : Obj A } → Hom A (a ∧ b) b  
+         _<=_ : (a b : Obj A ) → Obj A 
+         _* : {a b c : Obj A } → Hom A (a ∧ b) c → Hom A a (c <= b) 
+         ε : {a b : Obj A } → Hom A ((a <= b ) ∧ b) a 
+         isCCC : IsCCC A １ ○ _∧_ <_,_> π π' _<=_ _* ε 
+         is*-CCC : IsCCC-*-cong A １ ○ _∧_ <_,_> π π' _<=_ _* ε isCCC
+
 open Functor
 
 record CCCFunctor {c₁ c₂ ℓ c₁' c₂' ℓ' : Level} (A : Category c₁ c₂ ℓ) (B : Category c₁' c₂' ℓ')

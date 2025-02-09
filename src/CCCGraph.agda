@@ -1,5 +1,5 @@
-{-# OPTIONS --with-K --cubical-compatible #-}
--- {-# OPTIONS --cubical-compatible --safe #-}
+-- {-# OPTIONS --with-K --cubical-compatible #-}
+{-# OPTIONS --cubical-compatible --safe #-}
 module CCCgraph where
 
 open import Level
@@ -79,7 +79,7 @@ record GMap {c₁ c₂ c₁' c₂' : Level}  (x : Graph {c₁} {c₂} ) (y : Gra
 
 open GMap
 
-open import Relation.Binary.HeterogeneousEquality using (_≅_;refl ) renaming ( sym to ≅-sym ; trans to ≅-trans ; cong to ≅-cong )
+-- open import Relation.Binary.HeterogeneousEquality using (_≅_;refl ) renaming ( sym to ≅-sym ; trans to ≅-trans ; cong to ≅-cong )
 
 data [_]_==_ {c₁ c₂ : Level} (C : Graph  {c₁} {c₂}) {A B : vertex C} (f : edge C A B)
      : ∀{X Y : vertex C} → edge C X Y → Set (c₁ ⊔ c₂ ) where
@@ -93,10 +93,10 @@ eq-vertex2 : {c₁ c₂ : Level} (C : Graph  {c₁} {c₂}) {A B : vertex C} {f 
       {X Y : vertex C} → {g : edge C X Y } → ( [ C ] f == g ) → B ≡ Y
 eq-vertex2 _ (mrefl refl) = refl
 
-eq-edge : {c₁ c₂ : Level} (C : Graph  {c₁} {c₂}) {A B : vertex C} {f : edge C A B}
-      {X Y : vertex C} → {g : edge C X Y } → ( [ C ] f == g ) → f ≅ g
-eq-edge C eq with eq-vertex1 C eq | eq-vertex2 C eq
-eq-edge C (mrefl refl) | refl | refl = refl
+--   eq-edge : {c₁ c₂ : Level} (C : Graph  {c₁} {c₂}) {A B : vertex C} {f : edge C A B}
+--         {X Y : vertex C} → {g : edge C X Y } → ( [ C ] f == g ) → f ≅ g
+--   eq-edge C eq with eq-vertex1 C eq | eq-vertex2 C eq
+--   eq-edge C (mrefl refl) | refl | refl = refl
 
 _=m=_ : {c₁ c₂ c₁' c₂'  : Level} {C : Graph {c₁} {c₂} } {D : Graph {c₁'} {c₂'} }
     → (F G : GMap C D) → Set (c₁ ⊔ c₂ ⊔ c₁' ⊔ c₂')
@@ -207,7 +207,7 @@ module forgetful {c₁ : Level} where
     ... | eq | eqa | eqb =  cc11 (FMap (cmap f) e) (FMap (cmap g) e) eq eqa eqb where
            cc11 : {a c a' c' : Obj (cat b) } → ( f : Hom (cat b) a c ) → ( g : Hom (cat b) a' c' )
                → [ cat b ] f ~ g → a ≡ a'  → c  ≡ c'  →  [ uobj b ] f == g 
-           cc11 f g (refl eqv) refl refl =  mrefl (≡←≈ b eqv) 
+           cc11 f g (refl eqv) eq eq1 =  ? -- mrefl (≡←≈ b eqv) 
 
   UC :  Functor (CAT  {c₁} {c₁} {c₁}) (Grph {c₁} {c₁})
   FObj UC a = record { vertex = Obj a ; edge = Hom a } 
@@ -264,9 +264,9 @@ module fcat {c₁ c₂ : Level}  ( g : Graph {c₁} {c₂} ) where
           B = Sets {c₁ ⊔ c₂}
 
   -- Hom FCat is an image of Fucntor CS, but I don't know how to write it
-  postulate
-      fcat-pl : {a b : Obj (cat FCat) } → Hom (cat FCat) a b → Hom PL a b
-      fcat-eq :  {a b : Obj (cat FCat) } → (f : Hom (cat FCat) a b ) → {!!} -- FMap CS (fcat-pl f) ≡ f
+-- postulate
+--     fcat-pl : {a b : Obj (cat FCat) } → Hom (cat FCat) a b → Hom PL a b
+--     fcat-eq :  {a b : Obj (cat FCat) } → (f : Hom (cat FCat) a b ) → {!!} -- FMap CS (fcat-pl f) ≡ f
 
 ccc-graph-univ :  {c₁ : Level} → UniversalMapping (Grph {c₁} {c₁}) (Cart {c₁ } {c₁} {c₁}) forgetful.UX 
 ccc-graph-univ {c₁}  = record {
@@ -309,17 +309,18 @@ ccc-graph-univ {c₁}  = record {
        cobj {g} {c} f (b <= a) = CCC._<=_ (ccc c) (cobj {g} {c} f b) (cobj {g} {c} f a) 
        c-map :  {g : Obj (Grph  )} {c : Obj Cart} {A B : Objs g} 
            → (f : Hom Grph g (FObj UX c) ) → (fobj g A → fobj g B) → Hom (cat c) (cobj {g} {c} f A) (cobj {g} {c} f B)
-       c-map {g} {c} {atom x} {atom b} f y = {!!}  where
-            cmpa1 : ((y₁ : vertex g) → C g y₁ x ) → {!!}
-            cmpa1 = {!!}
-       c-map {g} {c} {⊤} {atom b} f y with y ! b
-       ... | id .b = {!!}
-       ... | next x t = (cat c) [ emap f x o c-map f {!!} ]
-       c-map {g} {c} {a ∧ a₁} {atom b} f y = {!!}
-       c-map {g} {c} {a <= a₁} {atom b} f y = {!!}
-       c-map {g} {c} {a} {⊤} f x = CCC.○ (ccc c) (cobj f a)
-       c-map {g} {c} {a} {x ∧ y} f z = CCC.<_,_> (ccc c) (c-map f (λ k → proj₁ (z k))) (c-map f (λ k → proj₂ (z k)))
-       c-map {g} {c} {d} {b <= a} f x = CCC._* (ccc c) ( c-map f (λ k → x (proj₁ k)  (proj₂ k)))
+       c-map = ?
+--      c-map {g} {c} {atom x} {atom b} f y = {!!}  where
+--           cmpa1 : ((y₁ : vertex g) → C g y₁ x ) → {!!}
+--           cmpa1 = {!!}
+--      c-map {g} {c} {⊤} {atom b} f y with y ! b
+--      ... | id .b = {!!}
+--      ... | next x t = (cat c) [ emap f x o c-map f {!!} ]
+--      c-map {g} {c} {a ∧ a₁} {atom b} f y = {!!}
+--      c-map {g} {c} {a <= a₁} {atom b} f y = {!!}
+--      c-map {g} {c} {a} {⊤} f x = CCC.○ (ccc c) (cobj f a)
+--      c-map {g} {c} {a} {x ∧ y} f z = CCC.<_,_> (ccc c) (c-map f (λ k → proj₁ (z k))) (c-map f (λ k → proj₂ (z k)))
+--      c-map {g} {c} {d} {b <= a} f x = CCC._* (ccc c) ( c-map f (λ k → x (proj₁ k)  (proj₂ k)))
        solution : {g : Obj Grph } {c : Obj Cart } → Hom Grph g (FObj UX c) → Hom Cart (F g) c
        solution  {g} {c} f = record { cmap = record {
              FObj = λ x →  cobj {g} {c} f x ;

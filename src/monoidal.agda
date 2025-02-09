@@ -1,4 +1,3 @@
--- {-# OPTIONS --cubical-compatible  --allow-unsolved-metas #-}
 {-# OPTIONS --cubical-compatible --safe #-}
 
 open import Level
