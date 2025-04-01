@@ -16,7 +16,6 @@ module applicative  (
     FT : {c₁ c₂ ℓ c₁' c₂' ℓ' : Level} (C : Category c₁ c₂ ℓ) (D : Category c₁' c₂' ℓ') {a b c : Obj C } → FreeTheorem C D  {a} {b} {c} )
        where
 
-
 open import Data.Product renaming (_×_ to _*_) hiding (_<*>_)
 open import Category.Constructions.Product
 open import HomReasoning

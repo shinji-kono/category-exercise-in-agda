@@ -209,11 +209,11 @@ record FundamentalHomomorphism (G H : Group c c )
     unique : (h1 : Group.Carrier (G / K ) → Group.Carrier H)  → 
        ( (x : Group.Carrier G)  →  f x ≈ h1 ( φ G K x ) ) → ( ( x : Group.Carrier (G / K)) → h x ≈ h1 x )
 
-postulate 
-  FundamentalHomomorphismTheorm : (G H : Group c c)
-    (f : Group.Carrier G → Group.Carrier H )
-    (homo : IsGroupHomomorphism (GR G) (GR H) f )
-    (K : NormalSubGroup G ) → (kf : K⊆ker G H K f)   → FundamentalHomomorphism G H f homo K kf
+--   postulate 
+--     FundamentalHomomorphismTheorm : (G H : Group c c)
+--       (f : Group.Carrier G → Group.Carrier H )
+--       (homo : IsGroupHomomorphism (GR G) (GR H) f )
+--       (K : NormalSubGroup G ) → (kf : K⊆ker G H K f)   → FundamentalHomomorphism G H f homo K kf
 
 Homomorph : ?
 Homomorph = ?

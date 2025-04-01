@@ -27,7 +27,7 @@ open import Function
 
 -- A is localy small
 
-import Axiom.Extensionality.Propositional
+-- import Axiom.Extensionality.Propositional
 -- Extensionality a b = {A : Set a} {B : A → Set b} {f g : (x : A) → B x} → (∀ x → f x ≡ g x) → f ≡ g → ( λ x → f x ≡ λ x → g x )
 -- postulate extensionality : { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) → Axiom.Extensionality.Propositional.Extensionality c₂ c₂
 

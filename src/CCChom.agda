@@ -16,8 +16,13 @@ open Functor
 --   ccc-2 : Hom A c (a × b) ≅ (Hom A c a ) × ( Hom A c b )
 --   ccc-3 : Hom A a (c ^ b) ≅ Hom A (a × b) c
 
-data One  : Set where
-  OneObj : One   -- () in Haskell ( or any one object set )
+-- data One  : Set where
+--   OneObj : One   -- () in Haskell ( or any one object set )
+
+open import Data.Unit
+
+One = ⊤ 
+OneObj = tt 
 
 OneCat : Category Level.zero Level.zero Level.zero
 OneCat = record {
