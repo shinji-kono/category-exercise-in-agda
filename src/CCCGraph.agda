@@ -1,4 +1,3 @@
--- {-# OPTIONS --with-K --cubical-compatible #-}
 {-# OPTIONS --cubical-compatible --safe #-}
 module CCCgraph where
 
@@ -21,10 +20,6 @@ open Functor
 open import Category.Sets
 open import graph
 open import Data.Unit
--- open import Polynominal
-
--- import Axiom.Extensionality.Propositional
--- postulate extensionality : { c₁ c₂ ℓ : Level} ( A : Category c₁ c₂ ℓ ) → Axiom.Extensionality.Propositional.Extensionality  c₂ c₂
 
 infixr 8 _∨_
 data _∨_ {c c' : Level } (a : Set c) (b : Set c') : Set (c ⊔ c') where
@@ -39,12 +34,12 @@ module ccc-from-graph {c₁ c₂ : Level }  (G : Graph {c₁} {c₂})  (ext : Ax
    V = vertex G
    E : V → V → Set c₂
    E = edge G
-   
+
    data Objs : Set c₁ where
-      atom : V → Objs 
-      top : Objs 
-      _∧_ : Objs  → Objs → Objs 
-      _<=_ : Objs → Objs → Objs 
+      atom : V → Objs
+      top : Objs
+      _∧_ : Objs  → Objs → Objs
+      _<=_ : Objs → Objs → Objs
 
    data  Arrows  : (b c : Objs ) → Set (c₁  ⊔  c₂)
    data Arrow :  Objs → Objs → Set (c₁  ⊔ c₂)  where                       --- case i
@@ -72,15 +67,15 @@ module ccc-from-graph {c₁ c₂ : Level }  (G : Graph {c₁} {c₂})  (ext : Ax
 
    identityR : {A B : Objs} {f : Arrows A B} → (f ∙ id A) ≡ f
    identityR {a} {b} {id _} = refl
-   identityR {a} {⊤} {○ eq} = refl 
+   identityR {a} {⊤} {○ eq} = refl
    identityR {a} {_} {< f , f₁ >} = cong₂ (λ j k → < j , k > ) identityR identityR
    identityR {a} {b} {iv f g} = cong (λ k → iv f k ) identityR
 
    plassoc : {a b c d : Objs} (f : Arrows c d) (g : Arrows b c) (h : Arrows a b) →
                             (f ∙ (g ∙ h)) ≡ ((f ∙ g) ∙ h)
    plassoc (id _) g h = refl
-   plassoc (○ a) g h = refl 
-   plassoc < f , f₁ > g h =  cong₂ (λ j k → < j , k > ) (plassoc f g h) (plassoc f₁ g h) 
+   plassoc (○ a) g h = refl
+   plassoc < f , f₁ > g h =  cong₂ (λ j k → < j , k > ) (plassoc f g h) (plassoc f₁ g h)
    plassoc (iv f f1) g h = cong (λ k → iv f k ) ( plassoc f1 g h )
    o-resp-≈  : {A B C : Objs} {f g : Arrows A B} {h i : Arrows B C} →
                         f ≡  g → h ≡  i → (h ∙ f) ≡ (i ∙ g)
@@ -96,12 +91,12 @@ module ccc-from-graph {c₁ c₂ : Level }  (G : Graph {c₁} {c₂})  (ext : Ax
             Id  =  λ{a} → id a ;
             isCategory  = record {
                     isEquivalence =  record {refl = refl ; trans = trans ; sym = sym} ;
-                    identityL  = λ {a b f} → identityL {a} {b} {f} ; 
-                    identityR  = λ {a b f} → identityR {a} {b} {f} ; 
-                    o-resp-≈  = λ {a b c f g h i} → o-resp-≈ {a} {b} {c} {f} {g} {h} {i}  ; 
+                    identityL  = λ {a b f} → identityL {a} {b} {f} ;
+                    identityR  = λ {a b f} → identityR {a} {b} {f} ;
+                    o-resp-≈  = λ {a b c f g h i} → o-resp-≈ {a} {b} {c} {f} {g} {h} {i}  ;
                     associative  = λ{a b c d f g h } → plassoc  f g h
                }
-           } 
+           }
 
 
    open import Relation.Nullary
@@ -117,17 +112,17 @@ module ccc-from-graph {c₁ c₂ : Level }  (G : Graph {c₁} {c₂})  (ext : Ax
    ¬x≡t∧x≡f  : { c : Level } → {x : Bool {c}} → ¬ ((x ≡ false) /\ (x ≡ true) )
    ¬x≡t∧x≡f {_} {true} p = ⊥-elim (¬f≡t (sym (proj₁ p)))
    ¬x≡t∧x≡f {_} {false} p = ⊥-elim (¬f≡t (proj₂ p))
-         
+
 --------
 --
--- CCC of  Positive Logic 
+-- CCC of  Positive Logic
 --
 
    C = graphtocat.Chain G
 
    tr : {a b : vertex G} → edge G a b → ((y : vertex G) → C y a) → (y : vertex G) → C y b
-   tr f x y = graphtocat.next f (x y) 
-   
+   tr f x y = graphtocat.next f (x y)
+
    fobj :  ( a  : Objs  ) → Set (c₁  ⊔ c₂)
    fobj  (atom x) = ( y : vertex G ) → C y x
    fobj top = Lift _  ⊤
@@ -137,17 +132,17 @@ module ccc-from-graph {c₁ c₂ : Level }  (G : Graph {c₁} {c₂})  (ext : Ax
    fmap :  { a b : Objs  } → Hom PL a b → fobj  a → fobj  b
    amap :  { a b : Objs  } → Arrow  a b → fobj  a → fobj  b
    amap  (arrow x) y =  tr x y -- tr x
-   amap π ( x , y ) = x 
+   amap π ( x , y ) = x
    amap π' ( x , y ) = y
    amap ε (f , x ) = f x
-   amap (f *) x = λ y →  fmap f ( x , y ) 
+   amap (f *) x = λ y →  fmap f ( x , y )
    fmap (id _) x = x
    fmap (○ _) x = lift tt  -- subst ( λ k → fobj k) (sym eq) ( lift tt  )
    fmap < f , g > x = ( fmap f x , fmap g x )
    fmap (iv x f) a = amap x ( fmap f a )
 
    -- to do so, we have to chose right equivalence relation
-   -- 
+   --
 
    _≐_ : {a b : Objs} → (f g : Hom PL a b) → Set (c₁  ⊔ c₂)
    _≐_ {a} {b} fa fb = (oa : fobj a) → fmap fa oa ≡ fmap fb oa
@@ -156,13 +151,43 @@ module ccc-from-graph {c₁ c₂ : Level }  (G : Graph {c₁} {c₂})  (ext : Ax
    fmap-distr {a} {a₁} {b} {f} {id _} z = refl
    fmap-distr {a} {a₁} {⊤} {f} {○ _} z = refl
    fmap-distr {a} {b} {c ∧ d} {f} {< g , g₁ >} z = cong₂ (λ j k  →  j , k  ) (fmap-distr {a} {b} {c} {f} {g} z) (fmap-distr {a} {b} {d} {f} {g₁} z)
-   fmap-distr {a} {b} {c} {f} {iv {_} {_} {d} x g} z = adistr (fmap-distr  {a} {b} {d} {f} {g} z) x where 
+   fmap-distr {a} {b} {c} {f} {iv {_} {_} {d} x g} z = adistr (fmap-distr  {a} {b} {d} {f} {g} z) x where
        adistr : fmap (g ∙ f) z ≡ fmap g (fmap f z) →
             ( x : Arrow d c ) → fmap ( iv x (g ∙ f) ) z  ≡ fmap ( iv x g ) (fmap f z )
        adistr eq x = cong ( λ k → amap x k ) eq
 
+   data CArrows : (a b : Objs) → Set  (c₁ ⊔ c₂) where
+       ca-id : (a b : Objs) → a ≡ b → CArrows a b
+       ca-term : (a b : Objs) → b ≡ top →  CArrows a b
+       ca-par : (a b c d : Objs) →  d ≡ (a ∧ b) → CArrows c a → CArrows c b → CArrows c d
+       ca-comp : (b c d : Objs) → (f : Arrow d c) → (g : CArrows b d ) → CArrows b c
+
+   C←A : {a b  : Objs}  → Arrows a b → CArrows a b
+   C←A {a} {.a} (id .a) = ca-id a _ refl
+   C←A {a} {.top} (○ .a) = ca-term a _ refl
+   C←A {a} {.(_ ∧ _)} < f , f₁ > = ca-par _ _ _ _ refl (C←A f ) (C←A f₁ )
+   C←A {a} {b} (iv f f₁) = ca-comp _ _ _ f (C←A f₁)
+
+   A←C : {a b  : Objs}  → CArrows a b → Arrows a b
+   A←C {a} {.a} (ca-id .a _ refl) = id a
+   A←C {a} {.top} (ca-term .a _ refl) = ○ a
+   A←C (ca-par _ _  _ _ refl f  f₁ ) = < A←C f , A←C f₁ >
+   A←C {a} {b} (ca-comp _ _ _ f f₁) = iv f (A←C f₁)
+
+   iso-AC : {a b : Objs} → (f : Arrows a b) → A←C (C←A f) ≡ f
+   iso-AC {a} {.a} (id .a) = refl
+   iso-AC {a} {.top} (○ .a) = refl
+   iso-AC {a} {.(_ ∧ _)} < f , f₁ > = cong₂ (λ j k → < j , k > ) (iso-AC f) (iso-AC f₁)
+   iso-AC {a} {b} (iv f f₁) = cong (λ k → iv f k ) (iso-AC f₁)
+
+   iso-CA : {a b : Objs} → (f : CArrows a b) → C←A (A←C f) ≡ f
+   iso-CA {a} {b} (ca-id .a .b refl) = refl
+   iso-CA {a} {b} (ca-term .a .b refl) = refl
+   iso-CA {a} {b} (ca-par a₁ b₁ .a .b refl f f₁) = cong₂ (λ j k → ca-par _ _ _ _ refl j k ) (iso-CA f) (iso-CA f₁)
+   iso-CA {a} {b} (ca-comp .a .b d f f₁) = cong (λ k → ca-comp _ _ _ f k) (iso-CA f₁)
+
    -- no injection here, because of ¬ ( id top ≡ ○ top )
-   -- ≐-iject : {a b : Objs} → (f g : Hom PL a b) → (f ≐ g) → (f ≡ g) 
+   -- ≐-inject : {a b : Objs} → (f g : Hom PL a b) → (f ≐ g) → (f ≡ g)
 
    PLC :  Category  c₁ (c₁  ⊔ c₂) (c₁  ⊔ c₂)
    PLC = record {
@@ -172,7 +197,7 @@ module ccc-from-graph {c₁ c₂ : Level }  (G : Graph {c₁} {c₂})  (ext : Ax
             _≈_ =  λ x y → x ≐ y  ;
             Id  =  λ{a} → id a  ;
             isCategory  = record {
-                    isEquivalence =  record { refl = λ _ → refl ; trans = λ f=g g=h → λ oa → trans (f=g oa) (g=h oa) ; sym = λ eq oa → sym (eq oa) } ; 
+                    isEquivalence =  record { refl = λ _ → refl ; trans = λ f=g g=h → λ oa → trans (f=g oa) (g=h oa) ; sym = λ eq oa → sym (eq oa) } ;
                     identityL  = λ {a b f} oa → refl ;
                     identityR  = λ {a b f} oa → cong (λ k → fmap k oa ) (identityR {a} {b} {f} ) ;
                     o-resp-≈  = λ {a b c f g h i} f=g h=i →  o-resp {a} {b} {c} f g h i f=g h=i ;
@@ -186,7 +211,37 @@ module ccc-from-graph {c₁ c₂ : Level }  (G : Graph {c₁} {c₂})  (ext : Ax
                  fmap h (fmap g oa) ≡⟨ h=i (fmap g oa) ⟩
                  fmap i (fmap g oa) ≡⟨ sym (fmap-distr {a} {b} {c} {g} {i} oa) ⟩
                  fmap (i ∙ g) oa ∎
-                   where open ≡-Reasoning 
+                   where open ≡-Reasoning
+
+   record PLCI : Set (c₁  ⊔ c₂) where
+      field 
+        a b : Objs
+        parrow : Arrows a b
+
+   -- PLC-Small : Small (c₁  ⊔ c₂)  PLC we cannot prove these
+   PLC-Small = record {
+         I = PLCI
+       ; hom→ = λ {i} {j} f → record { a = i ; b = j ; parrow = f } 
+       ; s-dom = λ p → PLCI.a p
+       ; s-cod  = λ p → PLCI.b p
+       ; s-dom-iso  = refl
+       ; s-cod-iso  = refl
+       ; hom← = λ f →  PLCI.parrow f 
+       ; hom-iso = λ _ → refl
+       ; hom-rev = refl
+       ; hom-inject  = lem
+       ; subst-eq = ?
+       ; ≡←≈ = ?
+     } where
+         lem : {i j k l : Obj PLC} {f : Hom PLC i j} {g : Hom PLC k l} → record { a = i ; b = j ; parrow = f } ≡
+            record { a = k ; b = l ; parrow = g } → i ≡ k /\ j ≡ l
+         lem eq =  (cong PLCI.a eq) , (cong PLCI.b eq) 
+         -- we can prove this using with-K
+         lem2 : {a b c d : Obj PLC} (a=b a=b' : a ≡ b) (c=d c=d' : c ≡ d) {f : Hom PLC a c} →
+            PLC [ subst₂ (Hom PLC) a=b c=d f ≈ subst₂ (Hom PLC) a=b' c=d' f ]
+         lem2 {a} {b} {c} {d} a=b a=b' c=d c=d' {f} oa = ?
+         lem3 : {i j : Obj PLC} {f g : Hom PLC i j} → PLC [ f ≈ g ] → f ≡ g   -- we cannot say this
+         lem3 = ?
 
 
    ccc-PL : CCC PLC
@@ -202,19 +257,19 @@ module ccc-from-graph {c₁ c₂ : Level }  (G : Graph {c₁} {c₂})  (ext : Ax
        ; ε = λ {a} {b} → iv  ε  (id _)
        ; isCCC = isCCC
      } where
-         isCCC : CCC.IsCCC PLC top (λ a → ○ a)  _∧_ ((λ {a} {b} {c} f g → < f , g >)) (iv π (id _)) (iv π' (id _)) 
+         isCCC : CCC.IsCCC PLC top (λ a → ○ a)  _∧_ ((λ {a} {b} {c} f g → < f , g >)) (iv π (id _)) (iv π' (id _))
              (λ f g → f <= g ) (λ f → iv (f *) (id _)) (iv ε (id _))
          isCCC = record {
-               e2  = λ {a} {f} oa → e2lem {a} oa f 
+               e2  = λ {a} {f} oa → e2lem {a} oa f
              ; e3a = λ {a} {b} {c} {f} {g} oa → e3alem oa f g
              ; e3b = λ {a} {b} {c} {f} {g} oa → e3blem oa f g
              ; e3c = λ {a} {b} {c} {h} → e3clem {a} {b} {c} {h}
              ; π-cong = λ {a} {b} {c} {f} {f'} {g} {g'} → π-cong-lem {a} {b} {c} {f} {f'} {g} {g'}
-             ; e4a = λ  {a} {b} {c} {h} → e4a-lem {a} {b} {c} {h} 
+             ; e4a = λ  {a} {b} {c} {h} → e4a-lem {a} {b} {c} {h}
              ; e4b = λ {a} {b} {c} {k} → e4b-lem {a} {b} {c} {k}
            } where
                e2lem : {c : Objs} →  (oa : fobj c) (f : Arrows c top) → fmap f oa ≡ lift tt
-               e2lem oa f = refl 
+               e2lem oa f = refl
                e3alem :  {a b c : Objs} → (oa : fobj c) → (f : Arrows c a)  → (g : Arrows c b)  → fmap (iv π (id (a ∧ b)) ∙ < f , g > ) oa ≡ fmap f oa
                e3alem oa f g = refl
                e3blem :  {a b c : Objs} → (oa : fobj c) → (f : Arrows c a)  → (g : Arrows c b)  → fmap (iv π' (id (a ∧ b)) ∙ < f , g > ) oa ≡ fmap g oa
@@ -225,10 +280,10 @@ module ccc-from-graph {c₁ c₂ : Level }  (G : Graph {c₁} {c₂})  (ext : Ax
                π-cong-lem {a} {b} {c} {f} {f'} {g} {g'} eqf eqg oa = begin
                    fmap f oa , fmap g oa ≡⟨ cong₂ _,_  (eqf oa) (eqg oa)  ⟩
                    fmap f' oa , fmap g' oa  ∎ where open ≡-Reasoning
-               e4a-lem :  {a b c : Obj PLC} {h : Hom PLC (c ∧ b) a} → PLC [ PLC [ iv ε (id ((a <= b) ∧ b)) 
+               e4a-lem :  {a b c : Obj PLC} {h : Hom PLC (c ∧ b) a} → PLC [ PLC [ iv ε (id ((a <= b) ∧ b))
                    o < PLC [ iv (h *) (id c) o iv π (id (c ∧ b)) ] , iv π' (id (c ∧ b)) > ] ≈ h ]
                e4a-lem {a} {b} {c} {h} oa = refl
-               e4b-lem :  {a b c : Obj PLC} {k : Hom PLC c (a <= b)} → PLC [ iv ((PLC [ iv ε (id ((a <= b) ∧ b)) 
+               e4b-lem :  {a b c : Obj PLC} {k : Hom PLC c (a <= b)} → PLC [ iv ((PLC [ iv ε (id ((a <= b) ∧ b))
                    o < PLC [ k o iv π (id (c ∧ b)) ] , iv π' (id (c ∧ b)) > ]) *) (id c) ≈ k ]
                e4b-lem {a} {b} {.(a <= b)} {id .(a <= b)} oa = refl
                e4b-lem {a} {b} {c} {iv f k} oa = begin
@@ -252,13 +307,13 @@ module ccc-from-graph {c₁ c₂ : Level }  (G : Graph {c₁} {c₂})  (ext : Ax
        ; ε = λ {a} {b} → iv  ε  (id _)
        ; isCCC = CCC.isCCC (ccc-PL)
        ; is*-CCC = record { *-cong = λ {a} {b} {c} {f} {f'} → *-cong {a} {b} {c} {f} {f'} }
-     } where 
+     } where
         *-cong : {a b c : Obj PLC} {f f' : Hom PLC (a ∧ b) c} → PLC [ f ≈ f' ] → PLC [ iv (f *) (id a) ≈ iv (f' *) (id a) ]
         *-cong {a} {b} {c} {f} {g} eq oa = begin
             fmap (iv (f *) (id a)) oa ≡⟨ ext (λ y → eq (oa , y) ) ⟩
             fmap (iv (g *) (id a)) oa ∎ where open ≡-Reasoning
 
-                
+
 
 --   CS is a map from Positive logic to Sets
 --    Sets is CCC, so we have a cartesian closed category generated by a graph
@@ -268,25 +323,16 @@ module ccc-from-graph {c₁ c₂ : Level }  (G : Graph {c₁} {c₂})  (ext : Ax
    FObj CS a  = fobj  a
    FMap CS {a} {b} f = fmap  {a} {b} f
    isFunctor CS = isf where
-        isf : IsFunctor PL Sets fobj fmap 
-        IsFunctor.identity isf x = refl 
-        IsFunctor.≈-cong isf refl x = refl 
-        IsFunctor.distr isf {a} {b} {c} {g} {f} x = fmap-distr {a} {b} {c} {g} {f} x 
-
-
----
----  SubCategoy SC F A is a category with Obj = FObj F, Hom = FMap
----
----     CCC ( SC (CS G)) Sets   have to be proved
----  SM can be eliminated if we have
----    sobj (a : vertex g ) → {a}              a set have only a
----    smap (a b : vertex g ) → {a} → {b}
-
+        isf : IsFunctor PL Sets fobj fmap
+        IsFunctor.identity isf x = refl
+        IsFunctor.≈-cong isf refl x = refl
+        IsFunctor.distr isf {a} {b} {c} {g} {f} x = fmap-distr {a} {b} {c} {g} {f} x
 
 record CCCObj {c₁ c₂ ℓ : Level}  : Set  (suc (ℓ ⊔ (c₂ ⊔ c₁))) where
    field
      cat : Category c₁ c₂ ℓ
-     ≡←≈ : {a b : Obj cat } → { f g : Hom cat a b } → cat [ f ≈ g ] → f ≡ g
+     small : Small c₁ cat
+     -- ≡←≈ : {a b : Obj cat } → { f g : Hom cat a b } → cat [ f ≈ g ] → f ≡ g   -- we assume smallness of Category
      ccc : CCC cat
 
 open CCCObj
@@ -400,14 +446,9 @@ module forgetful {c₁ : Level} where
       → { g g' : Hom B a' b' }
       → [_]_~_ B f g → B [ f ≈ f' ] → B [ g ≈ g' ] → [_]_~_ B f' g'
   ≃-cong B {a} {b} {a'} {b'} {f} {f'} {g} {g'}  (refl {g2} eqv) f=f' g=g' = let open ≈-Reasoning B in refl {_} {_} {_} {B} {a'} {b'} {f'} {g'} ( begin
-             f'
-          ≈↑⟨ f=f' ⟩
-             f
-          ≈⟨ eqv  ⟩
-             g
-          ≈⟨ g=g' ⟩
-             g'
-          ∎  )
+             f' ≈↑⟨ f=f' ⟩
+             f ≈⟨ eqv  ⟩
+             g ≈⟨ g=g' ⟩ g' ∎  )
 
   ≃→a=a : {c₁ ℓ : Level}  (B : Category c₁ c₁ ℓ ) → {a b a' b' : Obj B }
       → ( f : Hom B a b )
@@ -437,12 +478,9 @@ module forgetful {c₁ : Level} where
   isFunctor UX  = isf where
     isf : IsFunctor Cart Grph (λ z → (uobj z)) umap
     IsFunctor.identity isf {a} {b} {f} = begin
-         umap (id1 Cart a)
-       ≈⟨⟩
-         umap {a} {a} (record { cmap = identityFunctor ; ccf = λ x → x })
-       ≈⟨⟩
-         record { vmap = λ y → y ; emap = λ f → f }
-       ≈⟨⟩
+         umap (id1 Cart a) ≈⟨⟩
+         umap {a} {a} (record { cmap = identityFunctor ; ccf = λ x → x }) ≈⟨⟩
+         record { vmap = λ y → y ; emap = λ f → f } ≈⟨⟩
          id1 Grph ((uobj a))
        ∎ where open ≈-Reasoning Grph
     IsFunctor.distr isf {a} {b} {c} {f} {g} = begin
@@ -457,124 +495,90 @@ module forgetful {c₁ : Level} where
     ... | eq | eqa | eqb =  cc11 (FMap (cmap f) e) (FMap (cmap g) e) eq eqa eqb where
            cc11 : {a c a' c' : Obj (cat b) } → ( f : Hom (cat b) a c ) → ( g : Hom (cat b) a' c' )
                → [ cat b ] f ~ g → a ≡ a'  → c  ≡ c'  →  [ uobj b ] f == g
-           cc11 f g (refl eqv) eq eq1 =  mrefl (≡←≈ b eqv)
+           cc11 f g (refl eqv) eq eq1 =  mrefl (Small.≡←≈ (small b) eqv)
 
---
---  UC :  Functor (CAT  {c₁} {c₁} {c₁}) (Grph {c₁} {c₁})
---  FObj UC a = record { vertex = Obj a ; edge = Hom a }
---  FMap UC {a} {b} f =   record { vmap = λ e → FObj f e ; emap = λ e → FMap f e }
---  isFunctor UC  = isf where
---    isf : IsFunctor CAT Grph (λ z → {!!}) {!!}
---    IsFunctor.identity isf {a} {b} {f} = {!!}
---    IsFunctor.distr isf {a} {b} {c} {f} {g} = {!!}
---    IsFunctor.≈-cong isf {a} {b} {f} {g} f=g e = {!!}
---
--- at-graph-univ :  {c₁ : Level} → UniversalMapping (Grph {c₁} {c₁}) (CAT {c₁ } {c₁} {c₁}) forgetful.UC
--- at-graph-univ {c₁}  = record {
---     F = F ;
---     η = {!!} ;
---     _* = {!!} ;
---     isUniversalMapping = record {
---         universalMapping = {!!} ;
---         uniquness = {!!}
---      }
---  }  where
---      F :  Obj (Grph {c₁} {c₁}) → Obj CAT
---      F g =  PL where open ccc-from-graph g
---
-open ccc-from-graph.Objs
--- open ccc-from-graph.Arrow
--- open ccc-from-graph.Arrows
+-- open ccc-from-graph.Objs
 open graphtocat.Chain
 
-Sets0 : {c₂ : Level } → Category (suc c₂) c₂ c₂
-Sets0 {c₂} = Sets {c₂}
+module fcat {c₁ c₂ : Level} (ext : Axiom.Extensionality.Propositional.Extensionality c₁ c₁ )
+  (≡←≈ : (g : Obj (Grph {c₁} {c₁})) →  {a b : Obj (ccc-from-graph.PLC g ext)}
+            {f : Hom (ccc-from-graph.PLC g ext) a b}
+            {g₁ : Hom (ccc-from-graph.PLC g ext) a b} →
+            ccc-from-graph.PLC g ext [ f ≈ g₁ ] → f ≡ g₁ ) where
 
-module fcat {c₁ c₂ : Level}  ( g : Graph {c₁} {c₂} ) where
+  -- open g ext
 
-  open ccc-from-graph g
+  ccc-graph-univ : UniversalMapping (Grph {c₁} {c₁}) (Cart {c₁ } {c₁} {c₁}) forgetful.UX
+  ccc-graph-univ  = record {
+   F = F ;
+   η = η ;
+   _* = solution ;
+   isUniversalMapping = record {
+       universalMapping = λ {a} {b} {f} → is-solution {a} {b} {f};
+       uniquness = λ {a} {b} {f} {g} → is-unique {a} {b} {f} {g}
+     }
+   }  where
+    F : Obj (Grph {c₁} {c₁}) → Obj (Cart {c₁} {c₁} {c₁})
+    F g = record { cat = ccc-from-graph.PLC g ext ; small =  ? ; ccc = ccc-from-graph.ccc-PL g ext }
+    η : (a : Obj (Grph {c₁} {c₁}) ) → Hom Grph a (forgetful.uobj (F a))
+    η a = record { vmap = λ v → atom v ;  emap = λ {b} {c} e → iv (arrow e) (id (atom b)) }   where
+        open ccc-from-graph a ext
+    solution : {g : Obj Grph} {b : Obj Cart} → Hom Grph g (forgetful.uobj b) → Hom Cart (F g) b
+    solution {g} {b} f = record { cmap = record {
+           FObj = fobj1
+         ; FMap = λ f → fmap1 f
+         ; isFunctor = record {
+                identity = λ {a} → refl-hom
+               ; ≈-cong = λ {a} {b} {f} {h} → sl01 {a} {b} {f} {h}
+               ; distr = λ {a} {b} {c} {f} {g} → sl02 {a} {b} {c} {f} {g}
+            } } ;
+        ccf = λ _ → ccc b } where
+            open ccc-from-graph g ext hiding ( top  ;  _∧_ ; atom ; _<=_ )
+            open ≈-Reasoning (cat b) hiding ( sym )
+            open ccc-from-graph.Objs
 
--- FCat : Obj (Cart {c₁} {c₁ ⊔ c₂} {c₁ ⊔ c₂})
--- FCat  = record { cat = record {
---         Obj = Obj PL
---         ; Hom = λ a b → Hom PL a b
---         ; _o_ = Category._o_ PL
---         ; _≈_ = λ {a} {b} f g → FMap CS f ≡ FMap CS g
---         ; Id  = λ {a} → id1 PL a
---         ; isCategory = record {
---                   isEquivalence = {!!} ;
---                   identityL  = λ {a b f} → {!!} ;
---                   identityR  = λ {a b f} → {!!} ;
---                   o-resp-≈  = λ {a b c f g h i} → {!!} ;
---                   associative  = λ {a} {b} {c} {f} {g} {h} → {!!}
---            }
---         } ;
---        ≡←≈  = λ eq → {!!} ;
---        ccc = {!!}
---     } where
---         B = Sets {c₁ ⊔ c₂}
+            fobj1 : Obj PLC → Obj (cat b)
+            fobj1 (atom x) = vmap f x
+            fobj1 top = CCC.１ (ccc b)
+            fobj1 (a ∧ a₁) = CCC._∧_ (ccc b) (fobj1 a) (fobj1 a₁)
+            fobj1 (a <= a₁) = CCC._<=_ (ccc b) (fobj1 a) (fobj1 a₁)
 
-  -- Hom FCat is an image of Fucntor CS, but I don't know how to write it
--- postulate
---     fcat-pl : {a b : Obj (cat FCat) } → Hom (cat FCat) a b → Hom PL a b
---     fcat-eq :  {a b : Obj (cat FCat) } → (f : Hom (cat FCat) a b ) → {!!} -- FMap CS (fcat-pl f) ≡ f
+            fmap1 :  {A B : Obj PLC} → Hom PLC A B → Hom (cat b) (fobj1 A) (fobj1 B)
+            fmap1 {a} {.a} (id .a) = id1 (cat b) (fobj1 a)
+            fmap1 {a} {.top} (○ .a) = CCC.○ (ccc b) (fobj1 a)
+            fmap1 {a} {.(_ ∧ _)} < m , m₁ > = CCC.<_,_> (ccc b) (fmap1 {a}  m) (fmap1 {a}  m₁)
+            fmap1 {a} {_} (iv (arrow x) m) = (cat b) [ emap f x o fmap1 m ]
+            fmap1 {a} {_} (iv π m) = (cat b) [ CCC.π (ccc b)  o fmap1 m ]
+            fmap1 {a} {_} (iv π' m) = (cat b) [ CCC.π' (ccc b) o fmap1 m ]
+            fmap1 {a} {_} (iv ε m) = (cat b) [ CCC.ε (ccc b) o fmap1 m ]
+            fmap1 {a} {_} (iv (x *) m) = (cat b) [ CCC._* (ccc b) (fmap1 x) o fmap1 m ]
 
---   ccc-graph-univ :  {c₁ : Level} → UniversalMapping (Grph {c₁} {c₁}) (Cart {c₁ } {c₁} {c₁}) forgetful.UX
---   ccc-graph-univ {c₁}  = record {
---    F = F ;
---    η = η ;
---    _* = solution ;
---    isUniversalMapping = record {
---        universalMapping = {!!} ;
---        uniquness = {!!}
---     }
--- } where
---      open forgetful
---      open ccc-from-graph
-       --
-       --
-       --                                        η : Hom Grph a (FObj UX (F a))
-       --                    f : edge g x y   ----------------------------------->  (record {vertex = fobj (atom x) ; edge = fmap h }) : Graph
-       --  Graph g     x  ----------------------> y : vertex g                             ↑
-       --                       arrow f             : Hom (PL g) (atom x) (atom y)         |
-       --  PL g     atom x  ------------------> atom y : Obj (PL g)                        | UX : Functor Sets Graph
-       --                          |                                                       |
-       --                          | Functor (CS g)                                        |
-       --                          ↓                                                       |
-       --  Sets  ((z : vertx g) → C z x)  ----> ((z : vertx g) → C z y)  = h : Hom Sets (fobj (atom x)) (fobj (atom y))
-       --
---      F : Obj (Grph {c₁} {c₁}) → Obj (Cart {c₁} {c₁} {c₁})
---      F g = FCat  where open fcat g
---      η : (a : Obj (Grph {c₁} {c₁}) ) → Hom Grph a (FObj UX (F a))
---      η a = record { vmap = λ y → vm y ;  emap = λ f → em f }  where
---           fo : Graph  {c₁ } {c₁}
---           fo = uobj {c₁} (F a)
---           vm : (y : vertex a ) →  vertex (FObj UX (F a))
---           vm y =  atom y
---           em :  { x y : vertex a } (f : edge a x y ) → edge (FObj UX (F a)) (vm x) (vm y)
---           em {x} {y} f = iv (arrow f) (id _)  -- fmap a (iv (arrow f) (id _))
---      cobj  :  {g : Obj (Grph {c₁} {c₁} ) } {c : Obj Cart} → Hom Grph g (FObj UX c)  → Objs g → Obj (cat c)
---      cobj {g} {c} f (atom x) = vmap f x
---      cobj {g} {c} f ⊤ = CCC.１ (ccc c)
---      cobj {g} {c} f (x ∧ y) = CCC._∧_ (ccc c) (cobj {g} {c} f x) (cobj {g} {c} f y)
---      cobj {g} {c} f (b <= a) = CCC._<=_ (ccc c) (cobj {g} {c} f b) (cobj {g} {c} f a)
---      c-map :  {g : Obj (Grph  )} {c : Obj Cart} {A B : Objs g}
---          → (f : Hom Grph g (FObj UX c) ) → (fobj g A → fobj g B) → Hom (cat c) (cobj {g} {c} f A) (cobj {g} {c} f B)
---      c-map = ?
---      c-map {g} {c} {atom x} {atom b} f y = {!!}  where
---           cmpa1 : ((y₁ : vertex g) → C g y₁ x ) → {!!}
---           cmpa1 = {!!}
---      c-map {g} {c} {⊤} {atom b} f y with y ! b
---      ... | id .b = {!!}
---      ... | next x t = (cat c) [ emap f x o c-map f {!!} ]
---      c-map {g} {c} {a ∧ a₁} {atom b} f y = {!!}
---      c-map {g} {c} {a <= a₁} {atom b} f y = {!!}
---      c-map {g} {c} {a} {⊤} f x = CCC.○ (ccc c) (cobj f a)
---      c-map {g} {c} {a} {x ∧ y} f z = CCC.<_,_> (ccc c) (c-map f (λ k → proj₁ (z k))) (c-map f (λ k → proj₂ (z k)))
---      c-map {g} {c} {d} {b <= a} f x = CCC._* (ccc c) ( c-map f (λ k → x (proj₁ k)  (proj₂ k)))
---      solution : {g : Obj Grph } {c : Obj Cart } → Hom Grph g (FObj UX c) → Hom Cart (F g) c
---      solution  {g} {c} f = record { cmap = record {
---            FObj = λ x →  cobj {g} {c} f x ;
---            FMap = λ {x} {y} h → c-map {g} {c} {x} {y} f {!!} ;
---            isFunctor = {!!} } ;
---            ccf = {!!} }
+
+            sl00 : {A : Obj PLC} → cat b [ id1 (cat b) (fobj1 A) ≈ id1 (cat b) (fobj1 A) ]
+            sl00 {a} = refl-hom
+            sl01 :  {A B : Obj PLC} {f : Hom PLC A B} {h : Hom PLC A B} →
+                PLC [ f ≈ h ] → cat b [ fmap1 f ≈ fmap1 h ]
+            sl01 {a} {b} {f} {h} f=h = ?
+            sl02 : {a : Obj PLC} {b₂ : Obj PLC} {c : Obj PLC} {f : Hom PLC a b₂} {g : Hom PLC b₂ c} →
+                cat b [ fmap1 (PLC [ g o f ]) ≈ cat b [ fmap1 g o fmap1 f ] ]
+            sl02 {a} {b₂} {.b₂} {f} {ccc-from-graph.id .b₂} = ?
+            sl02 {a} {b₂} {.top} {f} {ccc-from-graph.○ .b₂} = ?
+            sl02 {a} {b₂} {.(_ ∧ _)} {f} {ccc-from-graph.< g , g₁ >} = ?
+            sl02 {a} {b₂} {c} {f} {ccc-from-graph.iv f₁ g} = ?
+
+
+    is-solution :   {a : Obj Grph} {b : Obj Cart} {f : Hom Grph a (forgetful.uobj b)} → Grph [ Grph [ forgetful.umap (solution {a}{b} f) o η a ] ≈ f ]
+    is-solution {a} {b1} {record { vmap = vmap ; emap = emap }} e = mrefl ? where
+       lem :  GMap.emap (Grph [ forgetful.umap (solution {a} {b1} (record { vmap = vmap ; emap = emap })) o η a ]) e ≡ emap e
+       lem = begin
+          cat b1 [ emap e o id1 (cat b1) (vmap _ ) ]  ≡⟨ ? ⟩
+          emap e ∎ where
+             open ≡-Reasoning
+
+
+    is-unique : {a : Obj Grph} {b : Obj Cart} {f : Hom Grph a (forgetful.uobj b)}
+            {g : Hom Cart (F a) b} →
+            Grph [ Grph [ forgetful.umap g o η a ] ≈ f ] →
+            Cart [ solution f ≈ g ]
+    is-unique {a} {b1} {f} {g} eq e = ?
+

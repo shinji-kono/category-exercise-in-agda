@@ -333,26 +333,26 @@ Yoneda-epi {b} {x} {y} g h yg=yh = begin
          ∎ where open ≈-Reasoning Sets
 
 
-open import Data.Product renaming (_×_ to _∧_) hiding (_<*>_)
+--   open import Data.Product renaming (_×_ to _∧_) hiding (_<*>_)
+--
+--   Yoneda-full-embed : {a b : Obj A } → FObj YonedaFunctor a ≡ FObj YonedaFunctor b → a ≡ b
+--   Yoneda-full-embed {a} {b} eq = ylem4 ? ? where
+--        open Small small
+--        ylem0 : I
+--        ylem0 = hom→ (id1 A a) 
+--        -- ylem2 : Hom A a b
+--        -- ylem2 = hom← ( hom→ (id1 A a) )
+--        ylem7 : I
+--        ylem7 = hom→ (hom← ( hom→ (id1 A a) ))
+--        open ≡-Reasoning 
+--        ylem5 : ylem0 ≡ ylem7
+--        ylem5 = begin
+--            hom→ (id1 A a) ≡⟨ EqR.sym hom-rev ⟩
+--            hom→ (hom←  ( hom→ (id1 A a) )) ∎
+--        ylem4 : (f : Hom A a b ) → hom→ (id1 A a) ≡ hom→ f → a ≡ b
+--        ylem4 f eq = begin
+--            a ≡⟨ proj₁ (hom-inject eq) ⟩
+--            b ∎
 
-Yoneda-full-embed : {a b : Obj A } → FObj YonedaFunctor a ≡ FObj YonedaFunctor b → a ≡ b
-Yoneda-full-embed {a} {b} eq = ylem4 _ ylem5 where
-     open Small small
-     ylem0 : I
-     ylem0 = hom→ (id1 A a) 
-     ylem2 : Hom A a b
-     ylem2 = hom← {b} {a} ( hom→ (id1 A a) )
-     ylem7 : I
-     ylem7 = hom→ ylem2
-     open ≡-Reasoning 
-     ylem5 : ylem0 ≡ ylem7
-     ylem5 = begin
-         hom→ (id1 A a) ≡⟨ EqR.sym hom-rev ⟩
-         hom→ (hom← {b} {a} ( hom→ (id1 A a) )) ∎
-     ylem4 : (f : Hom A a b ) → hom→ (id1 A a) ≡ hom→ f → a ≡ b
-     ylem4 f eq = begin
-         a ≡⟨ proj₁ (hom-inject eq) ⟩
-         b ∎
 
-
--- end
+    -- end

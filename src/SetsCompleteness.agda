@@ -51,8 +51,6 @@ record iproduct {a} (I : Set a)  ( pi0 : I → Set a ) : Set a where
 
 open iproduct
 
-open Small
-
 open import Axiom.Extensionality.Propositional
 
 SetsIProduct :  {  c₂ : Level} → (I : Obj Sets) (ai : I → Obj Sets )

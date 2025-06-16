@@ -75,18 +75,23 @@ module Definitions where
        field
          I : Set c
          hom→ : {i j : Obj C } →    Hom C i j →  I
-         hom← : {i j : Obj C } →  ( f : I ) →  Hom C i j
-         hom-iso : {i j : Obj C } →  { f : Hom C i j } →   C [ hom← ( hom→ f )  ≈ f ]
-         hom-rev : {i j : Obj C } →  { f : I } →   hom→ ( hom← {i} {j} f )  ≡ f
-         ≡←≈ : {i j : Obj C } →  { f g : Hom C i j } →  C [ f ≈ g ] →   f ≡ g
+         s-dom : I → Obj C
+         s-dom-iso : {i j : Obj C } → { f : Hom C i j } → i ≡ s-dom (hom→ f)
+         s-cod : I → Obj C
+         s-cod-iso : {i j : Obj C } → { f : Hom C i j } → j ≡ s-cod (hom→ f)
+         hom← :  ( f : I ) →  Hom C (s-dom f) (s-cod f)
+         hom-iso : {i j : Obj C } →  { f : Hom C i j } →   C [ hom← ( hom→ f )  ≈ EqR.subst₂ (λ j k → Hom C j k) s-dom-iso s-cod-iso f ]
+         hom-rev : { f : I } →   hom→ ( hom←   f )  ≡ f
          hom-inject  : {i j k l : Obj C } →  { f : Hom C i j } →  { g : Hom C k l } →  hom→ f ≡ hom→ g →  (i ≡ k ) ∧  (j ≡ l) 
-
+         -- this can be proved as subst-eq refl refl refl refl = refl-hom, if we have --with-K
+         subst-eq : {a b c d : Obj C} → (a=b a=b' : a ≡ b ) → (c=d c=d' : c ≡ d )
+            → {f : Hom C a c} 
+            → C [ EqR.subst₂ (λ j k → Hom C j k ) a=b c=d f ≈  EqR.subst₂ (λ j k → Hom C j k ) a=b' c=d' f  ] 
          -- we cannot remove ≡←≈ in easy way, because it interferes with Sets and Yoneda Functor
+         ≡←≈ : {i j : Obj C } →  { f g : Hom C i j } →  C [ f ≈ g ] →   f ≡ g
          -- we also having troube with cong below, it does not satisfy the resp
        hom→cong : {i j : Obj C } →  { f g : Hom C i j } → C [ f ≈ g ] → hom→ f ≡ hom→ g
        hom→cong {i} {j} {f} {g} f=g = EqR.cong hom→ (≡←≈ f=g)
-       -- hom←cong : {i j i1 j1 : Obj C } →  { f g : I } → f ≡ g → Category.dom C (hom← {i} {j} f) ≡ Category.dom C (hom← {i1} {j1} g)
-       -- hom←cong {i} {j} {f} {g} f=g = EqR.cong Category.dom C (hom← {i1} {j1} g)
 
     record IsUniversalMapping  {c₁ c₂ ℓ c₁' c₂' ℓ' : Level} (A : Category c₁ c₂ ℓ) (B : Category c₁' c₂' ℓ')
                      ( U : Functor B A )
@@ -250,12 +255,12 @@ module Definitions where
                 → C [ C [ ( FMap H (FMap F f )) o  ( TMap n (FObj F a)) ]  ≈ C [ (TMap n (FObj F b )) o  (FMap G (FMap F f))  ] ]
              commute  {a} {b} {f}  =  IsNTrans.commute ( isNTrans n)
 
-    record SObj {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (P : Obj A → Set ℓ ) :  Set (suc (c₁ ⊔ c₂ ⊔ ℓ)) where
+    record SObj {c₁ c₂ ℓ ℓ' : Level} (A : Category c₁ c₂ ℓ) (P : Obj A → Set ℓ' ) :  Set (suc (c₁ ⊔ c₂ ⊔ ℓ ⊔ ℓ')) where
         field
            s : Obj A
            p : P s
 
-    FullSubCategory : {c₁ c₂ ℓ : Level} (A : Category c₁ c₂ ℓ) (P : Obj A → Set ℓ ) → Category (suc c₁ ⊔ suc c₂ ⊔ suc ℓ)  c₂ ℓ
+    FullSubCategory : {c₁ c₂ ℓ ℓ' : Level} (A : Category c₁ c₂ ℓ) (P : Obj A → Set ℓ' ) → Category (suc c₁ ⊔ suc c₂ ⊔ suc ℓ ⊔ suc ℓ')  c₂ ℓ
     FullSubCategory A P = record {
            Obj = SObj A P
          ; Hom = λ a b → Hom A (SObj.s a) (SObj.s b)  -- full

@@ -29,7 +29,7 @@ open Functor
 
 ΓMap :  {  c₁ c₂ ℓ : Level} { C : Category c₁ c₂ ℓ }  ( s : Small c₁ C  ) ( Γ : Functor C ( Sets { c₁} ))
     {i j : Obj C } →　 ( f : Small.I s ) →  ΓObj s Γ i → ΓObj  s Γ j
-ΓMap  s Γ {i} {j} f = FMap Γ ( hom← s f )
+ΓMap  s Γ {i} {j} f = ? -- FMap Γ ( hom← s f )
 
 record snat   { c₁ c₂ }  { I : Set c₂} { OC :  Set  c₁ } ( sobj :  OC →  Set  c₂ )
      ( smap : { i j :  OC  }  → (f : I ) →  sobj i → sobj j ) : Set   (c₁ ⊔ c₂) where
@@ -71,8 +71,8 @@ Cone C s Γ  =  record {
     comm1 {a} {b} {f} sn = begin
                 FMap Γ f  (snmap sn  a )
             ≡⟨ cong ( λ f → ( FMap Γ f (snmap sn  a ))) (sym ( ≡←≈ s ( hom-iso s ))) ⟩
-                FMap Γ ( hom← s ( hom→ s f))  (snmap sn  a )
-            ≡⟨⟩
+                FMap Γ ( hom← s ( hom→ s f))  ? -- (snmap sn  a )
+            ≡⟨ ? ⟩
                 ΓMap s Γ (hom→ s f) (snmap sn a )
             ≡⟨ sncommute sn a b  (hom→ s  f) ⟩
                 snmap sn b
