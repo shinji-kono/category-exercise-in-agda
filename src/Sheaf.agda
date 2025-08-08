@@ -85,7 +85,7 @@ import Relation.Binary.Reasoning.Setoid as EqR
 SetsC :  Category (suc n) n Level.zero
 SetsC  = record {  Obj = HOD
    ; Hom = _⊆_
-   ; Id = λ {a} {e} ae → ae
+   ; Id = λ {a} ae → ae
    ; _o_ = λ a b → λ x → a (b x)
    ; _≈_ = λ a b → ⊤
    ; isCategory = record { isEquivalence = record { refl  = tt
@@ -310,6 +310,7 @@ HODSetsAop {c₁} {c₂} {ℓ } A = record { Obj = YObj
 --
 HOD-OSCA : {P : HOD} (TP : Topology P) →  Category (suc (suc (suc n))) (suc (suc (suc n))) (suc (suc n))
 HOD-OSCA {P} TP = HODSetsAop (OSC TP)
+
 
 --
 -- Slice Category of top
@@ -862,223 +863,431 @@ module HODShAdjoint (X : Obj top) where
        --     Fuv = Func.func (FMap F (λ q → V⊆U q))
        -- this is a restriction of Func (FObj F U) (FObj F V), that is if we  have (FUs : odef (FObj F U) s ),
        -- we have s|v = Func.func (FMap F (λ q → V⊆U q)) FUs,
-       --
-       restrict-func : {U V : Obj OX}
-           → (F : Functor OX HODSets)
-           → (V⊆U : SObj.s V ⊆ SObj.s U)
-           → Func (FObj F U) (FObj F V)
-       restrict-func {U} {V}  F V⊆U = record {
-              func = λ {x} (FUs : odef (FObj F U) x ) → Func.func (FMap F (λ q → V⊆U q)) FUs
-            ; is-func = λ {x} (FUs : odef (FObj F U) x ) → Func.is-func (FMap F (λ q → V⊆U q)) FUs
-            ; func-wld = λ {x y} (FUx : odef (FObj F U) x ) (FUy : odef (FObj F U) y) eq →
-                Func.func-wld (FMap F (λ q → V⊆U q)) FUx FUy eq
-          }
 
-       record Feq
-               (F : Functor OX HODSets)
-               {x s t : Ordinal} (X∋x : odef (space X) x)
-               (U V : Obj OX )
-               (fus : odef (FObj F U) s) (fvt : odef (FObj F V) t)  : Set n where
-          field
-             w : Ordinal
-             ow : OS (topology X) ∋ * w
-             w⊆u∩v : (* w) ⊆ ((SObj.s U) ∩ (SObj.s V) )
-             x∈w : odef (* w) x
-          W : Obj  OX
-          W = record { s = * w ; p = ow }
-          W⊆U : SObj.s W ⊆ SObj.s U
-          W⊆U {y} lt = proj1 (w⊆u∩v lt)
-          W⊆V : SObj.s W ⊆ SObj.s V
-          W⊆V {y} lt = proj2 (w⊆u∩v lt)
-          vv : odef (FObj F W) (Func.func (restrict-func {U} {W} F W⊆U) fus)
-          vv =  Func.is-func (restrict-func {U} {W} F W⊆U) fus
-          field
-             feq : Func.func (restrict-func {U} {W} F W⊆U) fus ≡ Func.func (restrict-func {V} {W} F W⊆V) fvt
+       --   (F : Functor OX HODSets) is unbounded in HODSets, this is (LObj :  Obj (HOD-OSCA (topology X) )) also.
+       --   To make the topology space from F, we need some restrition 
 
+       FLim : (F : Functor OX HODSets) → Set n
+       FLim F = (x : Ordinal) → (ox : odef (OS (topology X)) (& (* x) ))
+           → FObj F record { s = * x ; p = ox } ⊆ Power (space X)
 
-       module FEQ (F : Functor OX HODSets) {x : Ordinal }  (X∋x : odef (space X) x) where
-           record SFU (x : Ordinal) : Set n where
+       L00 : (a : Obj (HOD-OSCA (topology X))) → Functor OX HODSets
+       L00 a = a
+
+       --  
+       --  it looks like easy to prove, but we cannot prove it in safe mode
+       --  
+       Fwld : (F : Functor OX HODSets) → Set (suc n)
+       Fwld F = {a b : HOD } → a =h=  b → { pa : (OS (topology X)) ∋ a } { pb : (OS (topology X)) ∋ b }   
+               → FObj F record { s = a ; p = pa }  =h= FObj F record { s = b ; p = pb }
+
+       module FLIM (FL : (F : Functor OX HODSets) →  FLim F ) (FW : (F : Functor OX HODSets) →  Fwld F ) where
+
+           restrict-func : {U V : Obj OX}
+               → (F : Functor OX HODSets)
+               → (V⊆U : SObj.s V ⊆ SObj.s U)
+               → Func (FObj F U) (FObj F V)
+           restrict-func {U} {V}  F V⊆U = record {
+                  func = λ {x} (FUs : odef (FObj F U) x ) → Func.func (FMap F (λ q → V⊆U q)) FUs
+                ; is-func = λ {x} (FUs : odef (FObj F U) x ) → Func.is-func (FMap F (λ q → V⊆U q)) FUs
+                ; func-wld = λ {x y} (FUx : odef (FObj F U) x ) (FUy : odef (FObj F U) y) eq →
+                    Func.func-wld (FMap F (λ q → V⊆U q)) FUx FUy eq
+              }
+
+           restrict-func-⊆ : {U V W Y : Obj OX}
+               → (F : Functor OX HODSets)
+               → (V⊆U : SObj.s V ⊆ SObj.s U) → (W⊆Y : SObj.s W ⊆ SObj.s Y)
+               → {a b : Ordinal} → a ≡ b
+               → (fa : odef (FObj F U) a) (fb : odef (FObj F Y) b)
+               → Func.func (restrict-func {U} {V} F V⊆U) fa ≡ Func.func (restrict-func {Y} {W} F W⊆Y ) fb
+           restrict-func-⊆ {U} {V} {W} {Y} F V⊆U W⊆Y {a} {b} a=b fa fb = begin
+               Func.func (restrict-func {U} {V} F V⊆U) fa ≡⟨⟩
+               Func.func (FMap F (λ q → V⊆U q)) fa ≡⟨ ? ⟩
+               Func.func (FMap F (λ q → VW⊆V q)) (Func.is-func (FMap F V⊆U) fa ) ≡⟨ fab-eq ⟩
+               Func.func (FMap F (λ q → VW⊆Y q)) (Func.is-func (FMap F ?) fb ) ≡⟨ ? ⟩
+               Func.func (FMap F (λ q → W⊆Y q)) fb ≡⟨ ? ⟩
+               Func.func (restrict-func {Y} {W} F W⊆Y) fb ∎ where
+                  open ≡-Reasoning
+                  VW : Obj OX
+                  VW = record { s = SObj.s V ∩ SObj.s W ; p = o∩ (topology X) (SObj.p V) (SObj.p W) }
+                  VW⊆V : SObj.s VW ⊆ SObj.s V
+                  VW⊆V lt = proj1 lt
+                  VW⊆Y : SObj.s VW ⊆ SObj.s W
+                  VW⊆Y lt = proj2 lt
+                  lem00 : Ordinal
+                  lem00 = Func.func (FMap F VW⊆V  ) ?
+                  lem01 : odef (FObj F U) ?
+                  lem01 = Func.is-func (FMap F ? ) ?
+                  fa0 : odef (FObj F U) a
+                  fa0 = fa
+                  fv : odef (FObj F V) (Func.func (FMap F V⊆U) fa )
+                  fv = Func.is-func (FMap F V⊆U) fa
+                  fab : odef (FObj F VW) (Func.func (FMap F VW⊆V) fv )
+                  fab = Func.is-func (FMap F VW⊆V) fv
+                  fab1 : odef (FObj F VW) (Func.func (FMap F VW⊆V) (Func.is-func (FMap F V⊆U) fa))
+                  fab1 = Func.is-func (FMap F VW⊆V) (Func.is-func (FMap F V⊆U) fa)
+                  fab-eq : Func.func (FMap F VW⊆V) (Func.is-func (FMap F V⊆U) fa) ≡ Func.func (FMap F VW⊆Y )  (Func.is-func (FMap F W⊆Y) fb)
+                  fab-eq = ?
+
+           OXID : (a b : Obj OX) → SObj.s a =h= SObj.s b → Hom OX a b
+           OXID a b eq {x} ax = eq← eq ax
+
+           record Feq
+                   (F : Functor OX HODSets)
+                   {x s t : Ordinal} (X∋x : odef (space X) x)
+                   (U V : Obj OX )
+                   (fus : odef (FObj F U) s) (fvt : odef (FObj F V) t)  : Set n where
               field
-                 u : Ordinal
+                 w : Ordinal
+                 ow : OS (topology X) ∋ * w
+                 w⊆u∩v : (* w) ⊆ ((SObj.s U) ∩ (SObj.s V) )
+                 x∈w : odef (* w) x
+              W : Obj  OX
+              W = record { s = * w ; p = ow }
+              W⊆U : SObj.s W ⊆ SObj.s U
+              W⊆U {y} lt = proj1 (w⊆u∩v lt)
+              W⊆V : SObj.s W ⊆ SObj.s V
+              W⊆V {y} lt = proj2 (w⊆u∩v lt)
+              vv : odef (FObj F W) (Func.func (restrict-func {U} {W} F W⊆U) fus)
+              vv =  Func.is-func (restrict-func {U} {W} F W⊆U) fus
+              field
+                 feq : Func.func (restrict-func {U} {W} F W⊆U) fus ≡ Func.func (restrict-func {V} {W} F W⊆V) fvt
+
+           module FEQ (F : Functor OX HODSets) {x : Ordinal }  (X∋x : odef (space X) x) where
+               record SFU (x : Ordinal) : Set n where
+                  field
+                     u : Ordinal
+                     ou : OS (topology X) ∋ * u
+                  U : Obj OX
+                  U = record { s = * u ; p = ou }
+                  field
+                     s∈FU : odef (FObj F U ) x
+                  lem00 : & (FObj F (record { s = * u  ; p = ou }))   o< osuc (& (Power (space X))) 
+                  lem00 =  ⊆→o≤ ( FL F _ ou  )  
+                  x<PSX : x o< osuc (& (Power (space X))) 
+                  x<PSX  = begin
+                    x ≡⟨  sym &iso ⟩ 
+                    & (* x)  <⟨  c<→o< {* x} {FObj F U} (subst (λ k → odef (FObj F U) k ) (sym &iso) s∈FU) ⟩ 
+                    & (FObj F U) ≤⟨ ⊆→o≤ ( FL F _ ou  ) ⟩
+                    (& (Power (space X)))  ∎ where 
+                        open o≤-Reasoning
+                  PSX∋x : odef (Power (space X)) (& (* x) )
+                  PSX∋x = FL F _ ou (subst (λ k → odef (FObj F U) k ) (sym &iso) s∈FU) 
+
+               HODSFU : HOD
+               HODSFU = record { od = record { def = λ x → SFU x } ; odmax =  osuc (& (Power (space X))) ; <odmax = λ {z} lz → SFU.x<PSX lz }
+
+               _≐_ : Rel ( HODElement HODSFU ) n
+               a ≐ b = Feq F X∋x (SFU.U (HODElement.A∋elt a)) (SFU.U (HODElement.A∋elt b))  (SFU.s∈FU (HODElement.A∋elt a)) (SFU.s∈FU (HODElement.A∋elt b))
+
+               --  [s]x   s ∈ F(U)
+               --         equivalent class of s|w = t|w, w ⊆ u ∩ v, s.t. x∈w
+               record SFUEQ {y : Ordinal} (sy : SFU y) (x : Ordinal) : Set n where
+                  field
+                     sx : SFU x
+                     sfu-eq : Feq F X∋x (SFU.U sx) (SFU.U sy)  (SFU.s∈FU sx) (SFU.s∈FU sy)
+
+               HODSFUEQ : {y : Ordinal}  → SFU y → HOD
+               HODSFUEQ {y} sy = record { od = record { def = λ x → SFUEQ sy x } ; odmax = osuc (& (Power (space X))) 
+                   ; <odmax = λ lz → SFU.x<PSX (SFUEQ.sx lz) } 
+
+
+           --
+           -- |Yf| def≡ {x,[s]x) | ∃v∈OS(topology X) → x∈ U, s∈F(U) }
+           --    base set of target topology
+           --
+           record YF (F : Functor OX HODSets) (y : Ordinal) : Set n where
+              field
+                 x s u : Ordinal
                  ou : OS (topology X) ∋ * u
               U : Obj OX
               U = record { s = * u ; p = ou }
               field
-                 s∈FU : odef (FObj F U ) x
-           HODSFU : HOD
-           HODSFU = record { od = record { def = λ x → SFU x } ; odmax = & (FObj F record { s = OS (topology X) ; p = ? } ) ; <odmax = ? }
+                 x∈U : odef (SObj.s U) x
+                 s∈FU : odef (FObj F U ) s
+                 is-pair : y ≡ & < * x , FEQ.HODSFUEQ F (os⊆L (topology X) ou x∈U ) record { u = u ; ou = ou ; s∈FU = s∈FU }  >
+              EQ∈PSX :  odef (Power (Power (space X))) (& (FEQ.HODSFUEQ F (os⊆L (topology X) ou x∈U ) record { u = u ; ou = ou ; s∈FU = s∈FU } ))
+              EQ∈PSX z pz with eq→ *iso pz
+              ... | record { sx = sx ; sfu-eq = sfu-eq } = subst (λ k → odef (Power (space X)) k) &iso lem00 where
+                   lem00 : odef (Power (space X)) (& (* z) )
+                   lem00 = FEQ.SFU.PSX∋x sx 
+              sx∋x : space X ∋ * x
+              sx∋x  = subst ( λ k → odef (space X) k) (sym &iso) (os⊆L (topology X) ou x∈U )
+              YFM = ZFP (space X) (Power (Power (space X)))
+              y<YFM : odef (ZFP (space X) (Power (Power (space X)))) y
+              y<YFM = subst (λ k → odef (ZFP (space X) (Power (Power (space X)))) k ) (sym is-pair) (ZFP→ sx∋x EQ∈PSX)
 
-           _≐_ : Rel ( HODElement HODSFU ) n
-           a ≐ b = Feq F X∋x (SFU.U (HODElement.A∋elt a)) (SFU.U (HODElement.A∋elt b))  (SFU.s∈FU (HODElement.A∋elt a)) (SFU.s∈FU (HODElement.A∋elt b))
+           YFHOD :  (F : Functor OX HODSets) → HOD
+           YFHOD F = record { od = record { def = λ x → YF F x } ; odmax = & (ZFP (space X) (Power (Power (space X))))  ; <odmax = lem00 } where
+              lem00 : {y : Ordinal} → YF F y → y o< & (ZFP (space X) (Power (Power (space X))))
+              lem00 {y} yf = odef< ( YF.y<YFM yf ) 
 
-           record SFUEQ {y : Ordinal} (sy : SFU y) (x : Ordinal) : Set n where
+           -- 
+           --    open set of target topology
+           --
+           record YFO (F : Functor OX HODSets) {u s : Ordinal}
+                 (ou : OS (topology X) ∋ * u)
+                 (s∈FU : odef (FObj F (record { s = * u ; p = ou }) ) s) (y : Ordinal) : Set n where
               field
-                 sx : SFU x
-                 sfu-eq : Feq F X∋x (SFU.U sx) (SFU.U sy)  (SFU.s∈FU sx) (SFU.s∈FU sy)
+                 x : Ordinal
+                 x∈U : odef (* u) x
+                 is-pair : y ≡ &  < * x , FEQ.HODSFUEQ F (os⊆L (topology X) ou x∈U ) record { u = u ; ou = ou ; s∈FU = s∈FU }  >
+              EQ∈PSX :  odef (Power (Power (space X))) (& (FEQ.HODSFUEQ F (os⊆L (topology X) ou x∈U ) record { u = u ; ou = ou ; s∈FU = s∈FU } ))
+              EQ∈PSX z pz with eq→ *iso pz
+              ... | record { sx = sx ; sfu-eq = sfu-eq } = subst (λ k → odef (Power (space X)) k) &iso lem00 where
+                   lem00 : odef (Power (space X)) (& (* z) )
+                   lem00 = FEQ.SFU.PSX∋x sx 
+              sx∋x : space X ∋ * x
+              sx∋x  = subst ( λ k → odef (space X) k) (sym &iso) (os⊆L (topology X) ou x∈U )
+              YFM = ZFP (space X) (Power (Power (space X)))
+              y<YFM : odef (ZFP (space X) (Power (Power (space X)))) y
+              y<YFM = subst (λ k → odef (ZFP (space X) (Power (Power (space X)))) k ) (sym is-pair) (ZFP→ sx∋x EQ∈PSX)
 
-           HODSFUEQ : {y : Ordinal}  → SFU y → HOD
-           HODSFUEQ {y} sy = record { od = record { def = λ x → SFUEQ sy x } ; odmax = ? ; <odmax = ? }
+           record YFOs (F : Functor OX HODSets) (y : Ordinal) : Set n where
+              field
+                 u s : Ordinal
+                 ou : OS (topology X) ∋ * u
+                 s∈FU : odef (FObj F (record { s = * u ; p = ou }) ) s
+              lem00 : {x : Ordinal} → YFO F ou s∈FU x → x o< & (ZFP (space X) (Power (Power (space X)))) 
+              lem00 {y} yf = odef< ( YFO.y<YFM yf ) 
+              field
+                 is-open : y ≡ & record { od = record { def = λ x → YFO F ou s∈FU x } ; odmax =  & (ZFP (space X) (Power (Power (space X))))  
+                         ; <odmax = lem00 } 
 
+           YPP : HOD
+           YPP = ZFP (space X) (Power (Power (space X)))
 
-       record YF (F : Functor OX HODSets) (y : Ordinal) : Set n where
-          field
-             x s u : Ordinal
-             ou : OS (topology X) ∋ * u
-          U : Obj OX
-          U = record { s = * u ; p = ou }
-          field
-             x∈U : odef (SObj.s U) x
-             s∈FU : odef (FObj F U ) s
-             is-pair : y ≡ & < * x , FEQ.HODSFUEQ F (os⊆L (topology X) ou x∈U ) record { u = u ; ou = ou ; s∈FU = s∈FU }  >
+           YFOHOD : (F : Functor OX HODSets) → HOD
+           YFOHOD F = record { od = record { def = λ x → YFOs F x } ; odmax = & (Power YPP) ; <odmax = lem00 } where
+               lem01 : {y : Ordinal} → YFOs F y → odef (Power YPP) y
+               lem01 {y} yf z az with eq→ *iso (subst (λ k → odef k z ) ((cong (*) (YFOs.is-open yf))) az)
+               ... | yfo = YFO.y<YFM yfo
+               lem00 :  {y : Ordinal} → YFOs F y → y o< & (Power YPP)
+               lem00 {y} yf = odef< (lem01 yf)
 
-       YFHOD :  (F : Functor OX HODSets) → HOD
-       YFHOD F = record { od = record { def = λ x → YF F x } ; odmax = ? ; <odmax = ? }
+           YFTopology : (F : Functor OX HODSets) → Topology (YFHOD F)
+           YFTopology F = record {
+                 OS = YFOHOD F
+               ; OS⊆PL = lem00
+               ; o∩ = lem02
+               ; o∪ = lem05
+               ; OS∋od∅  = ?
+             } where
+                lem00 : YFOHOD F ⊆ Power (YFHOD F)
+                lem00 {x} record { u = u ; s = s ; ou = ou ; s∈FU = s∈FU ; is-open = is-open } y xy
+                   = record  { x = YFO.x lem01 ; s = s ; u = u ; x∈U = YFO.x∈U lem01 ; s∈FU  = s∈FU ; is-pair = YFO.is-pair lem01 } where
+                      lem01 : YFO F {u} {s} ou s∈FU y
+                      lem01 = eq→ *iso {y} (subst (λ k → odef (* k) y ) is-open  xy )
+                lem02 : {p q : HOD} → YFOHOD F ∋ p → YFOHOD F ∋ q → YFOHOD F ∋ (p ∩ q)
+                lem02 {p} {q} op oq  = record {  u = & ( * (YFOs.u op) ∩ * (YFOs.u oq))  ; s = Func.func (FMap F {pox } {yp∩q}  proj1 ) (YFOs.s∈FU op)
+                           ; ou = subst (λ k → odef (OS (topology X)) k) (sym &iso) (o∩ (topology X) (YFOs.ou op) (YFOs.ou oq))  
+                           ; s∈FU = lem11 ; is-open = ==→o≡ lem04 }  where
+                      pox : Obj OX
+                      pox = record { s = * (YFOs.u op) ; p = YFOs.ou op }
+                      yp∩q : Obj OX
+                      yp∩q = record { s = (* (YFOs.u op) ∩ * (YFOs.u oq)) ; p = o∩ (topology X) (YFOs.ou op) (YFOs.ou oq)  }
+                      lem07 : odef (FObj F (record { s = (* (YFOs.u op) ∩ * (YFOs.u oq)) ; p = o∩ (topology X) (YFOs.ou op) (YFOs.ou oq)  })) 
+                          (Func.func (FMap F proj1 ) (YFOs.s∈FU op))  
+                      lem07 = Func.is-func (FMap F proj1 ) (YFOs.s∈FU op)  
+                      lem11 : odef (FObj F (record { s = * (& (* (YFOs.u op) ∩ * (YFOs.u oq))) ; p =
+                          subst (λ k → odef (OS (topology X)) k) (sym &iso) (o∩ (topology X) (YFOs.ou op) (YFOs.ou oq)) }))
+                            (Func.func (FMap F (λ r → proj1 r)) (YFOs.s∈FU op))
+                      lem11 = eq→ (FW F (==-sym *iso)) lem07 
+                      py : YFOs F (& p) 
+                      py = op
+                      -- PYFO : p =h= record { od = record { def = λ x → YFO F (YFOs.ou op) (YFOs.s∈FU op) x } 
+                      --       ; odmax =  & (ZFP (space X) (Power (Power (space X))))  ; <odmax = _ } 
+                      -- PYFO = ord→== (YFOs.is-open op)
+                      lem04 : ( p ∩ q ) =h= record { od = record { def = λ x →  YFO F 
+                                (subst (λ k → odef (OS (topology X)) k) (sym &iso) (o∩ (topology X) (YFOs.ou op) (YFOs.ou oq)))  lem11  x  
+                                   }  ; odmax = & (ZFP (space X) (Power (Power (space X))))
+                                             ; <odmax = λ yf → odef< (YFO.y<YFM yf) }
+                      lem04 = record { eq→ = lem10 ; eq← = ? } where
+                         lem10 : {y : Ordinal} → odef (p ∩ q) y →
+                                YFO F (subst (λ k → odef (OS (topology X)) k)
+                                 (sym &iso) (o∩ (topology X) (YFOs.ou op) (YFOs.ou oq))) lem11 y
+                         lem10  {y} ⟪ opy , oqy ⟫ = record { x = YFO.x yqoy ; x∈U = lem13 ; is-pair = lem12 } where
+                             ypoy : YFO F (YFOs.ou op) (YFOs.s∈FU op) y
+                             ypoy = eq→ ( ord→== (YFOs.is-open op) ) opy
+                             y=pxf : y ≡ &  < * (YFO.x ypoy) , FEQ.HODSFUEQ F (os⊆L (topology X) (YFOs.ou op) (YFO.x∈U ypoy)  ) 
+                                 record { u = YFOs.u op ; ou = YFOs.ou op ; s∈FU = YFOs.s∈FU op }  >
+                             yqoy : YFO F (YFOs.ou oq) (YFOs.s∈FU oq) y
+                             yqoy = eq→ ( ord→== (YFOs.is-open oq) ) oqy
+                             y=pxf = YFO.is-pair ypoy
+                             y=qxf : y ≡ &  < * (YFO.x yqoy) , FEQ.HODSFUEQ F (os⊆L (topology X) (YFOs.ou oq) (YFO.x∈U yqoy)  ) 
+                                 record { u = YFOs.u oq ; ou = YFOs.ou oq ; s∈FU = YFOs.s∈FU oq }  >
+                             y=qxf = YFO.is-pair yqoy
+                             lem14 : { x y : HOD } → & < x , y > ≡ & < x , * ( & y ) >
+                             lem14 {x} {y} = ==→o≡ (prod-cong-== ==-refl (==-sym *iso) )
+                             yp=yq : YFO.x ypoy ≡ YFO.x yqoy 
+                             yp=yq = proj1 ( prod-≡ (  trans (trans (sym lem14) (trans (sym y=pxf) y=qxf) ) lem14 ))
+                             lem13 :  odef (* (& (* (YFOs.u op) ∩ * (YFOs.u oq)))) (YFO.x yqoy)
+                             lem13  = eq← *iso ⟪ subst (λ k → odef (* (YFOs.u op)) k) yp=yq (YFO.x∈U ypoy) 
+                                               , subst (λ k → odef (* (YFOs.u oq)) k) refl (YFO.x∈U yqoy) ⟫ 
+                             lem15 : FEQ.HODSFUEQ F (os⊆L (topology X) (YFOs.ou oq) (YFO.x∈U yqoy)  ) 
+                                    record { u = YFOs.u oq ; ou = YFOs.ou oq ; s∈FU = YFOs.s∈FU oq }  
+                                =h=  FEQ.HODSFUEQ F (os⊆L (topology X) 
+                                          (subst (odef (OS (topology X))) (sym &iso) (o∩ (topology X) (YFOs.ou op) (YFOs.ou oq))) lem13)
+                                    record { u = & (* (YFOs.u op) ∩ * (YFOs.u oq)) 
+                                      ; ou = subst (odef (OS (topology X))) (sym &iso) (o∩ (topology X) (YFOs.ou op) (YFOs.ou oq)) ; s∈FU = lem11 }
+                             lem15 = record { eq→ = lem16 ; eq← = ? } where
+                                  lem17 = subst (odef (OS (topology X))) (sym &iso) (o∩ (topology X) (YFOs.ou op) (YFOs.ou oq))
+                                  lem16 :  {x : Ordinal} 
+                                      → FEQ.SFUEQ F (os⊆L (topology X) (YFOs.ou oq) (YFO.x∈U yqoy)) 
+                                           (record { u = YFOs.u oq                         ; ou = YFOs.ou oq ; s∈FU = YFOs.s∈FU oq }) x 
+                                      → FEQ.SFUEQ F (os⊆L (topology X) lem17 lem13) 
+                                           (record { u = & (* (YFOs.u op) ∩ * (YFOs.u oq)) ; ou = lem17      ; s∈FU = lem11 }) x
+                                  lem16 {x} record { sx = record { u = u ; ou = ou ; s∈FU = s∈FU } 
+                                     ; sfu-eq = record { w = w ; ow = ow ; w⊆u∩v = w⊆u∩v ; x∈w = x∈w ; feq = feq } } 
+                                       = record { sx = record { u = u ; ou = ou ; s∈FU = s∈FU } 
+                                         ; sfu-eq = record { w = & wpq ; ow = lem20 ; w⊆u∩v = lem18 w⊆u∩v ; x∈w = lem19 ; feq = ? } } where
+                                             wpq : HOD
+                                             wpq =  (* w) ∩  (* (YFOs.u op))
+                                             lem18 : * w ⊆ (* u ∩ * (YFOs.u oq)) → * (& wpq) ⊆ (* u ∩ * (& (* (YFOs.u op) ∩ * (YFOs.u oq))))
+                                             lem18 inc lt with eq→ *iso lt    
+                                             ... | ⟪ wx , px ⟫  = ⟪ proj1 (inc wx) , eq← *iso ⟪ px , proj2 (inc wx) ⟫ ⟫
+                                             lem21 : odef (OS (topology X)) (& (* (YFOs.u op)))
+                                             lem21 = YFOs.ou op
+                                             lem19 : odef (* (& wpq)) (YFO.x yqoy)
+                                             lem19 = eq← *iso ⟪ x∈w ,  subst (λ k → odef (* (YFOs.u op)) k) yp=yq ( YFO.x∈U ypoy)  ⟫ where
+                                                 lem22 : odef (* (YFOs.u op)) (YFO.x ypoy)
+                                                 lem22 = YFO.x∈U ypoy  
+                                             lem20 : OS (topology X) ∋ * (& wpq)
+                                             lem20 = subst (odef (OS (topology X))) (sym &iso) (o∩ (topology X) ow (YFOs.ou op)) 
+                                             fo01 = record { s = * u ; p = ou }
+                                             fo02 = record { s = * (YFOs.u oq) ; p = ? }
+                                             fo03 = record { s = * (& (* (YFOs.u op) ∩ * (YFOs.u oq))) ; p = ? }
+                                             fo04 = record { s = * w ; p = ? }
+                                             fo05 = record { s = * (& wpq) ; p = ? }
+                                             lem23 : Func.func (restrict-func {fo01} {fo04} F (λ lt → proj1 (w⊆u∩v lt))) s∈FU
+                                                   ≡ Func.func (restrict-func {fo02} {fo04} F (λ lt → proj2 (w⊆u∩v lt))) (YFOs.s∈FU oq) 
+                                             lem23 = feq
+                                             lem22 : Func.func (restrict-func {fo01} {fo05} F (λ lt → proj1 (lem18 w⊆u∩v lt))) s∈FU 
+                                                   ≡ Func.func (restrict-func {fo03} {fo05} F (λ lt → proj2 (lem18 w⊆u∩v lt))) lem11
+                                             lem22 = ?
 
-       record YFO (F : Functor OX HODSets) {u s : Ordinal}
-             (ou : OS (topology X) ∋ * u)
-             (s∈FU : odef (FObj F (record { s = * u ; p = ou }) ) s) (y : Ordinal) : Set n where
-          field
-             x : Ordinal
-             x∈U : odef (* u) x
-             is-pair : y ≡ &  < * x , FEQ.HODSFUEQ F (os⊆L (topology X) ou x∈U ) record { u = u ; ou = ou ; s∈FU = s∈FU }  >
+--   ou       : Topology.Topology.OS (topology X) ∋ * u
+--   s∈FU     : odef (FObj F (record { s = * u ; p = ou })) x
+--   w        : Ordinal
+--   ow       : Topology.Topology.OS (topology X) ∋ * w
+--   w⊆u∩v    : * w ⊆ (* u ∩ * (YFOs.u oq))
+--   x∈w      : odef (* w) (YFO.x yqoy)
+--   feq      : ZProduct.Func.func (restrict-func F (λ lt → proj1 (w⊆u∩v lt))) s∈FU
+--              ≡
+--              ZProduct.Func.func (restrict-func F (λ lt → proj2 (w⊆u∩v lt)))
+--              (YFOs.s∈FU oq)            lem18 = ?
 
-       record YFOs (F : Functor OX HODSets) (y : Ordinal) : Set n where
-          field
-             u s : Ordinal
-             ou : OS (topology X) ∋ * u
-             s∈FU : odef (FObj F (record { s = * u ; p = ou }) ) s
-             is-open : y ≡ & record { od = record { def = λ x → YFO F ou s∈FU x } ; odmax = ? ; <odmax = ? }
+                             lem12 :  y ≡ & < * (YFO.x yqoy) , FEQ.HODSFUEQ F (os⊆L (topology X) (subst (odef (OS (topology X))) (sym &iso)
+                                  (o∩ (topology X) (YFOs.ou op) (YFOs.ou oq))) lem13)
+                                    (record { u = & (* (YFOs.u op) ∩ * (YFOs.u oq)) 
+                                      ; ou = subst (odef (OS (topology X))) (sym &iso) (o∩ (topology X) (YFOs.ou op) (YFOs.ou oq)) ; s∈FU = lem11 }) >
+                             lem12 = ?
+                lem05 : {P : HOD} → P ⊆ YFOHOD F → YFOHOD F ∋ Union P
+                lem05 = ?
 
-       YFOHOD : (F : Functor OX HODSets) → HOD
-       YFOHOD F = record { od = record { def = λ x → YFOs F x } ; odmax = ? ; <odmax = ? }
+           --     [s]x modulo s|w = t|w
+           --  |Yf| ≡ {(x,[s]x)|∃ U∈O(X) (x∈ U ∧ s∈ F(U)) } = ∪ (F x) x∈ X, where F x = lim F(U) = ∪ F(U)/~x --                                                                          x ∈ U
+           --  OS |Yf|  ≡ {(x,[s]x)|x∈ U ∧ s ∈ F(U) }
 
-       YFTopology : (F : Functor OX HODSets) → Topology (YFHOD F)
-       YFTopology F = record {
-             OS = YFOHOD F
-           ; OS⊆PL = lem00
-           ; o∩ = lem02
-           ; o∪ = ?
-           ; OS∋od∅  = ?
-         } where
-            lem00 : YFOHOD F ⊆ Power (YFHOD F)
-            lem00 {x} record { u = u ; s = s ; ou = ou ; s∈FU = s∈FU ; is-open = is-open } y xy
-               = record  { x = YFO.x lem01 ; s = s ; u = u ; x∈U = YFO.x∈U lem01 ; s∈FU  = s∈FU ; is-pair = YFO.is-pair lem01 } where
-                  lem01 : YFO F {u} {s} ou s∈FU y
-                  lem01 = eq→ *iso {y} (subst (λ k → odef (* k) y ) is-open  xy )
-            lem02 : {p q : HOD} → YFOHOD F ∋ p → YFOHOD F ∋ q → YFOHOD F ∋ (p ∩ q)
-            lem02 {p} {q} op oq  = record {  u = & ( * (YFOs.u op) ∩ * (YFOs.u oq))  ; s = & ( * (YFOs.s op) ∩ * (YFOs.s oq))
-                       ; ou = ? ; s∈FU = ? ; is-open = ==→o≡ lem04 }  where
-                  lem03 : (y : Ordinal) → YFO F ? ? y
-                  lem03 = ?
-                  lem04 : ( p ∩ q ) =h= record { od = record { def = λ x →  YFO F ? ? x  } ; odmax = ? ; <odmax = ? }
-                  lem04 = ?
-            lem05 : {P : HOD} → P ⊆ YFOHOD F → YFOHOD F ∋ Union P
-            lem05 = ?
+           YFunc : (F : Functor OX HODSets) → Func (YFHOD F) (space X)
+           YFunc F = record {
+                        func = λ {x} lt → YF.x lt
+                      ; is-func = λ {x} ax → OS⊆PL (topology X) (YF.ou ax ) _ (subst (λ k → odef _ k) (sym &iso) (YF.x∈U ax ) )
+                      ; func-wld = λ {x} {y} ax ay x=y → trans ? (trans ? ? ) }
 
-       --     [s]x modulo s|w = t|w
-       --  |Yf| ≡ {(x,[s]x)|∃ U∈O(X) (x∈ U ∧ s∈ F(U)) } = ∪ (F x) x∈ X, where F x = lim F(U) = ∪ F(U)/~x
-       --                                                                          x ∈ U
-       --  OS |Yf|  ≡ {(x,[s]x)|x∈ U ∧ s ∈ F(U) }
+           YFunc-is-x : (F : Functor OX HODSets) → {z : Ordinal} → (yz : odef (YFHOD F) z) → Func.func (YFunc F) yz ≡ YF.x yz
+           YFunc-is-x F {x₁} record { x = x ; s = s ; u = u ; ou = ou ; x∈U = x∈U ; s∈FU = s∈FU ; is-pair = is-pair } = refl
 
-       YFunc : (F : Functor OX HODSets) → Func (YFHOD F) (space X)
-       YFunc F = record {
-                    func = λ {x} lt → YF.x lt
-                  ; is-func = λ {x} ax → OS⊆PL (topology X) (YF.ou ax ) _ (subst (λ k → odef _ k) (sym &iso) (YF.x∈U ax ) )
-                  ; func-wld = λ {x} {y} ax ay x=y → trans ? (trans ? ? ) }
+           LObj :  Obj (HOD-OSCA (topology X) ) → Obj (top / X)
+           LObj F =   ⟦ hom ⟧ where
+               F-functor : Functor OX HODSets
+               F-functor = F
+               hom : Hom top record { space = YFHOD F ; topology = YFTopology F  } X
+               hom = record  { func = YFunc F
+                 ; continuous =  lem00
+                } where
+                    lem00 :  {x : Ordinal } → odef (OS (topology X)) x → odef (YFOHOD F) (& (HODInverseImage (YFunc F) x ))
+                    lem00 {x} ox = record { u = ? ; s = ? ; ou = ? ; s∈FU = ? ; is-open = ==→o≡ ? }
 
-       YFunc-is-x : (F : Functor OX HODSets) → {z : Ordinal} → (yz : odef (YFHOD F) z) → Func.func (YFunc F) yz ≡ YF.x yz
-       YFunc-is-x F {x₁} record { x = x ; s = s ; u = u ; ou = ou ; x∈U = x∈U ; s∈FU = s∈FU ; is-pair = is-pair } = refl
+           -- Slice top on X    Obj   record field { Obj a  ; obj-arrow : Hom top a X }
+           --                   Hom   record field { arrow : Hom (obj a) (obj b) ; proof : obj-arrow  f ≈ obj-arrow g o arrow }
+           --
+           --                   arrow a b
+           --                 a → b
+           ---                f\ /g    proof : f ≈ g o arrow
+           --                   X
+           --
+           -- YFwld : {F : Functor OX HODSets}
+           --      → {A B : Obj (HOD-OSCA (topology X))} → Hom (HOD-OSCA (topology X)) A B → ?
+           -- YFwld = ?
 
-       LObj :  Obj (HOD-OSCA (topology X) ) → Obj (top / X)
-       LObj F =   ⟦ hom ⟧ where
-           F-functor : Functor OX HODSets
-           F-functor = F
-           hom : Hom top record { space = YFHOD F ; topology = YFTopology F  } X
-           hom = record  { func = YFunc F
-             ; continuous =  lem00
-            } where
-                lem00 :  {x : Ordinal } → odef (OS (topology X)) x → odef (YFOHOD F) (& (HODInverseImage (YFunc F) x ))
-                lem00 {x} ox = record { u = ? ; s = ? ; ou = ? ; s∈FU = ? ; is-open = ==→o≡ ? }
-
-       -- Slice top on X    Obj   record field { Obj a  ; obj-arrow : Hom top a X }
-       --                   Hom   record field { arrow : Hom (obj a) (obj b) ; proof : obj-arrow  f ≈ obj-arrow g o arrow }
-       --
-       --                   arrow a b
-       --                 a → b
-       ---                f\ /g    proof : f ≈ g o arrow
-       --                   X
-       --
-       -- YFwld : {F : Functor OX HODSets}
-       --      → {A B : Obj (HOD-OSCA (topology X))} → Hom (HOD-OSCA (topology X)) A B → ?
-       -- YFwld = ?
-
-       LFMap : {A B : Obj (HOD-OSCA (topology X))} → Hom (HOD-OSCA (topology X)) A B → Hom (top / X) (LObj A) (LObj B)
-       LFMap {a} {b} nat = record { arrow = record { func = lem01 ; continuous = ? }  ; proof = lem02 }  where
-           af : Functor OX HODSets
-           af = a
-           bf : Functor OX HODSets
-           bf = b
-           lem00 :  NTrans OX HODSets a b
-           lem00 = nat
--- FEQ.HODSFUEQ b (os⊆L (topology X) (YF.ou ax) (YF.x∈U ax))
---             (record
---              { u = YF.u ax
---              ; ou = YF.ou ax
---              ; s∈FU =
---                  ZProduct.Func.is-func
---                  (TMap nat (record { s = * (YF.u ax) ; p = YF.ou ax })) (YF.s∈FU ax)
---              }))
-           lem01 : Func (YFHOD a) (YFHOD b)
-           lem01 = record {
-                func = λ {x} ax → & < * (YF.x ax) , _ >
-              ; is-func = λ {x} ax → record { x = YF.x ax
-                   ; s = Func.func (TMap nat record { s = * (YF.u ax) ; p = YF.ou ax }) (YF.s∈FU ax)
-                   ; s∈FU = Func.is-func (TMap nat record { s = * (YF.u ax) ; p = YF.ou ax }) (YF.s∈FU ax)
-                   ; u = YF.u ax ; ou = YF.ou ax ; x∈U = YF.x∈U ax
-                  ; is-pair = refl }
-              ; func-wld = ?
-             }
-           lem03 : Func (YFHOD a) (space X)
-           lem03 = FuncComp (ContFunc.func (SliceObj.arrow (LObj b))) lem01
-           lem02 : ( x : Ordinal ) ( ax : odef (YFHOD a) x ) → FuncEQ (ContFunc.func (SliceObj.arrow (LObj a))) lem03  x ax
-           lem02 x ax = begin
-              Func.func (ContFunc.func (SliceObj.arrow (LObj a))) ax ≡⟨ YFunc-is-x a ax ⟩
-              YF.x ax ≡⟨ sym ( YFunc-is-x a ax)  ⟩
-              Func.func lem03 ax  ∎ where open ≡-Reasoning
-
-       L : Functor (HOD-OSCA (topology X) ) ( top / X )
-       L = record { FObj = LObj ; FMap = LFMap; isFunctor = ? }
-
-       open import Category.Cat
-
-       eta : NTrans (HOD-OSCA (topology X)) (HOD-OSCA (topology X)) identityFunctor (Γ ○ L)
-       eta = record { TMap = λ a → eta00 a ; isNTrans = record { commute = ? } } where
-            eta01 : (a : Obj (HOD-OSCA (topology X))) (b : Obj OX) → Hom HODSets (FObj a b) (Γo (LObj a) b)
-            eta01 a b  = eta02 where
-                eta02 : Func (FObj a b) (Γo (LObj a) b)
-                eta02 = record {
-                    func = λ  {x} fab →  & < * x , FEQ.HODSFUEQ a ? record { u = ? ; ou = ? ; s∈FU = ? }  >
-                  ; is-func = ?
+           LFMap : {A B : Obj (HOD-OSCA (topology X))} → Hom (HOD-OSCA (topology X)) A B → Hom (top / X) (LObj A) (LObj B)
+           LFMap {a} {b} nat = record { arrow = record { func = lem01 ; continuous = ? }  ; proof = lem02 }  where
+               af : Functor OX HODSets
+               af = a
+               bf : Functor OX HODSets
+               bf = b
+               lem00 :  NTrans OX HODSets a b
+               lem00 = nat
+    -- FEQ.HODSFUEQ b (os⊆L (topology X) (YF.ou ax) (YF.x∈U ax))
+    --             (record
+    --              { u = YF.u ax
+    --              ; ou = YF.ou ax
+    --              ; s∈FU =
+    --                  ZProduct.Func.is-func
+    --                  (TMap nat (record { s = * (YF.u ax) ; p = YF.ou ax })) (YF.s∈FU ax)
+    --              }))
+               lem01 : Func (YFHOD a) (YFHOD b)
+               lem01 = record {
+                    func = λ {x} ax → & < * (YF.x ax) , _ >
+                  ; is-func = λ {x} ax → record { x = YF.x ax
+                       ; s = Func.func (TMap nat record { s = * (YF.u ax) ; p = YF.ou ax }) (YF.s∈FU ax)
+                       ; s∈FU = Func.is-func (TMap nat record { s = * (YF.u ax) ; p = YF.ou ax }) (YF.s∈FU ax)
+                       ; u = YF.u ax ; ou = YF.ou ax ; x∈U = YF.x∈U ax
+                      ; is-pair = refl }
                   ; func-wld = ?
                  }
-            eta00 : (a : Obj (HOD-OSCA (topology X))) → Hom (HOD-OSCA (topology X)) a (ΓObj (LObj a))
-            eta00 a = record { TMap = eta01 a ; isNTrans = record { commute = ? } }
+               lem03 : Func (YFHOD a) (space X)
+               lem03 = FuncComp (ContFunc.func (SliceObj.arrow (LObj b))) lem01
+               lem02 : ( x : Ordinal ) ( ax : odef (YFHOD a) x ) → FuncEQ (ContFunc.func (SliceObj.arrow (LObj a))) lem03  x ax
+               lem02 x ax = begin
+                  Func.func (ContFunc.func (SliceObj.arrow (LObj a))) ax ≡⟨ YFunc-is-x a ax ⟩
+                  YF.x ax ≡⟨ sym ( YFunc-is-x a ax)  ⟩
+                  Func.func lem03 ax  ∎ where open ≡-Reasoning
 
-       epsrion : NTrans (top / X) (top / X) (L ○ Γ) identityFunctor
-       epsrion = record { TMap = λ a → ep00 a ; isNTrans = record { commute = ? } } where
-            ep00 : ( a : Obj (top / X)) → Hom (top / X) (LObj (ΓObj a)) a
-            ep00 a = record { arrow = ? ; proof = ? }
+           L : Functor (HOD-OSCA (topology X) ) ( top / X )
+           L = record { FObj = ? ; FMap = ?; isFunctor = ? }
+
+           open import Category.Cat
+
+           eta : NTrans (HOD-OSCA (topology X)) (HOD-OSCA (topology X)) identityFunctor (Γ ○ L)
+           eta = record { TMap = λ a → eta00 a ; isNTrans = record { commute = ? } } where
+                eta01 : (a : Obj (HOD-OSCA (topology X))) (b : Obj OX) → Hom HODSets (FObj a b) (Γo (? a) b)
+                eta01 a b  = eta02 where
+                    eta02 : Func (FObj a b) (Γo (? a) b)
+                    eta02 = record {
+                        func = λ  {x} fab →  & < * x , ? a ? record { u = ? ; ou = ? ; s∈FU = ? }  >
+                      ; is-func = ?
+                      ; func-wld = ?
+                     }
+                eta00 : (a : Obj (HOD-OSCA (topology X))) → Hom (HOD-OSCA (topology X)) a (ΓObj (? a))
+                eta00 a = record { TMap = eta01 a ; isNTrans = record { commute = ? } }
+
+           epsrion : NTrans (top / X) (top / X) (L ○ Γ) identityFunctor
+           epsrion = record { TMap = λ a → ep00 a ; isNTrans = record { commute = ? } } where
+                ep00 : ( a : Obj (top / X)) → Hom (top / X) (? (ΓObj a)) a
+                ep00 a = record { arrow = ? ; proof = ? }
 
 
-       sheafAdj : Adjunction (HOD-OSCA (topology X) ) ( top / X )
-       sheafAdj = record {
-            U = Γ
-          ; F = L
-          ; η  = ?
-          ; ε  = ?
-          ; isAdjunction = record {
-                 adjoint1 = ?
-               ; adjoint2 = ?
+           sheafAdj : Adjunction (HOD-OSCA (topology X) ) ( top / X )
+           sheafAdj = record {
+                U = Γ
+              ; F = L
+              ; η  = ?
+              ; ε  = ?
+              ; isAdjunction = record {
+                     adjoint1 = ?
+                   ; adjoint2 = ?
+                 }
              }
-         }
 
